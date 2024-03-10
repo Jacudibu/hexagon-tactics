@@ -15,6 +15,8 @@
 - Grasslands: Food Production Bonus
 - Woodlands: Timber Production Bonus
 - Mountains: Metal Production Bonus
+- River: Food Production Bonus, might allow special building interactions
+- Ocean: Cannot be settled, natural boundary
 
 ## Resources
 - Quarters: Directly limit the army size. Every Unit occupies a spot, and when this is maxed out, no more units can be recruited
@@ -46,11 +48,11 @@ Let's say we have two units, A and B, with 50 and 75 Speed respectively.
 225 - Unit B
 
 In case of a Tie, the unit with the higher speed value goes first.
-In case of a tie there:
+In case both units have the same speed:
 - If it's the units of two different players:
   - Alternate who's unit goes first: Player A, then Player B. Then Player A again. 
-- If both units belong to the same player::
-  - Create a popup to let the player decide, go alphabetically or roll a die for each.
+- If both units belong to the same player:
+  - Create a popup to let the player decide / go alphabetically / roll a die for each.
 
 
 ## Classes 
