@@ -23,6 +23,10 @@
 - Food: Needed to keep your population happy
 - Money: Used to hire Mercenaries
 
+# World Map
+Tiles will show a preview of what they can expect on a tile: Monsters, Bandits, An Army...
+Players can assembled squads of their units and have to pick one of them to engage in Combat.
+
 # Combat
 Battles take place on a hexagonal battlefield. Turn-Based, but one turn for each individual unit rather than for each player.
 
