@@ -1,0 +1,8 @@
+[package]
+name = "game-server"
+homepage.workspace = true
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+game-common = { path = "../game-common" }

@@ -1,5 +1,8 @@
-[package]
-name = "hexagon-tactics"
+[workspace]
+resolver = "2"
+members = ["game-common", "game-client", "game-server"]
+
+[workspace.package]
 homepage = "https://github.com/Jacudibu/hexagon-tactics"
 version = "0.1.0"
 edition = "2021"
@@ -11,41 +14,3 @@ opt-level = 1
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
 opt-level = 3
-
-[workspace]
-resolver = "2"
-
-[dependencies]
-bevy = { version = "0.13.1", default-features = false, features = [
-    "animation",
-    "bevy_asset",
-    "bevy_gilrs",
-    "bevy_scene",
-    "bevy_winit",
-    "bevy_core_pipeline",
-    "bevy_pbr",
-    "bevy_gltf",
-    "bevy_render",
-    "bevy_sprite",
-    "bevy_text",
-    "bevy_ui",
-    "multi-threaded",
-    "png",
-    "hdr",
-    "x11",
-    "bevy_gizmos",
-    "android_shared_stdcxx",
-    "tonemapping_luts",
-    "default_font",
-    "webgl2",
-]}
-bevy_asset_loader = { version = "0.20.0", features = ["2d", "3d"] }
-bevy_basic_camera = { git = "https://github.com/DGriffin91/bevy_basic_camera" }
-bevy_egui = "0.26.0"
-bevy-inspector-egui = "0.23.4"
-bevy_kira_audio = "0.19.0"
-bevy_screen_diagnostics = "0.5.0"
-bevy_mod_raycast = "0.17.0"
-leafwing-input-manager = "0.13.3"
-rand = "0.8.5"
-

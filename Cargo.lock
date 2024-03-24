@@ -2033,6 +2033,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "game-client"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy-inspector-egui",
+ "bevy_asset_loader",
+ "bevy_basic_camera",
+ "bevy_egui 0.26.0",
+ "bevy_kira_audio",
+ "bevy_mod_raycast",
+ "bevy_screen_diagnostics",
+ "game-common",
+ "leafwing-input-manager",
+ "rand",
+]
+
+[[package]]
+name = "game-common"
+version = "0.1.0"
+
+[[package]]
+name = "game-server"
+version = "0.1.0"
+dependencies = [
+ "game-common",
+]
+
+[[package]]
 name = "gethostname"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2284,22 +2312,6 @@ name = "hermit-abi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
-
-[[package]]
-name = "hexagon-tactics"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy-inspector-egui",
- "bevy_asset_loader",
- "bevy_basic_camera",
- "bevy_egui 0.26.0",
- "bevy_kira_audio",
- "bevy_mod_raycast",
- "bevy_screen_diagnostics",
- "leafwing-input-manager",
- "rand",
-]
 
 [[package]]
 name = "hexasphere"
