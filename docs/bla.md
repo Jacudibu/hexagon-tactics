@@ -75,8 +75,9 @@ Let's use well-established D&D Style stats. Different classes will have their da
 - Health: 10 * Constitution
 - Mana: Intelligence * X + Wisdom * X
 - Speed: 50 + X * Dex
+- Happiness: Flexible -15% to +15% stat boost depending on a variety of factors: Food, Housing, recent events...
 
-(Mana is kinda necessary, to limit how many super-strong spells can be used in quick succession?)
+(Mana is kinda necessary, to limit how many super-strong spells can be used in quick succession, especially with multiclassing?)
 
 ## Classes
 Every Class has a signature weapon assigned to them. Character classes can be changed at will, but stats are persistent and raise depending on the active class on level up (?)
@@ -88,6 +89,7 @@ Every Class has a signature weapon assigned to them. Character classes can be ch
 
 #### "Medium Armor", for a lack of a better term
 - Rogue: Daggers. Fast moving, high damage glass cannons.
+- Monk: Bracers. Physical based magic, mix of STR and WIS.
 - Ranger: Bows. Can apply debuffs or boost damage by aiming at certain body parts.
 
 #### Mages
@@ -119,3 +121,6 @@ A random set of Units and/or Skills will receive Buffs and Debuffs every match. 
 
 # Multiplayer
 If we separate Game Logic into a separate crate and have the client just be a visual representation of game data, multiplayer would be very easy to add, both Co-Op and PvP. As would adding extra AIs be.
+
+# Basic Modding Support
+By parsing all game data from external files at game launch, certain aspects like classes, skills, monsters and events will be easy to change or extend.
