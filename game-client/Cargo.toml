@@ -39,3 +39,4 @@ bevy_mod_raycast = "0.17.0"
 leafwing-input-manager = "0.13.3"
 rand = "0.8.5"
 
+tokio = { version = "1.36.0", features = ["full"] }
