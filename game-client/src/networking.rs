@@ -1,5 +1,8 @@
-use bevy::prelude::{App, Commands, in_state, IntoSystemConfigs, Local, NextState, OnEnter, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, States, StateTransition, Time};
-use tokio::io::{AsyncWriteExt, ReadHalf};
+use bevy::prelude::{
+    in_state, info, trace, App, Commands, IntoSystemConfigs, Local, NextState, OnEnter, Plugin,
+    PostUpdate, PreUpdate, Res, ResMut, Resource, StateTransition, States, Time,
+};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, ReadHalf};
 use tokio::net::TcpStream;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
@@ -20,8 +23,17 @@ impl Plugin for NetworkPlugin {
 
         app.insert_resource(network)
             .insert_state(NetworkState::Disconnected)
-            .add_systems(PreUpdate, (check_for_connection.run_if(in_state(NetworkState::Disconnected)), receive_updates.run_if(in_state(NetworkState::Connected))))
-            .add_systems(PostUpdate, send_updates.run_if(in_state(NetworkState::Connected)));
+            .add_systems(
+                PreUpdate,
+                (
+                    check_for_connection.run_if(in_state(NetworkState::Disconnected)),
+                    receive_updates.run_if(in_state(NetworkState::Connected)),
+                ),
+            )
+            .add_systems(
+                PostUpdate,
+                send_updates.run_if(in_state(NetworkState::Connected)),
+            );
     }
 }
 
@@ -36,7 +48,8 @@ pub struct Network {
 
 #[derive(Resource)]
 pub struct Connection {
-    stream: TcpStream
+    message_rx: mpsc::UnboundedReceiver<Vec<u8>>,
+    message_tx: mpsc::UnboundedSender<Vec<u8>>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
@@ -50,37 +63,65 @@ impl Network {
     pub fn connect(&mut self) {
         let _guard = self.tokio_handle.enter();
 
-        let tx = self.connection_tx.clone();
+        let connection_tx = self.connection_tx.clone();
+
         tokio::spawn(async move {
             match TcpStream::connect("127.0.0.1:1337").await {
                 Ok(mut stream) => {
-                    println!("created stream");
+                    info!("created stream");
 
                     let result = stream.write_all(b"Hello world\n").await;
-                    println!("wrote to stream; success={:?}", result.is_ok());
+                    info!("wrote to stream; success={:?}", result.is_ok());
 
-                    match tx.send(Connection {stream}) {
+                    let (tx_rx, rx_rx) = mpsc::unbounded_channel();
+                    let (tx_tx, mut rx_tx) = mpsc::unbounded_channel();
+                    let connection = Connection {
+                        message_tx: tx_tx,
+                        message_rx: rx_rx,
+                    };
+                    match connection_tx.send(connection) {
                         Ok(_) => {
-                            println!("Connection has been sent to main thread.");
+                            info!("Connection has been sent to main thread.");
                         }
                         Err(e) => {
-                            println!("Internal error while persisting connection: {:?}", e);
+                            info!("Internal error while persisting connection: {:?}", e);
+                        }
+                    }
+
+                    info!("test");
+
+                    loop {
+                        let mut buf = [0; 32];
+                        tokio::select! {
+                            // Sending
+                            Some(msg) = rx_tx.recv() => {
+                                let _ = stream.write(&msg).await;
+                            }
+                            // Receiving
+                            result = stream.read(&mut buf) => match result {
+                                Ok(_) => {}
+                                Err(_) => {}
+                            }
                         }
                     }
                 }
                 Err(e) => {
-                    println!("Error while connecting: {:?}", e);
+                    info!("Error while connecting: {:?}", e);
                 }
             }
         });
     }
 }
 
-fn check_for_connection(mut commands: Commands, mut network: ResMut<Network>, mut next_network_state: ResMut<NextState<NetworkState>>) {
+fn check_for_connection(
+    mut commands: Commands,
+    mut network: ResMut<Network>,
+    mut next_network_state: ResMut<NextState<NetworkState>>,
+) {
     if let Ok(connection) = network.connection_rx.try_recv() {
         commands.insert_resource(connection);
         next_network_state.set(NetworkState::Connected);
-        println!("Connection Resource has been created.")
+        info!("Connection Resource has been created.")
     }
 }
 
@@ -91,7 +132,7 @@ fn receive_updates(connection: Res<Connection>) {
 
 #[derive(Default)]
 struct DebugLocal {
-    i: i32
+    i: i32,
 }
 
 fn send_updates(time: Res<Time>, mut connection: ResMut<Connection>, mut local: Local<DebugLocal>) {
@@ -102,9 +143,9 @@ fn send_updates(time: Res<Time>, mut connection: ResMut<Connection>, mut local: 
         return;
     }
 
-    println!("sending!");
+    trace!("sending!");
 
     local.i = time.elapsed_seconds() as i32 + 1;
     let data = format!("{}\n", time.elapsed_seconds()).into_bytes();
-    let bytes = connection.stream.write_all(&data);
+    let bytes = connection.message_tx.send(data);
 }
