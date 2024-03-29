@@ -1,8 +1,11 @@
+use bevy::input::keyboard::KeyboardInput;
+use bevy::input::ButtonInput;
 use bevy::prelude::{
-    error, in_state, info, trace, App, Commands, IntoSystemConfigs, Local, NextState, OnEnter,
-    Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, StateTransition, States, Time,
+    error, in_state, info, trace, App, Commands, IntoSystemConfigs, KeyCode, Local, NextState,
+    OnEnter, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, StateTransition, States, Time,
 };
 use futures::SinkExt;
+use std::string::FromUtf8Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, ReadHalf};
 use tokio::net::TcpStream;
 use tokio::runtime::{Handle, Runtime};
@@ -101,8 +104,9 @@ impl Network {
                             }
                             // Receiving
                             result = lines.next() => match result {
-                                Some(Ok(value)) => {
-                                    info!("Received {}", value);
+                                Some(Ok(msg)) => {
+                                    let msg = msg.as_bytes().to_vec();
+                                    let _ = tx_rx.send(msg);
                                 }
                                 Some(Err(e)) => {
                                     error!("Error when receiving data from server: {:?}", e)
@@ -132,31 +136,29 @@ fn check_for_connection(
     }
 }
 
-fn receive_updates(connection: Res<ServerConnection>) {
-    // TODO: Actually Receive Updates
-    // TODO: Create Events for updates
-}
+fn receive_updates(mut connection: ResMut<ServerConnection>) {
+    if let Ok(msg) = connection.message_rx.try_recv() {
+        match String::from_utf8(msg) {
+            Ok(msg) => {
+                info!("Received {}", msg);
+            }
+            Err(_) => {
+                todo!()
+            }
+        }
 
-#[derive(Default)]
-struct DebugLocal {
-    i: i32,
+        // TODO: Create Events for incoming updates
+    }
 }
 
 fn send_updates(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     mut connection: ResMut<ServerConnection>,
-    mut local: Local<DebugLocal>,
 ) {
-    // TODO: Actually send Updates
-    let value = local.i;
-
-    if value > time.elapsed_seconds() as i32 {
-        return;
+    // TODO: Actually send Updates instead of triggering them through key presses
+    for key in keyboard_input.get_just_pressed() {
+        let data = format!("{:?} ({})", key, time.elapsed_seconds()).into_bytes();
+        let bytes = connection.message_tx.send(data);
     }
-
-    trace!("sending!");
-
-    local.i = time.elapsed_seconds() as i32 + 1;
-    let data = format!("{}", time.elapsed_seconds()).into_bytes();
-    let bytes = connection.message_tx.send(data);
 }
