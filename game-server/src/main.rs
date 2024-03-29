@@ -1,3 +1,4 @@
+use futures::SinkExt;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io;
@@ -6,17 +7,16 @@ use std::sync::Arc;
 use tokio::io::AsyncReadExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{mpsc, Mutex};
-use tokio_util::codec::{Framed, LinesCodec};
 use tokio_stream::StreamExt;
-use futures::SinkExt;
-use tracing_subscriber::EnvFilter;
+use tokio_util::codec::{Framed, LinesCodec};
 use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env()
-        //    .add_directive("tokio=trace".parse()?)
+        .with_env_filter(
+            EnvFilter::from_default_env(), //    .add_directive("tokio=trace".parse()?)
         )
         //.with_span_events(FmtSpan::FULL)
         .with_max_level(tracing::Level::DEBUG)
@@ -40,12 +40,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         });
     }
-
 }
 
 #[derive(Default)]
 struct SharedState {
-    connections: HashMap<SocketAddr, mpsc::UnboundedSender<String>>
+    connections: HashMap<SocketAddr, mpsc::UnboundedSender<String>>,
+}
+
+impl SharedState {
+    async fn broadcast(&mut self, message: &str) {
+        for (addr, tx) in self.connections.iter_mut() {
+            let _ = tx.send(message.into());
+        }
+    }
 }
 
 struct ConnectedClient {
@@ -65,8 +72,11 @@ impl ConnectedClient {
     }
 }
 
-
-async fn process_incoming_connection(state: Arc<Mutex<SharedState>>, mut stream: TcpStream, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
+async fn process_incoming_connection(
+    state: Arc<Mutex<SharedState>>,
+    mut stream: TcpStream,
+    addr: SocketAddr,
+) -> Result<(), Box<dyn Error>> {
     let mut lines = Framed::new(stream, LinesCodec::new());
     let mut client = ConnectedClient::new(state.clone(), lines).await?;
 
@@ -79,10 +89,7 @@ async fn process_incoming_connection(state: Arc<Mutex<SharedState>>, mut stream:
             result = client.lines.next() => match result {
                 // A message was received from the client
                 Some(Ok(msg)) => {
-                    let mut state = state.lock().await;
-                    let msg = format!("{}: {}", addr, msg);
-
-                    tracing::info!(msg);
+                    process_message_from_client(Arc::clone(&state), addr, msg).await;
                 }
                 // An error occurred.
                 Some(Err(e)) => {
@@ -108,4 +115,21 @@ async fn process_incoming_connection(state: Arc<Mutex<SharedState>>, mut stream:
     }
 
     Ok(())
+}
+
+async fn process_message_from_client(
+    state: Arc<Mutex<SharedState>>,
+    sender: SocketAddr,
+    message: String,
+) {
+    let mut state = state.lock().await;
+    tracing::info!("Processing message from {}: {}", sender, message);
+
+    // TODO: Execute fancy game logic, broadcast result
+
+    let result = format!(
+        "This should contain the result for the message received from {} ({})",
+        sender, message
+    );
+    state.broadcast(&result).await;
 }

@@ -2145,10 +2145,13 @@ dependencies = [
  "bevy_kira_audio",
  "bevy_mod_raycast",
  "bevy_screen_diagnostics",
+ "futures",
  "game-common",
  "leafwing-input-manager",
  "rand",
  "tokio",
+ "tokio-stream",
+ "tokio-util",
 ]
 
 [[package]]

@@ -1,11 +1,14 @@
 use bevy::prelude::{
-    in_state, info, trace, App, Commands, IntoSystemConfigs, Local, NextState, OnEnter, Plugin,
-    PostUpdate, PreUpdate, Res, ResMut, Resource, StateTransition, States, Time,
+    error, in_state, info, trace, App, Commands, IntoSystemConfigs, Local, NextState, OnEnter,
+    Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, StateTransition, States, Time,
 };
+use futures::SinkExt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, ReadHalf};
 use tokio::net::TcpStream;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
+use tokio_stream::StreamExt;
+use tokio_util::codec::{Framed, LinesCodec};
 
 pub struct NetworkPlugin;
 
@@ -42,12 +45,12 @@ pub struct Network {
     _tokio_runtime: Runtime,
     tokio_handle: Handle,
 
-    connection_rx: mpsc::UnboundedReceiver<Connection>,
-    connection_tx: mpsc::UnboundedSender<Connection>,
+    connection_rx: mpsc::UnboundedReceiver<ServerConnection>,
+    connection_tx: mpsc::UnboundedSender<ServerConnection>,
 }
 
 #[derive(Resource)]
-pub struct Connection {
+pub struct ServerConnection {
     message_rx: mpsc::UnboundedReceiver<Vec<u8>>,
     message_tx: mpsc::UnboundedSender<Vec<u8>>,
 }
@@ -70,12 +73,12 @@ impl Network {
                 Ok(mut stream) => {
                     info!("created stream");
 
-                    let result = stream.write_all(b"Hello world\n").await;
+                    let result = stream.write_all(b"Hello world").await;
                     info!("wrote to stream; success={:?}", result.is_ok());
 
                     let (tx_rx, rx_rx) = mpsc::unbounded_channel();
                     let (tx_tx, mut rx_tx) = mpsc::unbounded_channel();
-                    let connection = Connection {
+                    let connection = ServerConnection {
                         message_tx: tx_tx,
                         message_rx: rx_rx,
                     };
@@ -88,19 +91,23 @@ impl Network {
                         }
                     }
 
-                    info!("test");
-
+                    let mut lines = Framed::new(stream, LinesCodec::new());
                     loop {
-                        let mut buf = [0; 32];
                         tokio::select! {
                             // Sending
                             Some(msg) = rx_tx.recv() => {
-                                let _ = stream.write(&msg).await;
+                                let msg = String::from_utf8(msg).expect("");
+                                let _ = lines.send(&msg).await;
                             }
                             // Receiving
-                            result = stream.read(&mut buf) => match result {
-                                Ok(_) => {}
-                                Err(_) => {}
+                            result = lines.next() => match result {
+                                Some(Ok(value)) => {
+                                    info!("Received {}", value);
+                                }
+                                Some(Err(e)) => {
+                                    error!("Error when receiving data from server: {:?}", e)
+                                }
+                                None => break,
                             }
                         }
                     }
@@ -125,7 +132,7 @@ fn check_for_connection(
     }
 }
 
-fn receive_updates(connection: Res<Connection>) {
+fn receive_updates(connection: Res<ServerConnection>) {
     // TODO: Actually Receive Updates
     // TODO: Create Events for updates
 }
@@ -135,7 +142,11 @@ struct DebugLocal {
     i: i32,
 }
 
-fn send_updates(time: Res<Time>, mut connection: ResMut<Connection>, mut local: Local<DebugLocal>) {
+fn send_updates(
+    time: Res<Time>,
+    mut connection: ResMut<ServerConnection>,
+    mut local: Local<DebugLocal>,
+) {
     // TODO: Actually send Updates
     let value = local.i;
 
@@ -146,6 +157,6 @@ fn send_updates(time: Res<Time>, mut connection: ResMut<Connection>, mut local: 
     trace!("sending!");
 
     local.i = time.elapsed_seconds() as i32 + 1;
-    let data = format!("{}\n", time.elapsed_seconds()).into_bytes();
+    let data = format!("{}", time.elapsed_seconds()).into_bytes();
     let bytes = connection.message_tx.send(data);
 }
