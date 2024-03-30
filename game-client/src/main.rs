@@ -1,13 +1,15 @@
 mod debugging;
+mod map_editor;
 mod networking;
 
+use crate::debugging::DebuggingPlugin;
+use crate::map_editor::MapEditorPlugin;
+use crate::networking::{Network, NetworkPlugin};
 use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy_basic_camera::{CameraController, CameraControllerPlugin};
 use bevy_kira_audio::AudioPlugin;
 use bevy_screen_diagnostics::*;
-use crate::debugging::DebuggingPlugin;
-use crate::networking::{Network, NetworkPlugin};
 
 fn main() {
     App::new()
@@ -31,11 +33,14 @@ fn main() {
         .add_plugins(DebuggingPlugin)
         .add_plugins(NetworkPlugin)
         .add_systems(Startup, init)
-    .run();
+        .add_plugins(MapEditorPlugin)
+        .run();
 }
 
 // Placeholder
 fn init(mut commands: Commands, mut network: ResMut<Network>) {
-    commands.spawn(Camera3dBundle::default()).insert(CameraController::default());
+    commands
+        .spawn(Camera3dBundle::default())
+        .insert(CameraController::default());
     network.connect();
 }
