@@ -6,7 +6,7 @@ use bevy::render::render_resource::PrimitiveTopology;
 use bevy::utils::HashMap;
 use bevy_basic_camera::CameraController;
 use game_common::game_map::GameMap;
-use hexx::{ColumnMeshBuilder, Hex, HexLayout, HexOrientation, Vec2};
+use hexx::{ColumnMeshBuilder, GridVertex, Hex, HexLayout};
 
 pub struct MapEditorPlugin;
 impl Plugin for MapEditorPlugin {
@@ -15,7 +15,9 @@ impl Plugin for MapEditorPlugin {
             brightness: 2000.0,
             ..default()
         });
-        app.add_systems(Startup, (setup_camera, setup_grid));
+        app.init_gizmo_group::<MapGizmos>();
+        app.add_systems(Startup, (setup_camera, setup_grid, set_gizmo_config));
+        app.add_systems(Update, draw_hexagon_gizmos);
     }
 }
 
@@ -30,6 +32,8 @@ fn setup_camera(mut commands: Commands) {
         })
         .insert(CameraController {
             sensitivity: 2.0,
+            walk_speed: 20.0,
+            run_speed: 50.0,
             ..default()
         });
 }
@@ -51,25 +55,19 @@ fn setup_grid(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let radius = 20;
-    let layout = HexLayout {
-        hex_size: Vec2::splat(1.0),
-        orientation: HexOrientation::Flat,
-        ..default()
-    };
+    let map = GameMap::new(radius);
 
     // materials
     let default_material = materials.add(Color::WHITE);
     let highlighted_material = materials.add(Color::YELLOW);
     // mesh
-    let mesh = generate_hexagonal_column_mesh(&layout, 1.0);
+    let mesh = generate_hexagonal_column_mesh(&map.layout, METERS_PER_TILE_HEIGHT_UNIT);
     let mesh_handle = meshes.add(mesh);
-
-    let map = GameMap::new(radius);
 
     let mut entities = HashMap::new();
     for (hex, data) in &map.tiles {
         let hex = hex.clone();
-        let pos = layout.hex_to_world_pos(hex);
+        let pos = map.layout.hex_to_world_pos(hex);
         let id = commands
             .spawn(PbrBundle {
                 transform: Transform::from_xyz(
@@ -108,4 +106,63 @@ fn generate_hexagonal_column_mesh(hex_layout: &HexLayout, height: f32) -> Mesh {
     .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals)
     .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs)
     .with_inserted_indices(Indices::U16(mesh_info.indices))
+}
+
+#[derive(Default, Reflect, GizmoConfigGroup)]
+struct MapGizmos;
+fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
+    for (hex, data) in &map.tiles {
+        let height = (1 + data.height) as f32 * METERS_PER_TILE_HEIGHT_UNIT;
+        let top_vertices = hex
+            .all_vertices()
+            .map(|x| vertex_coordinates_3d(&map.layout, x, height));
+
+        connect_hexagon_vertices(&mut gizmos, top_vertices);
+
+        // for mid_height in 1..data.height {
+        //     let mid_height = mid_height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
+        //     let vertices = hex
+        //         .all_vertices()
+        //         .map(|x| vertex_coordinates_3d(&map.layout, x, mid_height));
+        //
+        //     connect_hexagon_vertices(&mut gizmos, vertices);
+        // }
+
+        let bottom_vertices = hex
+            .all_vertices()
+            .map(|x| vertex_coordinates_3d(&map.layout, x, 0.0));
+
+        gizmos.line(top_vertices[0], bottom_vertices[0], Color::BLACK);
+        gizmos.line(top_vertices[1], bottom_vertices[1], Color::BLACK);
+        gizmos.line(top_vertices[2], bottom_vertices[2], Color::BLACK);
+        gizmos.line(top_vertices[3], bottom_vertices[3], Color::BLACK);
+        gizmos.line(top_vertices[4], bottom_vertices[4], Color::BLACK);
+        gizmos.line(top_vertices[5], bottom_vertices[5], Color::BLACK);
+    }
+}
+
+fn connect_hexagon_vertices(gizmos: &mut Gizmos<MapGizmos>, vertices: [Vec3; 6]) {
+    gizmos.line(vertices[0], vertices[1], Color::BLACK);
+    gizmos.line(vertices[1], vertices[2], Color::BLACK);
+    gizmos.line(vertices[2], vertices[3], Color::BLACK);
+    gizmos.line(vertices[3], vertices[4], Color::BLACK);
+    gizmos.line(vertices[4], vertices[5], Color::BLACK);
+    gizmos.line(vertices[5], vertices[0], Color::BLACK);
+}
+
+#[must_use]
+pub fn vertex_coordinates_3d(layout: &HexLayout, vertex: GridVertex, height: f32) -> Vec3 {
+    let vertex_coordinates = layout.vertex_coordinates(vertex);
+    Vec3 {
+        x: vertex_coordinates.x,
+        y: height,
+        z: vertex_coordinates.y,
+    }
+}
+
+fn set_gizmo_config(mut config_store: ResMut<GizmoConfigStore>) {
+    let (config, _) = config_store.config_mut::<MapGizmos>();
+    config.depth_bias = -0.00001;
+    config.line_width = 20.0;
+    config.line_perspective = true;
 }
