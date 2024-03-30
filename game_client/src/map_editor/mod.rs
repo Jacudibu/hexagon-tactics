@@ -5,6 +5,7 @@ use bevy::render::render_asset::RenderAssetUsages;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy::utils::HashMap;
 use bevy_basic_camera::CameraController;
+use game_common::game_map;
 use game_common::game_map::GameMap;
 use hexx::{ColumnMeshBuilder, GridVertex, Hex, HexLayout};
 
@@ -57,12 +58,18 @@ fn setup_grid(
     let radius = 20;
     let map = GameMap::new(radius);
 
-    // materials
     let default_material = materials.add(Color::WHITE);
     let highlighted_material = materials.add(Color::YELLOW);
-    // mesh
-    let mesh = generate_hexagonal_column_mesh(&map.layout, METERS_PER_TILE_HEIGHT_UNIT);
-    let mesh_handle = meshes.add(mesh);
+
+    let mut mesh_handles = HashMap::new();
+    for height in game_map::MIN_HEIGHT..=game_map::MAX_HEIGHT {
+        let mesh = generate_hexagonal_column_mesh(
+            &map.layout,
+            height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
+        );
+        let handle = meshes.add(mesh);
+        mesh_handles.insert(height, handle);
+    }
 
     let mut entities = HashMap::new();
     for (hex, data) in &map.tiles {
@@ -70,12 +77,11 @@ fn setup_grid(
         let pos = map.layout.hex_to_world_pos(hex);
         let id = commands
             .spawn(PbrBundle {
-                transform: Transform::from_xyz(
-                    pos.x,
-                    data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
-                    pos.y,
-                ),
-                mesh: mesh_handle.clone(),
+                transform: Transform::from_xyz(pos.x, 0.0, pos.y),
+                mesh: mesh_handles
+                    .get(&data.height)
+                    .expect("Meshes for all heights should exist!")
+                    .clone(),
                 material: default_material.clone(),
                 ..default()
             })
@@ -112,7 +118,7 @@ fn generate_hexagonal_column_mesh(hex_layout: &HexLayout, height: f32) -> Mesh {
 struct MapGizmos;
 fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
     for (hex, data) in &map.tiles {
-        let height = (1 + data.height) as f32 * METERS_PER_TILE_HEIGHT_UNIT;
+        let height = data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
         let top_vertices = hex
             .all_vertices()
             .map(|x| vertex_coordinates_3d(&map.layout, x, height));
@@ -121,10 +127,9 @@ fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
 
         // for mid_height in 1..data.height {
         //     let mid_height = mid_height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
-        //     let vertices = hex
+        //   //   let vertices = hex
         //         .all_vertices()
         //         .map(|x| vertex_coordinates_3d(&map.layout, x, mid_height));
-        //
         //     connect_hexagon_vertices(&mut gizmos, vertices);
         // }
 

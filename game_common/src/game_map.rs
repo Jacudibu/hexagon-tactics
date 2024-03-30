@@ -9,11 +9,20 @@ pub struct GameMap {
     pub tiles: HashMap<Hex, TileData>,
 }
 
+pub const MIN_HEIGHT: u8 = 1;
+pub const MAX_HEIGHT: u8 = 20;
+
 impl GameMap {
     pub fn new(radius: u32) -> Self {
         let mut tiles = HashMap::new();
+        let mut height = MIN_HEIGHT;
         for hex in hexx::shapes::hexagon(Hex::ORIGIN, radius) {
-            tiles.insert(hex, TileData { height: 0 });
+            tiles.insert(hex, TileData { height });
+            if height == MAX_HEIGHT {
+                height = MIN_HEIGHT;
+            } else {
+                height += 1;
+            }
         }
 
         let layout = HexLayout {
