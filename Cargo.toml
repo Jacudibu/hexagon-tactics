@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["game-common", "game-client", "game-server"]
+members = ["game_common", "game_client", "game_server"]
 
 [workspace.package]
 homepage = "https://github.com/Jacudibu/hexagon-tactics"
