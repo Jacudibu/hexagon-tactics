@@ -5,3 +5,5 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+bevy = { version = "0.13.1", features = [] }
+hexx = { version = "0.16.1", features = ["serde"] }

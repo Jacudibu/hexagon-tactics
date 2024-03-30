@@ -1,3 +1,5 @@
+pub mod game_map;
+
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }

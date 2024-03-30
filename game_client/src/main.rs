@@ -38,9 +38,6 @@ fn main() {
 }
 
 // Placeholder
-fn init(mut commands: Commands, mut network: ResMut<Network>) {
-    commands
-        .spawn(Camera3dBundle::default())
-        .insert(CameraController::default());
+fn init(mut network: ResMut<Network>) {
     network.connect();
 }
