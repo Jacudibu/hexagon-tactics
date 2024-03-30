@@ -12,12 +12,11 @@ use hexx::{ColumnMeshBuilder, GridVertex, Hex, HexLayout};
 pub struct MapEditorPlugin;
 impl Plugin for MapEditorPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(AmbientLight {
-            brightness: 2000.0,
-            ..default()
-        });
         app.init_gizmo_group::<MapGizmos>();
-        app.add_systems(Startup, (setup_camera, setup_grid, set_gizmo_config));
+        app.add_systems(
+            Startup,
+            (setup_camera, setup_grid, set_gizmo_config, setup_light),
+        );
         app.add_systems(Update, draw_hexagon_gizmos);
     }
 }
@@ -37,6 +36,23 @@ fn setup_camera(mut commands: Commands) {
             run_speed: 50.0,
             ..default()
         });
+}
+
+fn setup_light(mut commands: Commands) {
+    commands.insert_resource(AmbientLight {
+        brightness: 20.0,
+        ..default()
+    });
+
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            illuminance: 1000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 5.7, 0.3, 0.0)),
+        ..default()
+    });
 }
 
 #[derive(Debug, Resource)]
