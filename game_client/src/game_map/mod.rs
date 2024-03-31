@@ -1,3 +1,4 @@
+use crate::game_map::editor::MapEditorPlugin;
 use crate::game_map::map_gizmos::MapGizmosPlugin;
 use crate::game_map::tile_cursor::{TileCursorPlugin, TileRaycastSet};
 use bevy::app::{App, Plugin, Startup};
@@ -26,6 +27,7 @@ impl Plugin for GameMapPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(TileCursorPlugin);
         app.add_plugins(MapGizmosPlugin);
+        app.add_plugins(MapEditorPlugin);
         app.add_systems(
             Startup,
             (
