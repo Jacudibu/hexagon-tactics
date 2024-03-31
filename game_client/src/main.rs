@@ -9,6 +9,7 @@ use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy_basic_camera::{CameraController, CameraControllerPlugin};
 use bevy_kira_audio::AudioPlugin;
+use bevy_mod_raycast::DefaultRaycastingPlugin;
 use bevy_screen_diagnostics::*;
 
 fn main() {

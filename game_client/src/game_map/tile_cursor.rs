@@ -1,21 +1,27 @@
-use crate::game_map::TileCoordinates;
+use crate::game_map::{HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
 use crate::MouseCursorOverUiState;
 use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
 use bevy::hierarchy::Parent;
-use bevy::log::error;
-use bevy::math::{IVec2, Quat};
-use bevy::pbr::NotShadowCaster;
+use bevy::log::{error, info};
+use bevy::math::{IVec2, Quat, Vec2};
+use bevy::pbr::{NotShadowCaster, PbrBundle};
 use bevy::prelude::{
-    default, in_state, Commands, Component, Entity, IntoSystemConfigs, Query, Reflect, Res,
-    Resource, Transform, Vec3, With,
+    default, in_state, Color, Commands, Component, Entity, Gizmos, IntoSystemConfigs, Query,
+    Reflect, Res, Resource, Transform, Update, Vec3, With,
 };
-use bevy_mod_raycast::deferred::{RaycastMesh, RaycastSource};
-use hexx::Hex;
+use bevy::DefaultPlugins;
+use bevy_mod_raycast::deferred::{DeferredRaycastingPlugin, RaycastMesh, RaycastSource};
+use bevy_mod_raycast::prelude::{Raycast, RaycastPluginState};
+use bevy_mod_raycast::{CursorRay, DefaultRaycastingPlugin};
+use game_common::game_map::GameMap;
+use hexx::{Hex, HexLayout, HexOrientation};
 
 pub(in crate::game_map) struct TileCursorPlugin;
 impl Plugin for TileCursorPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(DeferredRaycastingPlugin::<TileRaycastSet>::default());
+        app.insert_resource(RaycastPluginState::<TileRaycastSet>::default());
         app.add_systems(
             First,
             (
@@ -73,6 +79,8 @@ fn update_tile_cursor(
     mut commands: Commands,
     mouse_cursor: Option<Res<MouseCursorOnTile>>,
     tile_cursor_q: Query<(Entity, &TileCursor)>,
+    hexagon_meshes: Res<HexagonMeshes>,
+    map: Res<GameMap>,
 ) {
     let Some(mouse_cursor) = mouse_cursor else {
         return;
@@ -89,8 +97,29 @@ fn update_tile_cursor(
         }
     }
 
+    // TODO: should really really be a resource at this point
+    let layout = HexLayout {
+        origin: Vec2::ZERO,
+        hex_size: Vec2::splat(1.0),
+        orientation: HexOrientation::Pointy,
+        ..default()
+    };
+
     for selected_tile in this_frame_selection.iter() {
         if !already_existing_cursors.contains(selected_tile) {
+            let position = layout.hex_to_world_pos(selected_tile.clone());
+            let translation = Vec3 {
+                x: position.x,
+                y: map
+                    .tiles
+                    .get(selected_tile)
+                    .expect("Hex Coordinates should always be valid!")
+                    .height as f32
+                    * METERS_PER_TILE_HEIGHT_UNIT
+                    + 0.01,
+                z: position.y,
+            };
+
             commands.spawn((
                 Name::new(format!(
                     "Tile Cursor [{},{}]",
@@ -99,7 +128,11 @@ fn update_tile_cursor(
                 TileCursor {
                     hex: selected_tile.clone(),
                 },
-                // TODO: Graphical Representation. A flat hex mesh should be enough.
+                PbrBundle {
+                    mesh: hexagon_meshes.flat.clone(),
+                    transform: Transform::from_translation(translation),
+                    ..default()
+                },
                 NotShadowCaster,
             ));
         }
