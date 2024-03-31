@@ -1,11 +1,9 @@
 mod debugging;
 mod game_map;
-mod map_editor;
 mod networking;
 
 use crate::debugging::DebuggingPlugin;
 use crate::game_map::GameMapPlugin;
-use crate::map_editor::MapEditorPlugin;
 use crate::networking::{Network, NetworkPlugin};
 use bevy::prelude::*;
 use bevy::window::PresentMode;
@@ -34,12 +32,20 @@ fn main() {
         .add_plugins(ScreenEntityDiagnosticsPlugin)
         .add_plugins(DebuggingPlugin)
         .add_plugins(NetworkPlugin)
-        .add_systems(Startup, init)
         .add_plugins(GameMapPlugin)
+        .insert_state(MouseCursorOverUiState::default())
+        //.add_systems(Startup, init)
         .run();
 }
 
 // Placeholder
 fn init(mut network: ResMut<Network>) {
     network.connect();
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum MouseCursorOverUiState {
+    #[default]
+    NotOverUI,
+    OverUI,
 }

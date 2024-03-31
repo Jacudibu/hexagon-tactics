@@ -1,3 +1,4 @@
+use crate::game_map::tile_cursor::{TileCursorPlugin, TileRaycastSet};
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::asset::{Assets, Handle};
 use bevy::math::{EulerRot, Quat, Vec3};
@@ -5,23 +6,26 @@ use bevy::pbr::{
     AmbientLight, DirectionalLight, DirectionalLightBundle, PbrBundle, StandardMaterial,
 };
 use bevy::prelude::{
-    default, AppGizmoBuilder, Camera3dBundle, Color, Commands, Entity, GizmoConfigGroup,
+    default, AppGizmoBuilder, Camera3dBundle, Color, Commands, Component, Entity, GizmoConfigGroup,
     GizmoConfigStore, Gizmos, Mesh, Reflect, Res, ResMut, Resource, Transform,
 };
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
 use bevy::utils::HashMap;
 use bevy_basic_camera::CameraController;
+use bevy_mod_raycast::prelude::RaycastMesh;
 use game_common::game_map;
 use game_common::game_map::GameMap;
 use hexx::{ColumnMeshBuilder, GridVertex, Hex, HexLayout};
 
 mod editor;
+mod tile_cursor;
 
 pub struct GameMapPlugin;
 impl Plugin for GameMapPlugin {
     fn build(&self, app: &mut App) {
         app.init_gizmo_group::<MapGizmos>();
+        app.add_plugins(TileCursorPlugin);
         app.add_systems(
             Startup,
             (setup_camera, setup_grid, set_gizmo_config, setup_light),
@@ -75,6 +79,12 @@ struct MapMaterials {
     default_material: Handle<StandardMaterial>,
 }
 
+#[derive(Debug, Component)]
+struct TileCoordinates {
+    hex: Hex,
+    height: u8,
+}
+
 fn setup_grid(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -101,15 +111,22 @@ fn setup_grid(
         let hex = hex.clone();
         let pos = map.layout.hex_to_world_pos(hex);
         let id = commands
-            .spawn(PbrBundle {
-                transform: Transform::from_xyz(pos.x, 0.0, pos.y),
-                mesh: mesh_handles
-                    .get(&data.height)
-                    .expect("Meshes for all heights should exist!")
-                    .clone(),
-                material: default_material.clone(),
-                ..default()
-            })
+            .spawn((
+                PbrBundle {
+                    transform: Transform::from_xyz(pos.x, 0.0, pos.y),
+                    mesh: mesh_handles
+                        .get(&data.height)
+                        .expect("Meshes for all heights should exist!")
+                        .clone(),
+                    material: default_material.clone(),
+                    ..default()
+                },
+                RaycastMesh::<TileRaycastSet>::default(),
+                TileCoordinates {
+                    hex,
+                    height: data.height,
+                },
+            ))
             .id();
 
         entities.insert(hex, id);

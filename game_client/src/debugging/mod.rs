@@ -1,9 +1,9 @@
 mod world_inspector;
 
+use crate::debugging::world_inspector::{WorldInspectorPlugin, WorldInspectorState};
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
-use crate::debugging::world_inspector::{WorldInspectorPlugin, WorldInspectorState};
 
 pub struct DebuggingPlugin;
 impl Plugin for DebuggingPlugin {
@@ -22,7 +22,7 @@ enum DebugAction {
 }
 
 impl DebugAction {
-    fn default_input_map() -> InputMap<Self>{
+    fn default_input_map() -> InputMap<Self> {
         let mut input_map = InputMap::default();
 
         input_map.insert(Self::ToggleWorldInspector, KeyCode::F2);
