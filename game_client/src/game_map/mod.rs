@@ -1,16 +1,25 @@
-use bevy::app::App;
-use bevy::prelude::*;
-use bevy::render::mesh::Indices;
+use bevy::app::{App, Plugin, Startup, Update};
+use bevy::asset::{Assets, Handle};
+use bevy::math::{EulerRot, Quat, Vec3};
+use bevy::pbr::{
+    AmbientLight, DirectionalLight, DirectionalLightBundle, PbrBundle, StandardMaterial,
+};
+use bevy::prelude::{
+    default, AppGizmoBuilder, Camera3dBundle, Color, Commands, Entity, GizmoConfigGroup,
+    GizmoConfigStore, Gizmos, Mesh, Reflect, Res, ResMut, Resource, Transform,
+};
+use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
-use bevy::render::render_resource::PrimitiveTopology;
 use bevy::utils::HashMap;
 use bevy_basic_camera::CameraController;
 use game_common::game_map;
 use game_common::game_map::GameMap;
 use hexx::{ColumnMeshBuilder, GridVertex, Hex, HexLayout};
 
-pub struct MapEditorPlugin;
-impl Plugin for MapEditorPlugin {
+mod editor;
+
+pub struct GameMapPlugin;
+impl Plugin for GameMapPlugin {
     fn build(&self, app: &mut App) {
         app.init_gizmo_group::<MapGizmos>();
         app.add_systems(
@@ -132,6 +141,7 @@ fn generate_hexagonal_column_mesh(hex_layout: &HexLayout, height: f32) -> Mesh {
 
 #[derive(Default, Reflect, GizmoConfigGroup)]
 struct MapGizmos;
+
 fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
     for (hex, data) in &map.tiles {
         let height = data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT;

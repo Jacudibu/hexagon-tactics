@@ -1,8 +1,10 @@
 mod debugging;
+mod game_map;
 mod map_editor;
 mod networking;
 
 use crate::debugging::DebuggingPlugin;
+use crate::game_map::GameMapPlugin;
 use crate::map_editor::MapEditorPlugin;
 use crate::networking::{Network, NetworkPlugin};
 use bevy::prelude::*;
@@ -33,7 +35,7 @@ fn main() {
         .add_plugins(DebuggingPlugin)
         .add_plugins(NetworkPlugin)
         .add_systems(Startup, init)
-        .add_plugins(MapEditorPlugin)
+        .add_plugins(GameMapPlugin)
         .run();
 }
 
