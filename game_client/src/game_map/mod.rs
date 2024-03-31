@@ -1,5 +1,6 @@
+use crate::game_map::map_gizmos::MapGizmosPlugin;
 use crate::game_map::tile_cursor::{TileCursorPlugin, TileRaycastSet};
-use bevy::app::{App, Plugin, Startup, Update};
+use bevy::app::{App, Plugin, Startup};
 use bevy::asset::{Assets, Handle};
 use bevy::math::{EulerRot, Quat, Vec3};
 use bevy::pbr::{
@@ -7,7 +8,7 @@ use bevy::pbr::{
 };
 use bevy::prelude::{
     default, AppGizmoBuilder, Camera3dBundle, Color, Commands, Component, Entity, GizmoConfigGroup,
-    GizmoConfigStore, Gizmos, Mesh, Reflect, Res, ResMut, Resource, Transform,
+    Mesh, Reflect, ResMut, Resource, Transform,
 };
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
@@ -16,21 +17,18 @@ use bevy_basic_camera::CameraController;
 use bevy_mod_raycast::prelude::RaycastMesh;
 use game_common::game_map;
 use game_common::game_map::GameMap;
-use hexx::{ColumnMeshBuilder, GridVertex, Hex, HexLayout};
+use hexx::{ColumnMeshBuilder, Hex, HexLayout};
 
 mod editor;
+mod map_gizmos;
 mod tile_cursor;
 
 pub struct GameMapPlugin;
 impl Plugin for GameMapPlugin {
     fn build(&self, app: &mut App) {
-        app.init_gizmo_group::<MapGizmos>();
         app.add_plugins(TileCursorPlugin);
-        app.add_systems(
-            Startup,
-            (setup_camera, setup_grid, set_gizmo_config, setup_light),
-        );
-        app.add_systems(Update, draw_hexagon_gizmos);
+        app.add_plugins(MapGizmosPlugin);
+        app.add_systems(Startup, (setup_camera, setup_grid, setup_light));
     }
 }
 
@@ -154,63 +152,4 @@ fn generate_hexagonal_column_mesh(hex_layout: &HexLayout, height: f32) -> Mesh {
     .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals)
     .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs)
     .with_inserted_indices(Indices::U16(mesh_info.indices))
-}
-
-#[derive(Default, Reflect, GizmoConfigGroup)]
-struct MapGizmos;
-
-fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
-    for (hex, data) in &map.tiles {
-        let height = data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
-        let top_vertices = hex
-            .all_vertices()
-            .map(|x| vertex_coordinates_3d(&map.layout, x, height));
-
-        connect_hexagon_vertices(&mut gizmos, top_vertices);
-
-        // for mid_height in 1..data.height {
-        //     let mid_height = mid_height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
-        //   //   let vertices = hex
-        //         .all_vertices()
-        //         .map(|x| vertex_coordinates_3d(&map.layout, x, mid_height));
-        //     connect_hexagon_vertices(&mut gizmos, vertices);
-        // }
-
-        let bottom_vertices = hex
-            .all_vertices()
-            .map(|x| vertex_coordinates_3d(&map.layout, x, 0.0));
-
-        gizmos.line(top_vertices[0], bottom_vertices[0], Color::BLACK);
-        gizmos.line(top_vertices[1], bottom_vertices[1], Color::BLACK);
-        gizmos.line(top_vertices[2], bottom_vertices[2], Color::BLACK);
-        gizmos.line(top_vertices[3], bottom_vertices[3], Color::BLACK);
-        gizmos.line(top_vertices[4], bottom_vertices[4], Color::BLACK);
-        gizmos.line(top_vertices[5], bottom_vertices[5], Color::BLACK);
-    }
-}
-
-fn connect_hexagon_vertices(gizmos: &mut Gizmos<MapGizmos>, vertices: [Vec3; 6]) {
-    gizmos.line(vertices[0], vertices[1], Color::BLACK);
-    gizmos.line(vertices[1], vertices[2], Color::BLACK);
-    gizmos.line(vertices[2], vertices[3], Color::BLACK);
-    gizmos.line(vertices[3], vertices[4], Color::BLACK);
-    gizmos.line(vertices[4], vertices[5], Color::BLACK);
-    gizmos.line(vertices[5], vertices[0], Color::BLACK);
-}
-
-#[must_use]
-pub fn vertex_coordinates_3d(layout: &HexLayout, vertex: GridVertex, height: f32) -> Vec3 {
-    let vertex_coordinates = layout.vertex_coordinates(vertex);
-    Vec3 {
-        x: vertex_coordinates.x,
-        y: height,
-        z: vertex_coordinates.y,
-    }
-}
-
-fn set_gizmo_config(mut config_store: ResMut<GizmoConfigStore>) {
-    let (config, _) = config_store.config_mut::<MapGizmos>();
-    config.depth_bias = -0.00001;
-    config.line_width = 20.0;
-    config.line_perspective = true;
 }
