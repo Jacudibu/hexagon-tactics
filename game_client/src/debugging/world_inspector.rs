@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use bevy_egui::{egui, EguiContext};
+use bevy_egui::{egui, EguiContext, EguiPlugin};
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum WorldInspectorState {
@@ -12,6 +12,10 @@ pub enum WorldInspectorState {
 pub struct WorldInspectorPlugin;
 impl Plugin for WorldInspectorPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<EguiPlugin>() {
+            app.add_plugins(EguiPlugin);
+        }
+
         app.add_plugins(bevy_inspector_egui::DefaultInspectorConfigPlugin)
             .add_systems(
                 Update,
