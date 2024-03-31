@@ -2,7 +2,7 @@ use crate::game_map::map_gizmos::MapGizmosPlugin;
 use crate::game_map::tile_cursor::{TileCursorPlugin, TileRaycastSet};
 use bevy::app::{App, Plugin, Startup};
 use bevy::asset::{Assets, Handle};
-use bevy::math::{EulerRot, Quat, Vec2, Vec3};
+use bevy::math::{EulerRot, Quat, Vec3};
 use bevy::pbr::{
     AmbientLight, DirectionalLight, DirectionalLightBundle, PbrBundle, StandardMaterial,
 };
@@ -14,8 +14,8 @@ use bevy_basic_camera::CameraController;
 use bevy_mod_raycast::deferred::RaycastSource;
 use bevy_mod_raycast::prelude::RaycastMesh;
 use game_common::game_map;
-use game_common::game_map::GameMap;
-use hexx::{ColumnMeshBuilder, Hex, HexLayout, HexOrientation};
+use game_common::game_map::{GameMap, HEX_LAYOUT};
+use hexx::{ColumnMeshBuilder, Hex, HexLayout};
 
 mod editor;
 mod map_gizmos;
@@ -99,21 +99,15 @@ pub struct HexagonMeshes {
 
 // TODO: Move this into some asset_loader-style loading state
 fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
-    // TODO: Layout is probably best stores as a resource as well
-    let layout = HexLayout {
-        origin: Vec2::ZERO,
-        hex_size: Vec2::splat(1.0),
-        orientation: HexOrientation::Pointy,
-        ..default()
-    };
-
-    let flat_mesh = generate_hexagonal_column_mesh(&layout, 0.0);
+    let flat_mesh = generate_hexagonal_column_mesh(&HEX_LAYOUT, 0.0);
     let flat = meshes.add(flat_mesh);
 
     let mut columns = HashMap::new();
     for height in game_map::MIN_HEIGHT..=game_map::MAX_HEIGHT {
-        let mesh =
-            generate_hexagonal_column_mesh(&layout, height as f32 * METERS_PER_TILE_HEIGHT_UNIT);
+        let mesh = generate_hexagonal_column_mesh(
+            &HEX_LAYOUT,
+            height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
+        );
         let handle = meshes.add(mesh);
         columns.insert(height, handle);
     }
@@ -135,7 +129,7 @@ fn setup_grid(
     let mut entities = HashMap::new();
     for (hex, data) in &map.tiles {
         let hex = hex.clone();
-        let pos = map.layout.hex_to_world_pos(hex);
+        let pos = HEX_LAYOUT.hex_to_world_pos(hex);
         let id = commands
             .spawn((
                 PbrBundle {

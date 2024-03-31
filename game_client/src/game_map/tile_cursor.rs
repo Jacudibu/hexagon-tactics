@@ -1,21 +1,16 @@
-use crate::game_map::{HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
-use crate::MouseCursorOverUiState;
 use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
-use bevy::hierarchy::Parent;
-use bevy::log::{error, info};
-use bevy::math::{IVec2, Quat, Vec2};
+use bevy::log::error;
 use bevy::pbr::{NotShadowCaster, PbrBundle};
-use bevy::prelude::{
-    default, in_state, Color, Commands, Component, Entity, Gizmos, IntoSystemConfigs, Query,
-    Reflect, Res, Resource, Transform, Update, Vec3, With,
-};
-use bevy::DefaultPlugins;
+use bevy::prelude::*;
 use bevy_mod_raycast::deferred::{DeferredRaycastingPlugin, RaycastMesh, RaycastSource};
-use bevy_mod_raycast::prelude::{Raycast, RaycastPluginState};
-use bevy_mod_raycast::{CursorRay, DefaultRaycastingPlugin};
-use game_common::game_map::GameMap;
-use hexx::{Hex, HexLayout, HexOrientation};
+use bevy_mod_raycast::prelude::RaycastPluginState;
+use hexx::Hex;
+
+use game_common::game_map::{GameMap, HEX_LAYOUT};
+
+use crate::game_map::{HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::MouseCursorOverUiState;
 
 pub(in crate::game_map) struct TileCursorPlugin;
 impl Plugin for TileCursorPlugin {
@@ -97,17 +92,9 @@ fn update_tile_cursor(
         }
     }
 
-    // TODO: should really really be a resource at this point
-    let layout = HexLayout {
-        origin: Vec2::ZERO,
-        hex_size: Vec2::splat(1.0),
-        orientation: HexOrientation::Pointy,
-        ..default()
-    };
-
     for selected_tile in this_frame_selection.iter() {
         if !already_existing_cursors.contains(selected_tile) {
-            let position = layout.hex_to_world_pos(selected_tile.clone());
+            let position = HEX_LAYOUT.hex_to_world_pos(selected_tile.clone());
             let translation = Vec3 {
                 x: position.x,
                 y: map

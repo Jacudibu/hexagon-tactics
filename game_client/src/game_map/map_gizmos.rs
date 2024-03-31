@@ -4,7 +4,7 @@ use bevy::math::Vec3;
 use bevy::prelude::{
     AppGizmoBuilder, Color, GizmoConfigGroup, GizmoConfigStore, Gizmos, Reflect, Res, ResMut,
 };
-use game_common::game_map::GameMap;
+use game_common::game_map::{GameMap, HEX_LAYOUT};
 use hexx::{GridVertex, HexLayout};
 
 pub(in crate::game_map) struct MapGizmosPlugin;
@@ -24,7 +24,7 @@ fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
         let height = data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
         let top_vertices = hex
             .all_vertices()
-            .map(|x| vertex_coordinates_3d(&map.layout, x, height));
+            .map(|x| vertex_coordinates_3d(&HEX_LAYOUT, x, height));
 
         connect_hexagon_vertices(&mut gizmos, top_vertices);
 
@@ -38,7 +38,7 @@ fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
 
         let bottom_vertices = hex
             .all_vertices()
-            .map(|x| vertex_coordinates_3d(&map.layout, x, 0.0));
+            .map(|x| vertex_coordinates_3d(&HEX_LAYOUT, x, 0.0));
 
         gizmos.line(top_vertices[0], bottom_vertices[0], Color::BLACK);
         gizmos.line(top_vertices[1], bottom_vertices[1], Color::BLACK);
