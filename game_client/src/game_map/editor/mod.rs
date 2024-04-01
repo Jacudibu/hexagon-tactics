@@ -142,15 +142,15 @@ fn update_tile_entity(
     materials: &HexagonMaterials,
 ) {
     let mut commands = commands.entity(*entity);
-    if tile.height == 0 {
-        commands.remove::<Handle<Mesh>>();
+    if let Some(mesh) = meshes.columns.get(&tile.height) {
+        commands.insert(mesh.clone());
     } else {
-        if let Some(mesh) = meshes.columns.get(&tile.height) {
-            commands.insert(mesh.clone());
-        } else {
-            error!("Was unable to find hex mesh for height {}!", tile.height);
-        }
+        error!("Was unable to find hex mesh for height {}!", tile.height);
     }
 
-    commands.insert(materials.surface_material(&tile.surface));
+    if tile.height == 0 {
+        commands.insert(materials.invisible.clone());
+    } else {
+        commands.insert(materials.surface_material(&tile.surface));
+    }
 }

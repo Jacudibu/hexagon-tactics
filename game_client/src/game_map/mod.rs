@@ -91,6 +91,7 @@ struct TileCoordinates {
 
 #[derive(Debug, Resource)]
 struct HexagonMaterials {
+    invisible: Handle<StandardMaterial>,
     grass: Handle<StandardMaterial>,
     stone: Handle<StandardMaterial>,
     sand: Handle<StandardMaterial>,
@@ -123,7 +124,7 @@ fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     let flat = meshes.add(flat_mesh);
 
     let mut columns = HashMap::new();
-    for height in 1..=game_map::MAX_HEIGHT {
+    for height in 0..=game_map::MAX_HEIGHT {
         let mesh = generate_hexagonal_column_mesh(
             &HEX_LAYOUT,
             height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
@@ -137,6 +138,7 @@ fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
 
 fn load_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
     commands.insert_resource(HexagonMaterials {
+        invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
         grass: materials.add(Color::GREEN),
         stone: materials.add(Color::GRAY),
         sand: materials.add(Color::BEIGE),
