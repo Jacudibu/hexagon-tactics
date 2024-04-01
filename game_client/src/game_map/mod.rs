@@ -105,7 +105,7 @@ fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     let flat = meshes.add(flat_mesh);
 
     let mut columns = HashMap::new();
-    for height in game_map::MIN_HEIGHT..=game_map::MAX_HEIGHT {
+    for height in 1..=game_map::MAX_HEIGHT {
         let mesh = generate_hexagonal_column_mesh(
             &HEX_LAYOUT,
             height as f32 * METERS_PER_TILE_HEIGHT_UNIT,

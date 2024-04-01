@@ -139,9 +139,13 @@ fn update_tile_entity(
     entity: &Entity,
     meshes: &HexagonMeshes,
 ) {
-    if let Some(mesh) = meshes.columns.get(&tile.height) {
-        commands.entity(*entity).insert(mesh.clone());
+    if tile.height == 0 {
+        commands.entity(*entity).remove::<Handle<Mesh>>();
     } else {
-        error!("Was unable to find hex mesh for height {}!", tile.height);
+        if let Some(mesh) = meshes.columns.get(&tile.height) {
+            commands.entity(*entity).insert(mesh.clone());
+        } else {
+            error!("Was unable to find hex mesh for height {}!", tile.height);
+        }
     }
 }

@@ -28,6 +28,10 @@ fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
 
         connect_hexagon_vertices(&mut gizmos, top_vertices);
 
+        if data.height == 0 {
+            continue;
+        }
+
         // for mid_height in 1..data.height {
         //     let mid_height = mid_height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
         //   //   let vertices = hex

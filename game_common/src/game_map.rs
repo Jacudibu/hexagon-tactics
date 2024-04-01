@@ -8,7 +8,6 @@ pub struct GameMap {
     pub tiles: HashMap<Hex, TileData>,
 }
 
-pub const MIN_HEIGHT: u8 = 1;
 pub const MAX_HEIGHT: u8 = 20;
 pub const HEX_LAYOUT: HexLayout = HexLayout {
     hex_size: Vec2::splat(1.0),
@@ -25,7 +24,7 @@ impl GameMap {
             tiles.insert(
                 hex,
                 TileData {
-                    height: MIN_HEIGHT,
+                    height: 1,
                     surface: TileSurface::Grass,
                 },
             );
