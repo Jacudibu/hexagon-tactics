@@ -21,14 +21,14 @@ pub const HEX_LAYOUT: HexLayout = HexLayout {
 impl GameMap {
     pub fn new(radius: u32) -> Self {
         let mut tiles = HashMap::new();
-        let mut height = MIN_HEIGHT;
         for hex in hexx::shapes::hexagon(Hex::ORIGIN, radius) {
-            tiles.insert(hex, TileData { height });
-            if height == MAX_HEIGHT {
-                height = MIN_HEIGHT;
-            } else {
-                height += 1;
-            }
+            tiles.insert(
+                hex,
+                TileData {
+                    height: MIN_HEIGHT,
+                    surface: TileSurface::Grass,
+                },
+            );
         }
 
         GameMap { tiles }
@@ -38,4 +38,14 @@ impl GameMap {
 #[derive(Debug)]
 pub struct TileData {
     pub height: u8,
+    pub surface: TileSurface,
+}
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum TileSurface {
+    Grass,
+    Stone,
+    Sand,
+    Earth,
+    Water,
 }
