@@ -10,12 +10,13 @@ use bevy::pbr::{
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
+use bevy::render::render_resource::SurfaceTexture;
 use bevy::utils::HashMap;
 use bevy_basic_camera::CameraController;
 use bevy_mod_raycast::deferred::RaycastSource;
 use bevy_mod_raycast::prelude::RaycastMesh;
 use game_common::game_map;
-use game_common::game_map::{GameMap, HEX_LAYOUT};
+use game_common::game_map::{GameMap, TileSurface, HEX_LAYOUT};
 use hexx::{ColumnMeshBuilder, Hex, HexLayout};
 
 mod editor;
@@ -32,8 +33,9 @@ impl Plugin for GameMapPlugin {
             Startup,
             (
                 load_meshes,
+                load_materials,
                 setup_camera,
-                setup_grid.after(load_meshes),
+                setup_grid.after(load_meshes).after(load_materials),
                 setup_light,
             ),
         );
@@ -81,16 +83,32 @@ struct MapTileEntities {
     entities: HashMap<Hex, Entity>,
 }
 
-#[derive(Debug, Resource)]
-struct MapMaterials {
-    highlighted_material: Handle<StandardMaterial>,
-    default_material: Handle<StandardMaterial>,
-}
-
 #[derive(Debug, Component)]
 struct TileCoordinates {
     hex: Hex,
     height: u8,
+}
+
+#[derive(Debug, Resource)]
+struct HexagonMaterials {
+    grass: Handle<StandardMaterial>,
+    stone: Handle<StandardMaterial>,
+    sand: Handle<StandardMaterial>,
+    earth: Handle<StandardMaterial>,
+    water: Handle<StandardMaterial>,
+}
+
+impl HexagonMaterials {
+    #[must_use]
+    pub fn surface_material(&self, surface: &TileSurface) -> Handle<StandardMaterial> {
+        match surface {
+            TileSurface::Grass => self.grass.clone(),
+            TileSurface::Stone => self.stone.clone(),
+            TileSurface::Sand => self.sand.clone(),
+            TileSurface::Earth => self.earth.clone(),
+            TileSurface::Water => self.water.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Resource)]
@@ -117,16 +135,23 @@ fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     commands.insert_resource(HexagonMeshes { flat, columns })
 }
 
+fn load_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
+    commands.insert_resource(HexagonMaterials {
+        grass: materials.add(Color::GREEN),
+        stone: materials.add(Color::GRAY),
+        sand: materials.add(Color::BEIGE),
+        earth: materials.add(Color::TOMATO),
+        water: materials.add(Color::BLUE),
+    });
+}
+
 fn setup_grid(
     mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Res<HexagonMaterials>,
     meshes: Res<HexagonMeshes>,
 ) {
     let radius = 20;
     let map = GameMap::new(radius);
-
-    let default_material = materials.add(Color::WHITE);
-    let highlighted_material = materials.add(Color::YELLOW);
 
     let mut entities = HashMap::new();
     for (hex, data) in &map.tiles {
@@ -141,7 +166,7 @@ fn setup_grid(
                         .get(&data.height)
                         .expect("Meshes for all heights should exist!")
                         .clone(),
-                    material: default_material.clone(),
+                    material: materials.surface_material(&data.surface).clone(),
                     ..default()
                 },
                 RaycastMesh::<TileRaycastSet>::default(),
@@ -157,10 +182,6 @@ fn setup_grid(
 
     commands.insert_resource(map);
     commands.insert_resource(MapTileEntities { entities });
-    commands.insert_resource(MapMaterials {
-        highlighted_material,
-        default_material,
-    });
 }
 
 /// Compute a bevy mesh from the layout

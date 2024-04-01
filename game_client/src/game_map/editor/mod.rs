@@ -1,5 +1,5 @@
 use crate::game_map::tile_cursor::TileCursor;
-use crate::game_map::{HexagonMeshes, MapTileEntities};
+use crate::game_map::{HexagonMaterials, HexagonMeshes, MapTileEntities};
 use crate::networking::ServerConnection;
 use bevy::app::App;
 use bevy::ecs::system::SystemParam;
@@ -91,6 +91,7 @@ fn use_tool(
     active_tool: Res<MapEditorTool>,
     tile_entities: Res<MapTileEntities>,
     meshes: Res<HexagonMeshes>,
+    materials: Res<HexagonMaterials>,
     current_selection: Query<&TileCursor>,
     input_state: Res<ActionState<MapEditorAction>>,
 ) {
@@ -106,7 +107,7 @@ fn use_tool(
             use_tool_on_tile(&active_tool, tile);
 
             if let Some(entity) = tile_entities.entities.get(&x.hex) {
-                update_tile_entity(&mut commands, tile, entity, &meshes);
+                update_tile_entity(&mut commands, tile, entity, &meshes, &materials);
             } else {
                 error!("Was unable to find hex entity at {:?} in map!", x);
             }
@@ -138,14 +139,18 @@ fn update_tile_entity(
     tile: &TileData,
     entity: &Entity,
     meshes: &HexagonMeshes,
+    materials: &HexagonMaterials,
 ) {
+    let mut commands = commands.entity(*entity);
     if tile.height == 0 {
-        commands.entity(*entity).remove::<Handle<Mesh>>();
+        commands.remove::<Handle<Mesh>>();
     } else {
         if let Some(mesh) = meshes.columns.get(&tile.height) {
-            commands.entity(*entity).insert(mesh.clone());
+            commands.insert(mesh.clone());
         } else {
             error!("Was unable to find hex mesh for height {}!", tile.height);
         }
     }
+
+    commands.insert(materials.surface_material(&tile.surface));
 }
