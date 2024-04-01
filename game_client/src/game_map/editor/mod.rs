@@ -2,6 +2,7 @@ use crate::game_map::tile_cursor::TileCursor;
 use crate::game_map::{HexagonMaterials, HexagonMeshes, MapTileEntities};
 use crate::networking::ServerConnection;
 use bevy::app::App;
+use bevy::asset::AssetContainer;
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
@@ -157,6 +158,8 @@ fn update_tile_entity(
     let mut commands = commands.entity(*entity);
     if let Some(mesh) = meshes.columns.get(&tile.height) {
         commands.insert(mesh.clone());
+        // FIXME: Temporary fix for https://github.com/bevyengine/bevy/issues/4294 and/or https://github.com/aevyrie/bevy_mod_raycast/issues/42
+        commands.remove::<bevy::render::primitives::Aabb>();
     } else {
         error!("Was unable to find hex mesh for height {}!", tile.height);
     }

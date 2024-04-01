@@ -50,7 +50,10 @@ fn update_mouse_cursor(
 ) {
     for source in tile_ray.iter() {
         if let Some(intersections) = source.get_intersections() {
-            for (entity, intersection) in intersections {
+            let nearest = intersections
+                .iter()
+                .min_by(|(_, a), (_, b)| a.distance().total_cmp(&b.distance()));
+            if let Some((entity, intersection)) = nearest {
                 match ray_targets.get(entity.clone()) {
                     Ok(tile_coordinates) => {
                         commands.insert_resource(MouseCursorOnTile {
