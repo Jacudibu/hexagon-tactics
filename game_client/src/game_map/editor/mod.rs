@@ -7,10 +7,12 @@ use bevy::prelude::*;
 use bevy::utils::HashMap;
 use futures::future::err;
 use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
+use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::Actionlike;
+use std::ops::{Deref, DerefMut};
 
 pub struct MapEditorPlugin;
 impl Plugin for MapEditorPlugin {
@@ -94,12 +96,23 @@ fn use_tool(
     materials: Res<HexagonMaterials>,
     current_selection: Query<&TileCursor>,
     input_state: Res<ActionState<MapEditorAction>>,
+    mut previously_interacted_tiles: Local<Vec<Hex>>,
 ) {
-    if !input_state.just_pressed(&MapEditorAction::UseTool) {
+    if !input_state.pressed(&MapEditorAction::UseTool) {
         return;
     }
 
+    if input_state.just_pressed(&MapEditorAction::UseTool) {
+        previously_interacted_tiles.deref_mut().clear();
+    }
+
     for x in current_selection.iter() {
+        if previously_interacted_tiles.contains(&x.hex) {
+            continue;
+        } else {
+            previously_interacted_tiles.push(x.hex);
+        }
+
         if let Some(tile) = map.tiles.get_mut(&x.hex) {
             if !can_tool_be_used_on_tile(&active_tool, tile) {
                 continue;
