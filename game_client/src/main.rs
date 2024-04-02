@@ -1,13 +1,14 @@
+mod camera;
 mod debugging;
 mod game_map;
 mod networking;
 
+use crate::camera::CameraPlugin;
 use crate::debugging::DebuggingPlugin;
 use crate::game_map::GameMapPlugin;
 use crate::networking::{Network, NetworkPlugin};
 use bevy::prelude::*;
 use bevy::window::PresentMode;
-use bevy_basic_camera::CameraControllerPlugin;
 use bevy_kira_audio::AudioPlugin;
 use bevy_screen_diagnostics::*;
 
@@ -26,13 +27,13 @@ fn main() {
                 }),
             AudioPlugin,
         ))
-        .add_plugins(CameraControllerPlugin)
         .add_plugins(ScreenDiagnosticsPlugin::default())
         .add_plugins(ScreenFrameDiagnosticsPlugin)
         .add_plugins(ScreenEntityDiagnosticsPlugin)
         .add_plugins(DebuggingPlugin)
         .add_plugins(NetworkPlugin)
         .add_plugins(GameMapPlugin)
+        .add_plugins(CameraPlugin)
         .insert_state(MouseCursorOverUiState::default())
         //.add_systems(Startup, init)
         .run();

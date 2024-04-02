@@ -1,23 +1,23 @@
-use crate::game_map::editor::MapEditorPlugin;
-use crate::game_map::map_gizmos::MapGizmosPlugin;
-use crate::game_map::tile_cursor::{TileCursorPlugin, TileRaycastSet};
 use bevy::app::{App, Plugin, Startup};
 use bevy::asset::{Assets, Handle};
-use bevy::math::{EulerRot, Quat, Vec3};
+use bevy::math::{EulerRot, Quat};
 use bevy::pbr::{
     AmbientLight, DirectionalLight, DirectionalLightBundle, PbrBundle, StandardMaterial,
 };
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
-use bevy::render::render_resource::SurfaceTexture;
 use bevy::utils::HashMap;
-use bevy_basic_camera::CameraController;
-use bevy_mod_raycast::deferred::RaycastSource;
 use bevy_mod_raycast::prelude::RaycastMesh;
+use hexx::{ColumnMeshBuilder, Hex, HexLayout};
+
 use game_common::game_map;
 use game_common::game_map::{GameMap, TileSurface, HEX_LAYOUT};
-use hexx::{ColumnMeshBuilder, Hex, HexLayout};
+pub use tile_cursor::TileRaycastSet;
+
+use crate::game_map::editor::MapEditorPlugin;
+use crate::game_map::map_gizmos::MapGizmosPlugin;
+use crate::game_map::tile_cursor::TileCursorPlugin;
 
 mod editor;
 mod map_gizmos;
@@ -34,7 +34,6 @@ impl Plugin for GameMapPlugin {
             (
                 load_meshes,
                 load_materials,
-                setup_camera,
                 setup_grid.after(load_meshes).after(load_materials),
                 setup_light,
             ),
@@ -43,23 +42,6 @@ impl Plugin for GameMapPlugin {
 }
 
 pub const METERS_PER_TILE_HEIGHT_UNIT: f32 = 0.5;
-
-fn setup_camera(mut commands: Commands) {
-    let transform = Transform::from_xyz(0.0, 60.0, 60.0).looking_at(Vec3::ZERO, Vec3::Y);
-    commands.spawn((
-        Camera3dBundle {
-            transform,
-            ..default()
-        },
-        RaycastSource::<TileRaycastSet>::new_cursor(),
-        CameraController {
-            sensitivity: 2.0,
-            walk_speed: 20.0,
-            run_speed: 50.0,
-            ..default()
-        },
-    ));
-}
 
 fn setup_light(mut commands: Commands) {
     commands.insert_resource(AmbientLight {
