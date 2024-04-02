@@ -1,7 +1,8 @@
 # hexagon-tactics
 
 There really ain't much to see here right now, as I'm just toying around with bevy.
-Attempting some kind of Final Fantasy Tactics Clone on a hexagonal map, with some roguelite elements sprinkled on top.
+Attempting some kind of Final Fantasy Tactics Clone on a hexagonal map, with some roguelite elements sprinkled on top in
+case I ever get that far.
 
 ## Project Structure
 
@@ -17,7 +18,7 @@ General game logic, shared between server and client.
 
 Handle connections between Clients and AI, both local or via network.
 
-# Licence
+# License
 
 [GNU AGPL 3](./LICENSE)
 
