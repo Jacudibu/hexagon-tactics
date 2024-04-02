@@ -12,6 +12,7 @@ use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
+use leafwing_input_manager::prelude::InputKind;
 use leafwing_input_manager::Actionlike;
 use std::ops::{Deref, DerefMut};
 
@@ -49,8 +50,7 @@ enum MapEditorAction {
 impl MapEditorAction {
     fn default_input_map() -> InputMap<Self> {
         let mut input_map = InputMap::default();
-
-        input_map.insert(Self::UseTool, KeyCode::KeyX);
+        input_map.insert(Self::UseTool, InputKind::Mouse(MouseButton::Left));
         input_map.insert(Self::RaiseTiles, KeyCode::KeyR);
         input_map.insert(Self::LowerTiles, KeyCode::KeyF);
         input_map.insert(Self::PaintGrass, KeyCode::Digit1);
