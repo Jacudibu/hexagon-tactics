@@ -1,3 +1,6 @@
+mod editor_ui;
+
+use crate::game_map::editor::editor_ui::EditorUiPlugin;
 use crate::game_map::tile_cursor::TileCursor;
 use crate::game_map::{HexagonMaterials, HexagonMeshes, MapTileEntities};
 use crate::networking::ServerConnection;
@@ -14,12 +17,14 @@ use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::prelude::InputKind;
 use leafwing_input_manager::Actionlike;
+use std::fmt::Formatter;
 use std::ops::{Deref, DerefMut};
 
 pub struct MapEditorPlugin;
 impl Plugin for MapEditorPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<MapEditorAction>::default());
+        app.add_plugins(EditorUiPlugin);
         app.init_resource::<ActionState<MapEditorAction>>();
         app.insert_resource(MapEditorAction::default_input_map());
         app.insert_resource(MapEditorTool::default());
@@ -33,6 +38,16 @@ enum MapEditorTool {
     RaiseTiles,
     LowerTiles,
     PaintSurface(TileSurface),
+}
+
+impl std::fmt::Display for MapEditorTool {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MapEditorTool::RaiseTiles => write!(f, "Raise Tiles"),
+            MapEditorTool::LowerTiles => write!(f, "Lower Tiles"),
+            MapEditorTool::PaintSurface(surface) => write!(f, "Paint {}", surface),
+        }
+    }
 }
 
 #[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Debug, Reflect)]

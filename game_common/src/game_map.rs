@@ -2,6 +2,7 @@ use bevy::math::Vec2;
 use bevy::prelude::Resource;
 use bevy::utils::hashbrown::HashMap;
 use hexx::{Hex, HexLayout, HexOrientation};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Resource)]
 pub struct GameMap {
@@ -47,4 +48,16 @@ pub enum TileSurface {
     Sand,
     Earth,
     Water,
+}
+
+impl Display for TileSurface {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TileSurface::Grass => write!(f, "Grass"),
+            TileSurface::Stone => write!(f, "Stone"),
+            TileSurface::Sand => write!(f, "Sand"),
+            TileSurface::Earth => write!(f, "Earth"),
+            TileSurface::Water => write!(f, "Water"),
+        }
+    }
 }

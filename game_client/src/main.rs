@@ -34,7 +34,7 @@ fn main() {
         .add_plugins(NetworkPlugin)
         .add_plugins(GameMapPlugin)
         .add_plugins(CameraPlugin)
-        .insert_state(MouseCursorOverUiState::default())
+        .init_state::<MouseCursorOverUiState>()
         //.add_systems(Startup, init)
         .run();
 }
