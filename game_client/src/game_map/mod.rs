@@ -34,7 +34,7 @@ impl Plugin for GameMapPlugin {
             (
                 load_meshes,
                 load_materials,
-                setup_grid.after(load_meshes).after(load_materials),
+                setup_debug_map.after(load_meshes).after(load_materials),
                 setup_light,
             ),
         );
@@ -62,6 +62,7 @@ fn setup_light(mut commands: Commands) {
 
 #[derive(Debug, Resource)]
 struct MapTileEntities {
+    parent: Entity,
     entities: HashMap<Hex, Entity>,
 }
 
@@ -129,13 +130,28 @@ fn load_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardM
     });
 }
 
-fn setup_grid(
+fn setup_debug_map(
     mut commands: Commands,
     materials: Res<HexagonMaterials>,
     meshes: Res<HexagonMeshes>,
 ) {
     let radius = 20;
     let map = GameMap::new(radius);
+
+    spawn_map(&map, &mut commands, &materials, &meshes);
+
+    commands.insert_resource(map);
+}
+
+fn spawn_map(
+    map: &GameMap,
+    mut commands: &mut Commands,
+    materials: &HexagonMaterials,
+    meshes: &HexagonMeshes,
+) {
+    let parent = commands
+        .spawn((SpatialBundle::default(), Name::new("Map")))
+        .id();
 
     let mut entities = HashMap::new();
     for (hex, data) in &map.tiles {
@@ -158,14 +174,15 @@ fn setup_grid(
                     hex,
                     height: data.height,
                 },
+                Name::new(format!("Hexagon Tile [{},{}]", hex.x, hex.y)),
             ))
+            .set_parent(parent)
             .id();
 
         entities.insert(hex, id);
     }
 
-    commands.insert_resource(map);
-    commands.insert_resource(MapTileEntities { entities });
+    commands.insert_resource(MapTileEntities { parent, entities });
 }
 
 /// Compute a bevy mesh from the layout
