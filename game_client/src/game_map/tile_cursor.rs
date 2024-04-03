@@ -9,6 +9,7 @@ use hexx::Hex;
 
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 
+use crate::game_map::editor::TileChangeEvent;
 use crate::game_map::{HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
 use crate::MouseCursorOverUiState;
 
@@ -26,6 +27,7 @@ impl Plugin for TileCursorPlugin {
                     .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
             ),
         );
+        app.add_systems(Update, handle_tile_change_event);
     }
 }
 
@@ -73,6 +75,19 @@ fn update_mouse_cursor(
     commands.remove_resource::<MouseCursorOnTile>()
 }
 
+fn handle_tile_change_event(
+    map: Res<GameMap>,
+    mut tile_change_event: EventReader<TileChangeEvent>,
+    mut tile_cursor_q: Query<(&TileCursor, &mut Transform)>,
+) {
+    let changed_hexagons: Vec<Hex> = tile_change_event.read().map(|x| x.hex).collect();
+    for (cursor, mut transform) in tile_cursor_q.iter_mut() {
+        if changed_hexagons.contains(&cursor.hex) {
+            transform.translation = cursor_position_for_tile(&map, &cursor.hex)
+        }
+    }
+}
+
 fn update_tile_cursor(
     mut commands: Commands,
     mouse_cursor: Option<Res<MouseCursorOnTile>>,
@@ -97,18 +112,7 @@ fn update_tile_cursor(
 
     for selected_tile in this_frame_selection.iter() {
         if !already_existing_cursors.contains(selected_tile) {
-            let position = HEX_LAYOUT.hex_to_world_pos(selected_tile.clone());
-            let translation = Vec3 {
-                x: position.x,
-                y: map
-                    .tiles
-                    .get(selected_tile)
-                    .expect("Hex Coordinates should always be valid!")
-                    .height as f32
-                    * METERS_PER_TILE_HEIGHT_UNIT
-                    + 0.01,
-                z: position.y,
-            };
+            let translation = cursor_position_for_tile(&map, selected_tile);
 
             commands.spawn((
                 Name::new(format!(
@@ -126,5 +130,20 @@ fn update_tile_cursor(
                 NotShadowCaster,
             ));
         }
+    }
+}
+
+fn cursor_position_for_tile(map: &GameMap, hex: &Hex) -> Vec3 {
+    let position = HEX_LAYOUT.hex_to_world_pos(hex.clone());
+    Vec3 {
+        x: position.x,
+        y: map
+            .tiles
+            .get(hex)
+            .expect("Hex Coordinates should always be valid!")
+            .height as f32
+            * METERS_PER_TILE_HEIGHT_UNIT
+            + 0.01,
+        z: position.y,
     }
 }

@@ -199,5 +199,5 @@ fn update_tile_entity(
 
 #[derive(Event)]
 pub struct TileChangeEvent {
-    hex: Hex,
+    pub hex: Hex,
 }
