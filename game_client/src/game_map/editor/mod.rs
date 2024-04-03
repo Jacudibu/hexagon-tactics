@@ -15,6 +15,7 @@ use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
 use crate::game_map::editor::editor_ui::EditorUiPlugin;
 use crate::game_map::tile_cursor::TileCursor;
 use crate::game_map::{HexagonMaterials, HexagonMeshes, MapTileEntities};
+use crate::MouseCursorOverUiState;
 
 mod editor_ui;
 
@@ -30,7 +31,9 @@ impl Plugin for MapEditorPlugin {
             Update,
             (
                 track_input,
-                use_tool.after(track_input),
+                use_tool
+                    .after(track_input)
+                    .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
                 update_tile_entity.after(use_tool),
             ),
         );
@@ -68,6 +71,21 @@ enum MapEditorAction {
     PaintWater,
 }
 
+impl std::fmt::Display for MapEditorAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MapEditorAction::UseTool => write!(f, "Use Tool"),
+            MapEditorAction::RaiseTiles => write!(f, "Raise Tiles"),
+            MapEditorAction::LowerTiles => write!(f, "Lower Tiles"),
+            MapEditorAction::PaintGrass => write!(f, "Paint Grass"),
+            MapEditorAction::PaintStone => write!(f, "Paint Stone"),
+            MapEditorAction::PaintSand => write!(f, "Paint Sand"),
+            MapEditorAction::PaintEarth => write!(f, "Paint Earth"),
+            MapEditorAction::PaintWater => write!(f, "Paint Water"),
+        }
+    }
+}
+
 impl MapEditorAction {
     fn default_input_map() -> InputMap<Self> {
         let mut input_map = InputMap::default();
@@ -85,7 +103,7 @@ impl MapEditorAction {
 }
 
 #[rustfmt::skip]
-const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
+pub(in crate::game_map::editor) const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
     (MapEditorAction::RaiseTiles, MapEditorTool::RaiseTiles),
     (MapEditorAction::LowerTiles, MapEditorTool::LowerTiles),
     (MapEditorAction::PaintGrass, MapEditorTool::PaintSurface(TileSurface::Grass)),
@@ -152,7 +170,7 @@ fn can_tool_be_used_on_tile(tool: &MapEditorTool, tile: &TileData) -> bool {
     }
 }
 
-fn use_tool_on_tile(tool: &MapEditorTool, mut tile: &mut TileData) {
+fn use_tool_on_tile(tool: &MapEditorTool, tile: &mut TileData) {
     match tool {
         MapEditorTool::RaiseTiles => tile.height += 1,
         MapEditorTool::LowerTiles => tile.height -= 1,
