@@ -22,15 +22,15 @@ struct MapGizmos;
 fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
     for (hex, data) in &map.tiles {
         let height = data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
+        if data.height == 0 {
+            continue;
+        }
+
         let top_vertices = hex
             .all_vertices()
             .map(|x| vertex_coordinates_3d(&HEX_LAYOUT, x, height));
 
         connect_hexagon_vertices(&mut gizmos, top_vertices);
-
-        if data.height == 0 {
-            continue;
-        }
 
         // for mid_height in 1..data.height {
         //     let mid_height = mid_height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
