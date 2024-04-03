@@ -1,24 +1,19 @@
 use bevy::app::{App, Plugin, Startup};
-use bevy::asset::{Assets, Handle};
 use bevy::math::{EulerRot, Quat};
-use bevy::pbr::{
-    AmbientLight, DirectionalLight, DirectionalLightBundle, PbrBundle, StandardMaterial,
-};
+use bevy::pbr::{AmbientLight, DirectionalLight, DirectionalLightBundle, PbrBundle};
 use bevy::prelude::*;
-use bevy::render::mesh::{Indices, PrimitiveTopology};
-use bevy::render::render_asset::RenderAssetUsages;
 use bevy::utils::HashMap;
 use bevy_mod_raycast::prelude::RaycastMesh;
-use hexx::{ColumnMeshBuilder, Hex, HexLayout};
+use hexx::Hex;
 
-use game_common::game_map;
-use game_common::game_map::{GameMap, TileSurface, HEX_LAYOUT};
+use game_common::game_map::{GameMap, HEX_LAYOUT};
 pub use tile_cursor::TileRaycastSet;
 
 use crate::game_map::editor::MapEditorPlugin;
 use crate::game_map::map_gizmos::MapGizmosPlugin;
 use crate::game_map::map_ui::MapUiPlugin;
 use crate::game_map::tile_cursor::TileCursorPlugin;
+use crate::load::{HexagonMaterials, HexagonMeshes};
 
 mod editor;
 mod map_gizmos;
@@ -35,9 +30,10 @@ impl Plugin for GameMapPlugin {
         app.add_systems(
             Startup,
             (
-                load_meshes,
-                load_materials,
-                setup_debug_map.after(load_meshes).after(load_materials),
+                setup_debug_map
+                    // TODO: Use Asset Loader instead of making these pub.
+                    .after(crate::load::load_meshes)
+                    .after(crate::load::load_materials),
                 setup_light,
             ),
         );
@@ -73,78 +69,6 @@ struct MapTileEntities {
 struct TileCoordinates {
     hex: Hex,
     height: u8,
-}
-
-#[derive(Debug, Resource)]
-struct HexagonMaterials {
-    invisible: Handle<StandardMaterial>,
-    grass: Handle<StandardMaterial>,
-    stone: Handle<StandardMaterial>,
-    sand: Handle<StandardMaterial>,
-    earth: Handle<StandardMaterial>,
-    water: Handle<StandardMaterial>,
-}
-
-impl HexagonMaterials {
-    #[must_use]
-    pub fn surface_material(&self, surface: &TileSurface) -> Handle<StandardMaterial> {
-        match surface {
-            TileSurface::Grass => self.grass.clone(),
-            TileSurface::Stone => self.stone.clone(),
-            TileSurface::Sand => self.sand.clone(),
-            TileSurface::Earth => self.earth.clone(),
-            TileSurface::Water => self.water.clone(),
-        }
-    }
-}
-
-#[derive(Debug, Resource)]
-struct CursorMaterials {
-    default: Handle<StandardMaterial>,
-}
-
-#[derive(Debug, Resource)]
-pub struct HexagonMeshes {
-    flat: Handle<Mesh>,
-    columns: HashMap<u8, Handle<Mesh>>,
-}
-
-// TODO: Move this into some asset_loader-style loading state
-fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
-    let flat_mesh = generate_hexagonal_column_mesh(&HEX_LAYOUT, 0.0);
-    let flat = meshes.add(flat_mesh);
-
-    let mut columns = HashMap::new();
-    for height in 0..=game_map::MAX_HEIGHT {
-        let mesh = generate_hexagonal_column_mesh(
-            &HEX_LAYOUT,
-            height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
-        );
-        let handle = meshes.add(mesh);
-        columns.insert(height, handle);
-    }
-
-    commands.insert_resource(HexagonMeshes { flat, columns })
-}
-
-fn load_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
-    commands.insert_resource(HexagonMaterials {
-        invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
-        grass: materials.add(Color::GREEN),
-        stone: materials.add(Color::GRAY),
-        sand: materials.add(Color::BEIGE),
-        earth: materials.add(Color::TOMATO),
-        water: materials.add(Color::BLUE),
-    });
-
-    commands.insert_resource(CursorMaterials {
-        default: materials.add(StandardMaterial {
-            base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
-            unlit: true,
-            alpha_mode: AlphaMode::Multiply,
-            ..default()
-        }),
-    })
 }
 
 fn setup_debug_map(
@@ -200,20 +124,4 @@ fn spawn_map(
     }
 
     commands.insert_resource(MapTileEntities { parent, entities });
-}
-
-/// Compute a bevy mesh from the layout
-fn generate_hexagonal_column_mesh(hex_layout: &HexLayout, height: f32) -> Mesh {
-    let mesh_info = ColumnMeshBuilder::new(hex_layout, height)
-        .without_bottom_face()
-        .center_aligned()
-        .build();
-    Mesh::new(
-        PrimitiveTopology::TriangleList,
-        RenderAssetUsages::default(),
-    )
-    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices)
-    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals)
-    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs)
-    .with_inserted_indices(Indices::U16(mesh_info.indices))
 }

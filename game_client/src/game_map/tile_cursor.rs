@@ -10,9 +10,8 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 
 use crate::game_map::editor::TileChangeEvent;
-use crate::game_map::{
-    CursorMaterials, HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT,
-};
+use crate::game_map::{HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::load::CursorMaterials;
 use crate::MouseCursorOverUiState;
 
 pub(in crate::game_map) struct TileCursorPlugin;

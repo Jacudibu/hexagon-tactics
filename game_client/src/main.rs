@@ -1,11 +1,13 @@
 mod camera;
 mod debugging;
 mod game_map;
+mod load;
 mod networking;
 
 use crate::camera::CameraPlugin;
 use crate::debugging::DebuggingPlugin;
 use crate::game_map::GameMapPlugin;
+use crate::load::LoadPlugin;
 use crate::networking::{Network, NetworkPlugin};
 use bevy::prelude::*;
 use bevy::window::PresentMode;
@@ -34,6 +36,7 @@ fn main() {
         .add_plugins(NetworkPlugin)
         .add_plugins(GameMapPlugin)
         .add_plugins(CameraPlugin)
+        .add_plugins(LoadPlugin)
         .init_state::<MouseCursorOverUiState>()
         //.add_systems(Startup, init)
         .run();
