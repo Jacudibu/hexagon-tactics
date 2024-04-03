@@ -133,17 +133,19 @@ fn update_tile_cursor(
     }
 }
 
+const EXTRA_HEIGHT: f32 = 0.01;
 fn cursor_position_for_tile(map: &GameMap, hex: &Hex) -> Vec3 {
     let position = HEX_LAYOUT.hex_to_world_pos(hex.clone());
+    let height = if let Some(tile) = map.tiles.get(hex) {
+        tile.height as f32
+    } else {
+        error!("Was unable to find a tile for {:?} in map.", hex);
+        0.0
+    };
+
     Vec3 {
         x: position.x,
-        y: map
-            .tiles
-            .get(hex)
-            .expect("Hex Coordinates should always be valid!")
-            .height as f32
-            * METERS_PER_TILE_HEIGHT_UNIT
-            + 0.01,
+        y: height * METERS_PER_TILE_HEIGHT_UNIT + EXTRA_HEIGHT,
         z: position.y,
     }
 }
