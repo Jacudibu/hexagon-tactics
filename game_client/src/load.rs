@@ -2,10 +2,13 @@ use crate::game_map::METERS_PER_TILE_HEIGHT_UNIT;
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
+use bevy::render::texture::{
+    ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor,
+};
 use bevy::utils::HashMap;
 use game_common::game_map;
 use game_common::game_map::{TileSurface, HEX_LAYOUT};
-use hexx::{ColumnMeshBuilder, HexLayout};
+use hexx::{ColumnMeshBuilder, HexLayout, MeshInfo, UVOptions};
 
 pub struct LoadPlugin;
 impl Plugin for LoadPlugin {
@@ -16,6 +19,12 @@ impl Plugin for LoadPlugin {
 
 #[derive(Debug, Resource)]
 pub struct HexagonMaterials {
+    pub top: HexagonMaterialsForSideOrTop,
+    pub sides: HexagonMaterialsForSideOrTop,
+}
+
+#[derive(Debug)]
+pub struct HexagonMaterialsForSideOrTop {
     pub invisible: Handle<StandardMaterial>,
     pub grass: Handle<StandardMaterial>,
     pub stone: Handle<StandardMaterial>,
@@ -24,7 +33,7 @@ pub struct HexagonMaterials {
     pub water: Handle<StandardMaterial>,
 }
 
-impl HexagonMaterials {
+impl HexagonMaterialsForSideOrTop {
     #[must_use]
     pub fn surface_material(&self, surface: &TileSurface) -> Handle<StandardMaterial> {
         match surface {
@@ -49,7 +58,7 @@ pub struct HexagonMeshes {
 }
 
 pub fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
-    let flat_mesh = generate_hexagonal_column_mesh(&HEX_LAYOUT, 0.0);
+    let flat_mesh = generate_hexagon_flat_mesh(&HEX_LAYOUT);
     let flat = meshes.add(flat_mesh);
 
     let mut columns = HashMap::new();
@@ -65,14 +74,55 @@ pub fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     commands.insert_resource(HexagonMeshes { flat, columns })
 }
 
-pub fn load_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
+pub fn load_materials(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    let sampler_desc = ImageSamplerDescriptor {
+        address_mode_u: ImageAddressMode::Repeat,
+        address_mode_v: ImageAddressMode::Repeat,
+        ..Default::default()
+    };
+
+    let settings = move |s: &mut ImageLoaderSettings| {
+        s.sampler = ImageSampler::Descriptor(sampler_desc.clone());
+    };
+
+    let debug_texture_side =
+        asset_server.load_with_settings("textures/debugging/uv_test_16px.png", settings);
+    let debug_texture_top = asset_server.load("textures/debugging/uv_test_32px.png");
+
+    let grass_top = materials.add(StandardMaterial {
+        base_color_texture: Some(debug_texture_top.clone()),
+        ..default()
+    });
+    let grass_side = materials.add(StandardMaterial {
+        base_color_texture: Some(debug_texture_side.clone()),
+        ..default()
+    });
+
     commands.insert_resource(HexagonMaterials {
-        invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
-        grass: materials.add(Color::GREEN),
-        stone: materials.add(Color::GRAY),
-        sand: materials.add(Color::BEIGE),
-        earth: materials.add(Color::TOMATO),
-        water: materials.add(Color::BLUE),
+        top: {
+            HexagonMaterialsForSideOrTop {
+                invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
+                grass: grass_top,
+                stone: materials.add(Color::GRAY),
+                sand: materials.add(Color::BEIGE),
+                earth: materials.add(Color::TOMATO),
+                water: materials.add(Color::BLUE),
+            }
+        },
+        sides: {
+            HexagonMaterialsForSideOrTop {
+                invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
+                grass: grass_side,
+                stone: materials.add(Color::GRAY),
+                sand: materials.add(Color::BEIGE),
+                earth: materials.add(Color::TOMATO),
+                water: materials.add(Color::BLUE),
+            }
+        },
     });
 
     commands.insert_resource(CursorMaterials {
@@ -80,17 +130,37 @@ pub fn load_materials(mut commands: Commands, mut materials: ResMut<Assets<Stand
             base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
             unlit: true,
             alpha_mode: AlphaMode::Multiply,
+            //base_color_texture: Some(debug_texture.clone()),
             ..default()
         }),
     })
+}
+
+fn generate_hexagon_flat_mesh(hex_layout: &HexLayout) -> Mesh {
+    let mesh_info = hexx::mesh::PlaneMeshBuilder::new(hex_layout).build();
+    generate_mesh(mesh_info)
 }
 
 /// Compute a bevy mesh from the layout
 fn generate_hexagonal_column_mesh(hex_layout: &HexLayout, height: f32) -> Mesh {
     let mesh_info = ColumnMeshBuilder::new(hex_layout, height)
         .without_bottom_face()
+        .without_top_face()
         .center_aligned()
+        .with_sides_uv_options(UVOptions {
+            flip: BVec2 { x: true, y: true },
+            rect: hexx::Rect {
+                min: Vec2::ZERO,
+                max: Vec2::new(1.0, height),
+            },
+            ..default()
+        })
         .build();
+
+    generate_mesh(mesh_info)
+}
+
+fn generate_mesh(mesh_info: MeshInfo) -> Mesh {
     Mesh::new(
         PrimitiveTopology::TriangleList,
         RenderAssetUsages::default(),

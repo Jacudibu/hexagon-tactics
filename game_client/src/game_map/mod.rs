@@ -62,13 +62,18 @@ fn setup_light(mut commands: Commands) {
 #[derive(Debug, Resource)]
 struct MapTileEntities {
     parent: Entity,
-    entities: HashMap<Hex, Entity>,
+    entities: HashMap<Hex, MapTileEntityBundle>,
+}
+
+#[derive(Debug)]
+struct MapTileEntityBundle {
+    top: Entity,
+    side: Entity,
 }
 
 #[derive(Debug, Component)]
 struct TileCoordinates {
     hex: Hex,
-    height: u8,
 }
 
 fn setup_debug_map(
@@ -90,7 +95,7 @@ fn spawn_map(
     materials: &HexagonMaterials,
     meshes: &HexagonMeshes,
 ) {
-    let parent = commands
+    let map_parent = commands
         .spawn((SpatialBundle::default(), Name::new("Map")))
         .id();
 
@@ -98,30 +103,60 @@ fn spawn_map(
     for (hex, data) in &map.tiles {
         let hex = hex.clone();
         let pos = HEX_LAYOUT.hex_to_world_pos(hex);
-        let id = commands
+
+        let parent = commands
+            .spawn((
+                SpatialBundle {
+                    transform: Transform::from_xyz(pos.x, 0.0, pos.y),
+                    ..default()
+                },
+                Name::new(format!("Hexagon Tile [{},{}]", hex.x, hex.y)),
+            ))
+            .set_parent(map_parent)
+            .id();
+
+        let top = commands
             .spawn((
                 PbrBundle {
-                    transform: Transform::from_xyz(pos.x, 0.0, pos.y),
+                    transform: Transform::from_xyz(
+                        0.0,
+                        data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
+                        0.0,
+                    ),
+                    mesh: meshes.flat.clone(),
+                    material: materials.top.surface_material(&data.surface).clone(),
+                    ..default()
+                },
+                RaycastMesh::<TileRaycastSet>::default(),
+                TileCoordinates { hex },
+                Name::new(format!("Tile Top [{},{}]", hex.x, hex.y)),
+            ))
+            .set_parent(parent)
+            .id();
+
+        let side = commands
+            .spawn((
+                PbrBundle {
                     mesh: meshes
                         .columns
                         .get(&data.height)
                         .expect("Meshes for all heights should exist!")
                         .clone(),
-                    material: materials.surface_material(&data.surface).clone(),
+                    material: materials.sides.surface_material(&data.surface).clone(),
                     ..default()
                 },
                 RaycastMesh::<TileRaycastSet>::default(),
-                TileCoordinates {
-                    hex,
-                    height: data.height,
-                },
-                Name::new(format!("Hexagon Tile [{},{}]", hex.x, hex.y)),
+                TileCoordinates { hex },
+                Name::new(format!("Tile Side [{},{}]", hex.x, hex.y)),
             ))
             .set_parent(parent)
             .id();
 
-        entities.insert(hex, id);
+        entities.insert(hex, MapTileEntityBundle { top, side });
     }
 
-    commands.insert_resource(MapTileEntities { parent, entities });
+    commands.insert_resource(MapTileEntities {
+        parent: map_parent,
+        entities,
+    });
 }

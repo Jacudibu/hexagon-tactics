@@ -14,7 +14,9 @@ use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
 
 use crate::game_map::editor::editor_ui::EditorUiPlugin;
 use crate::game_map::tile_cursor::TileCursor;
-use crate::game_map::{HexagonMaterials, HexagonMeshes, MapTileEntities};
+use crate::game_map::{
+    HexagonMaterials, HexagonMeshes, MapTileEntities, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT,
+};
 use crate::MouseCursorOverUiState;
 
 mod editor_ui;
@@ -185,23 +187,41 @@ fn update_tile_entity(
     meshes: Res<HexagonMeshes>,
     materials: Res<HexagonMaterials>,
     tile_entities: Res<MapTileEntities>,
+    mut top_transforms: Query<&mut Transform, With<TileCoordinates>>,
 ) {
     for event in tile_change_event.read() {
         if let Some(tile) = map.tiles.get(&event.hex) {
-            if let Some(entity) = tile_entities.entities.get(&event.hex) {
-                let mut commands = commands.entity(*entity);
+            if let Some(entities) = tile_entities.entities.get(&event.hex) {
+                let mut side_commands = commands.entity(entities.side);
                 if let Some(mesh) = meshes.columns.get(&tile.height) {
-                    commands.insert(mesh.clone());
+                    side_commands.insert(mesh.clone());
                     // FIXME: Temporary fix for https://github.com/bevyengine/bevy/issues/4294 and/or https://github.com/aevyrie/bevy_mod_raycast/issues/42
-                    commands.remove::<bevy::render::primitives::Aabb>();
+                    side_commands.remove::<bevy::render::primitives::Aabb>();
                 } else {
                     error!("Was unable to find hex mesh for height {}!", tile.height);
                 }
 
                 if tile.height == 0 {
-                    commands.insert(materials.invisible.clone());
+                    side_commands.insert(materials.sides.invisible.clone());
                 } else {
-                    commands.insert(materials.surface_material(&tile.surface));
+                    side_commands.insert(materials.sides.surface_material(&tile.surface));
+                }
+
+                let mut top_commands = commands.entity(entities.top);
+                if let Ok(mut transform) = top_transforms.get_mut(entities.top) {
+                    transform.translation =
+                        Vec3::new(0.0, tile.height as f32 * METERS_PER_TILE_HEIGHT_UNIT, 0.0);
+                } else {
+                    error!(
+                        "Unable to find a transform for the hex top at {:?}",
+                        event.hex
+                    );
+                }
+
+                if tile.height == 0 {
+                    top_commands.insert(materials.top.invisible.clone());
+                } else {
+                    top_commands.insert(materials.top.surface_material(&tile.surface));
                 }
             } else {
                 error!("Was unable to find hex entity at {:?} in map!", event.hex);
