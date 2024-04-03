@@ -148,7 +148,7 @@ fn setup_debug_map(
 
 fn spawn_map(
     map: &GameMap,
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     materials: &HexagonMaterials,
     meshes: &HexagonMeshes,
 ) {

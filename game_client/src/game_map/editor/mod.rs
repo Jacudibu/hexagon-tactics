@@ -1,24 +1,22 @@
-mod editor_ui;
+use std::fmt::Formatter;
+use std::ops::DerefMut;
 
-use crate::game_map::editor::editor_ui::EditorUiPlugin;
-use crate::game_map::tile_cursor::TileCursor;
-use crate::game_map::{HexagonMaterials, HexagonMeshes, MapTileEntities};
-use crate::networking::ServerConnection;
 use bevy::app::App;
-use bevy::asset::AssetContainer;
-use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
-use bevy::utils::HashMap;
-use futures::future::err;
-use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::prelude::InputKind;
 use leafwing_input_manager::Actionlike;
-use std::fmt::Formatter;
-use std::ops::{Deref, DerefMut};
+
+use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
+
+use crate::game_map::editor::editor_ui::EditorUiPlugin;
+use crate::game_map::tile_cursor::TileCursor;
+use crate::game_map::{HexagonMaterials, HexagonMeshes, MapTileEntities};
+
+mod editor_ui;
 
 pub struct MapEditorPlugin;
 impl Plugin for MapEditorPlugin {
@@ -28,7 +26,15 @@ impl Plugin for MapEditorPlugin {
         app.init_resource::<ActionState<MapEditorAction>>();
         app.insert_resource(MapEditorAction::default_input_map());
         app.insert_resource(MapEditorTool::default());
-        app.add_systems(Update, (track_input, use_tool.after(track_input)));
+        app.add_systems(
+            Update,
+            (
+                track_input,
+                use_tool.after(track_input),
+                update_tile_entity.after(use_tool),
+            ),
+        );
+        app.add_event::<TileChangeEvent>();
     }
 }
 
@@ -99,20 +105,15 @@ fn track_input(
             break;
         }
     }
-
-    // TODO: Decide if we want to introduce an event or just track that press in use_tool
 }
 
 fn use_tool(
-    mut commands: Commands,
     mut map: ResMut<GameMap>,
     active_tool: Res<MapEditorTool>,
-    tile_entities: Res<MapTileEntities>,
-    meshes: Res<HexagonMeshes>,
-    materials: Res<HexagonMaterials>,
     current_selection: Query<&TileCursor>,
     input_state: Res<ActionState<MapEditorAction>>,
     mut previously_interacted_tiles: Local<Vec<Hex>>,
+    mut tile_change_event: EventWriter<TileChangeEvent>,
 ) {
     if !input_state.pressed(&MapEditorAction::UseTool) {
         return;
@@ -122,28 +123,24 @@ fn use_tool(
         previously_interacted_tiles.deref_mut().clear();
     }
 
-    for x in current_selection.iter() {
+    tile_change_event.send_batch(current_selection.iter().filter_map(|x| {
         if previously_interacted_tiles.contains(&x.hex) {
-            continue;
+            None
         } else {
             previously_interacted_tiles.push(x.hex);
-        }
-
-        if let Some(tile) = map.tiles.get_mut(&x.hex) {
-            if !can_tool_be_used_on_tile(&active_tool, tile) {
-                continue;
-            }
-            use_tool_on_tile(&active_tool, tile);
-
-            if let Some(entity) = tile_entities.entities.get(&x.hex) {
-                update_tile_entity(&mut commands, tile, entity, &meshes, &materials);
+            if let Some(tile) = map.tiles.get_mut(&x.hex) {
+                if can_tool_be_used_on_tile(&active_tool, tile) {
+                    use_tool_on_tile(&active_tool, tile);
+                    Some(TileChangeEvent { hex: x.hex })
+                } else {
+                    None
+                }
             } else {
-                error!("Was unable to find hex entity at {:?} in map!", x);
+                error!("Was unable to find hex tile_data at {:?} in map!", x);
+                None
             }
-        } else {
-            error!("Was unable to find hex tile_data at {:?} in map!", x);
         }
-    }
+    }));
 }
 
 #[must_use]
@@ -164,24 +161,43 @@ fn use_tool_on_tile(tool: &MapEditorTool, mut tile: &mut TileData) {
 }
 
 fn update_tile_entity(
-    mut commands: &mut Commands,
-    tile: &TileData,
-    entity: &Entity,
-    meshes: &HexagonMeshes,
-    materials: &HexagonMaterials,
+    mut commands: Commands,
+    map: Res<GameMap>,
+    mut tile_change_event: EventReader<TileChangeEvent>,
+    meshes: Res<HexagonMeshes>,
+    materials: Res<HexagonMaterials>,
+    tile_entities: Res<MapTileEntities>,
 ) {
-    let mut commands = commands.entity(*entity);
-    if let Some(mesh) = meshes.columns.get(&tile.height) {
-        commands.insert(mesh.clone());
-        // FIXME: Temporary fix for https://github.com/bevyengine/bevy/issues/4294 and/or https://github.com/aevyrie/bevy_mod_raycast/issues/42
-        commands.remove::<bevy::render::primitives::Aabb>();
-    } else {
-        error!("Was unable to find hex mesh for height {}!", tile.height);
-    }
+    for event in tile_change_event.read() {
+        if let Some(tile) = map.tiles.get(&event.hex) {
+            if let Some(entity) = tile_entities.entities.get(&event.hex) {
+                let mut commands = commands.entity(*entity);
+                if let Some(mesh) = meshes.columns.get(&tile.height) {
+                    commands.insert(mesh.clone());
+                    // FIXME: Temporary fix for https://github.com/bevyengine/bevy/issues/4294 and/or https://github.com/aevyrie/bevy_mod_raycast/issues/42
+                    commands.remove::<bevy::render::primitives::Aabb>();
+                } else {
+                    error!("Was unable to find hex mesh for height {}!", tile.height);
+                }
 
-    if tile.height == 0 {
-        commands.insert(materials.invisible.clone());
-    } else {
-        commands.insert(materials.surface_material(&tile.surface));
+                if tile.height == 0 {
+                    commands.insert(materials.invisible.clone());
+                } else {
+                    commands.insert(materials.surface_material(&tile.surface));
+                }
+            } else {
+                error!("Was unable to find hex entity at {:?} in map!", event.hex);
+            }
+        } else {
+            error!(
+                "Was unable to find hex tile_data at {:?} in map!",
+                event.hex
+            );
+        }
     }
+}
+
+#[derive(Event)]
+pub struct TileChangeEvent {
+    hex: Hex,
 }
