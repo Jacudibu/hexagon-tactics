@@ -99,6 +99,11 @@ impl HexagonMaterials {
 }
 
 #[derive(Debug, Resource)]
+struct CursorMaterials {
+    default: Handle<StandardMaterial>,
+}
+
+#[derive(Debug, Resource)]
 pub struct HexagonMeshes {
     flat: Handle<Mesh>,
     columns: HashMap<u8, Handle<Mesh>>,
@@ -131,6 +136,15 @@ fn load_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardM
         earth: materials.add(Color::TOMATO),
         water: materials.add(Color::BLUE),
     });
+
+    commands.insert_resource(CursorMaterials {
+        default: materials.add(StandardMaterial {
+            base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
+            unlit: true,
+            alpha_mode: AlphaMode::Multiply,
+            ..default()
+        }),
+    })
 }
 
 fn setup_debug_map(

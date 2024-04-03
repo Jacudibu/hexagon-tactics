@@ -10,7 +10,9 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 
 use crate::game_map::editor::TileChangeEvent;
-use crate::game_map::{HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::game_map::{
+    CursorMaterials, HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT,
+};
 use crate::MouseCursorOverUiState;
 
 pub(in crate::game_map) struct TileCursorPlugin;
@@ -93,6 +95,7 @@ fn update_tile_cursor(
     mouse_cursor: Option<Res<MouseCursorOnTile>>,
     tile_cursor_q: Query<(Entity, &TileCursor)>,
     hexagon_meshes: Res<HexagonMeshes>,
+    cursor_materials: Res<CursorMaterials>,
     map: Res<GameMap>,
 ) {
     let Some(mouse_cursor) = mouse_cursor else {
@@ -125,6 +128,7 @@ fn update_tile_cursor(
                 PbrBundle {
                     mesh: hexagon_meshes.flat.clone(),
                     transform: Transform::from_translation(translation),
+                    material: cursor_materials.default.clone(),
                     ..default()
                 },
                 NotShadowCaster,
