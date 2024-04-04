@@ -81,7 +81,7 @@ fn setup_debug_map(
     materials: Res<HexagonMaterials>,
     meshes: Res<HexagonMeshes>,
 ) {
-    let radius = 20;
+    let radius = 1;
     let map = GameMap::new(radius);
 
     spawn_map(&map, &mut commands, &materials, &meshes);
