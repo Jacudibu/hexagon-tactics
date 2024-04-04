@@ -77,7 +77,7 @@ pub fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
 pub fn load_materials(
     mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
+    _asset_server: Res<AssetServer>,
 ) {
     let sampler_desc = ImageSamplerDescriptor {
         address_mode_u: ImageAddressMode::Repeat,
@@ -85,20 +85,20 @@ pub fn load_materials(
         ..Default::default()
     };
 
-    let settings = move |s: &mut ImageLoaderSettings| {
+    let _settings = move |s: &mut ImageLoaderSettings| {
         s.sampler = ImageSampler::Descriptor(sampler_desc.clone());
     };
 
-    let debug_texture_side =
-        asset_server.load_with_settings("textures/debugging/uv_test_16px.png", settings);
-    let debug_texture_top = asset_server.load("textures/debugging/uv_test_32px.png");
-
     let grass_top = materials.add(StandardMaterial {
-        base_color_texture: Some(debug_texture_top.clone()),
+        //        base_color_texture: Some(asset_server.load("textures/debugging/uv_test_32px.png")),
+        base_color: Color::GREEN,
         ..default()
     });
     let grass_side = materials.add(StandardMaterial {
-        base_color_texture: Some(debug_texture_side.clone()),
+        // base_color_texture: Some(
+        //     asset_server.load_with_settings("textures/debugging/uv_test_16px.png", settings),
+        // ),
+        base_color: Color::GREEN,
         ..default()
     });
 
