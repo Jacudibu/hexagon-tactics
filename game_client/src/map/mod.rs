@@ -136,7 +136,7 @@ fn spawn_map_command_listener(
                         0.0,
                     ),
                     mesh: meshes.flat.clone(),
-                    material: materials.top.surface_material(&data.surface).clone(),
+                    material: materials.top.surface_material(&data),
                     ..default()
                 },
                 RaycastMesh::<TileRaycastSet>::default(),
@@ -154,7 +154,7 @@ fn spawn_map_command_listener(
                         .get(&data.height)
                         .expect("Meshes for all heights should exist!")
                         .clone(),
-                    material: materials.sides.surface_material(&data.surface).clone(),
+                    material: materials.sides.surface_material(&data),
                     ..default()
                 },
                 RaycastMesh::<TileRaycastSet>::default(),

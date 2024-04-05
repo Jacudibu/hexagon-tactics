@@ -7,7 +7,7 @@ use bevy::render::texture::{
 };
 use bevy::utils::HashMap;
 use game_common::game_map;
-use game_common::game_map::{TileSurface, HEX_LAYOUT};
+use game_common::game_map::{TileData, TileSurface, HEX_LAYOUT};
 use hexx::{ColumnMeshBuilder, HexLayout, MeshInfo, UVOptions};
 
 pub struct LoadPlugin;
@@ -35,13 +35,17 @@ pub struct HexagonMaterialsForSideOrTop {
 
 impl HexagonMaterialsForSideOrTop {
     #[must_use]
-    pub fn surface_material(&self, surface: &TileSurface) -> Handle<StandardMaterial> {
-        match surface {
-            TileSurface::Grass => self.grass.clone(),
-            TileSurface::Stone => self.stone.clone(),
-            TileSurface::Sand => self.sand.clone(),
-            TileSurface::Earth => self.earth.clone(),
-            TileSurface::Water => self.water.clone(),
+    pub fn surface_material(&self, tile_data: &TileData) -> Handle<StandardMaterial> {
+        if tile_data.height == 0 {
+            self.invisible.clone()
+        } else {
+            match tile_data.surface {
+                TileSurface::Grass => self.grass.clone(),
+                TileSurface::Stone => self.stone.clone(),
+                TileSurface::Sand => self.sand.clone(),
+                TileSurface::Earth => self.earth.clone(),
+                TileSurface::Water => self.water.clone(),
+            }
         }
     }
 }

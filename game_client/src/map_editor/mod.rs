@@ -224,11 +224,7 @@ fn update_tile_entity(
                     error!("Was unable to find hex mesh for height {}!", tile.height);
                 }
 
-                if tile.height == 0 {
-                    side_commands.insert(materials.sides.invisible.clone());
-                } else {
-                    side_commands.insert(materials.sides.surface_material(&tile.surface));
-                }
+                side_commands.insert(materials.sides.surface_material(&tile));
 
                 let mut top_commands = commands.entity(entities.top);
                 if let Ok(mut transform) = top_transforms.get_mut(entities.top) {
@@ -241,11 +237,7 @@ fn update_tile_entity(
                     );
                 }
 
-                if tile.height == 0 {
-                    top_commands.insert(materials.top.invisible.clone());
-                } else {
-                    top_commands.insert(materials.top.surface_material(&tile.surface));
-                }
+                top_commands.insert(materials.top.surface_material(&tile));
             } else {
                 error!("Was unable to find hex entity at {:?} in map!", event.hex);
             }
