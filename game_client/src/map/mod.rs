@@ -41,7 +41,8 @@ fn on_map_spawned(mut new_map_state: ResMut<NextState<MapState>>) {
     new_map_state.set(MapState::Loaded);
 }
 
-fn on_map_despawned(mut new_map_state: ResMut<NextState<MapState>>) {
+fn on_map_despawned(mut commands: Commands, mut new_map_state: ResMut<NextState<MapState>>) {
+    commands.remove_resource::<GameMap>();
     new_map_state.set(MapState::Unloaded);
 }
 
@@ -73,6 +74,7 @@ fn setup_light(mut commands: Commands) {
 
 #[derive(Debug, Resource)]
 pub struct MapTileEntities {
+    pub parent: Entity,
     pub entities: HashMap<Hex, MapTileEntityBundle>,
 }
 
@@ -153,5 +155,8 @@ pub fn spawn_map(
         entities.insert(hex, MapTileEntityBundle { top, side });
     }
 
-    commands.insert_resource(MapTileEntities { entities });
+    commands.insert_resource(MapTileEntities {
+        parent: map_parent,
+        entities,
+    });
 }

@@ -27,6 +27,7 @@ impl Plugin for MapEditorPlugin {
         app.init_resource::<ActionState<MapEditorAction>>();
         app.insert_resource(MapEditorAction::default_input_map());
         app.add_systems(OnEnter(GameState::MapEditor), setup_map_editor);
+        app.add_systems(OnExit(GameState::MapEditor), exit_map_editor);
         app.add_systems(
             Update,
             (
@@ -42,7 +43,7 @@ impl Plugin for MapEditorPlugin {
     }
 }
 
-pub fn setup_map_editor(
+fn setup_map_editor(
     mut commands: Commands,
     materials: Res<HexagonMaterials>,
     meshes: Res<HexagonMeshes>,
@@ -55,6 +56,11 @@ pub fn setup_map_editor(
     spawn_map(&map, &mut commands, &materials, &meshes);
 
     commands.insert_resource(map);
+}
+
+fn exit_map_editor(mut commands: Commands, map_entities: ResMut<MapTileEntities>) {
+    commands.entity(map_entities.parent).despawn_recursive();
+    commands.remove_resource::<MapTileEntities>();
 }
 
 #[derive(Resource, Debug, Default)]
@@ -119,7 +125,7 @@ impl MapEditorAction {
 }
 
 #[rustfmt::skip]
-pub(crate) const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
+const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
     (MapEditorAction::RaiseTiles, MapEditorTool::RaiseTiles),
     (MapEditorAction::LowerTiles, MapEditorTool::LowerTiles),
     (MapEditorAction::PaintGrass, MapEditorTool::PaintSurface(TileSurface::Grass)),

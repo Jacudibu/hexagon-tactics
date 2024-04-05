@@ -33,6 +33,13 @@ impl Plugin for TileCursorPlugin {
             Update,
             handle_tile_change_event.run_if(in_state(MapState::Loaded)),
         );
+        app.add_systems(OnExit(MapState::Loaded), clean_up);
+    }
+}
+
+fn clean_up(mut commands: Commands, cursors: Query<Entity, With<TileCursor>>) {
+    for x in cursors.iter() {
+        commands.entity(x).despawn();
     }
 }
 

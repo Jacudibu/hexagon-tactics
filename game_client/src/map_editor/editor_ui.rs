@@ -14,7 +14,7 @@ impl Plugin for MapEditorUiPlugin {
 
         app.add_systems(
             Update,
-            (tool_view, io_buttons).run_if(in_state(GameState::MapEditor)),
+            (tool_view, menu_buttons).run_if(in_state(GameState::MapEditor)),
         );
     }
 }
@@ -42,7 +42,11 @@ fn tool_view(mut egui: EguiContexts, mut current_tool: ResMut<MapEditorTool>) {
 }
 
 const TEST_MAP_NAME: &str = "test_map.map";
-fn io_buttons(mut egui: EguiContexts, map: Res<GameMap>) {
+fn menu_buttons(
+    mut egui: EguiContexts,
+    map: Res<GameMap>,
+    mut next_game_state: ResMut<NextState<GameState>>,
+) {
     egui::Window::new("Save & Load")
         .title_bar(false)
         .collapsible(false)
@@ -55,6 +59,9 @@ fn io_buttons(mut egui: EguiContexts, map: Res<GameMap>) {
             }
             if ui.button("Load").clicked() {
                 let _ = GameMap::load_from_file(TEST_MAP_NAME);
+            }
+            if ui.button("Back To Menu").clicked() {
+                next_game_state.set(GameState::Menu);
             }
         });
 }
