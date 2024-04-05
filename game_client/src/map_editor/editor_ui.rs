@@ -1,12 +1,11 @@
-use crate::game_map::map_editor::{MapEditorAction, MapEditorTool, ACTION_TO_TOOL};
+use crate::map_editor::*;
 use crate::GameState;
 use bevy::app::{App, Plugin};
-use bevy::prelude::*;
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::game_map::GameMap;
 
-pub(in crate::game_map::map_editor) struct MapEditorUiPlugin;
+pub struct MapEditorUiPlugin;
 impl Plugin for MapEditorUiPlugin {
     fn build(&self, app: &mut App) {
         if !app.is_plugin_added::<EguiPlugin>() {

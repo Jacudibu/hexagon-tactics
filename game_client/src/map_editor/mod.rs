@@ -12,12 +12,9 @@ use leafwing_input_manager::Actionlike;
 
 use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
 
-use crate::game_map::map_editor::editor_ui::MapEditorUiPlugin;
-use crate::game_map::tile_cursor::TileCursor;
-use crate::game_map::{
-    spawn_map, HexagonMaterials, HexagonMeshes, MapTileEntities, TileCoordinates,
-    METERS_PER_TILE_HEIGHT_UNIT,
-};
+use crate::game_map::*;
+use crate::load::{HexagonMaterials, HexagonMeshes};
+use crate::map_editor::editor_ui::MapEditorUiPlugin;
 use crate::{GameState, MouseCursorOverUiState};
 
 mod editor_ui;
@@ -122,7 +119,7 @@ impl MapEditorAction {
 }
 
 #[rustfmt::skip]
-pub(in crate::game_map::map_editor) const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
+pub(crate) const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
     (MapEditorAction::RaiseTiles, MapEditorTool::RaiseTiles),
     (MapEditorAction::LowerTiles, MapEditorTool::LowerTiles),
     (MapEditorAction::PaintGrass, MapEditorTool::PaintSurface(TileSurface::Grass)),

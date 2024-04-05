@@ -9,23 +9,21 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 pub use tile_cursor::TileRaycastSet;
 
-use crate::game_map::map_editor::MapEditorPlugin;
 use crate::game_map::map_gizmos::MapGizmosPlugin;
 use crate::game_map::map_ui::MapUiPlugin;
 use crate::game_map::tile_cursor::TileCursorPlugin;
 use crate::load::{HexagonMaterials, HexagonMeshes};
 
-mod map_editor;
 mod map_gizmos;
 mod map_ui;
 mod tile_cursor;
+pub use tile_cursor::TileCursor;
 
 pub struct GameMapPlugin;
 impl Plugin for GameMapPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(TileCursorPlugin);
         app.add_plugins(MapGizmosPlugin);
-        app.add_plugins(MapEditorPlugin);
         app.add_plugins(MapUiPlugin);
         app.add_systems(Startup, setup_light);
         app.add_systems(
@@ -74,22 +72,22 @@ fn setup_light(mut commands: Commands) {
 }
 
 #[derive(Debug, Resource)]
-struct MapTileEntities {
-    entities: HashMap<Hex, MapTileEntityBundle>,
+pub struct MapTileEntities {
+    pub entities: HashMap<Hex, MapTileEntityBundle>,
 }
 
 #[derive(Debug)]
-struct MapTileEntityBundle {
-    top: Entity,
-    side: Entity,
+pub struct MapTileEntityBundle {
+    pub top: Entity,
+    pub side: Entity,
 }
 
 #[derive(Debug, Component)]
-struct TileCoordinates {
+pub struct TileCoordinates {
     hex: Hex,
 }
 
-fn spawn_map(
+pub fn spawn_map(
     map: &GameMap,
     commands: &mut Commands,
     materials: &HexagonMaterials,
