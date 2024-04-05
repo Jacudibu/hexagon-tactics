@@ -2,12 +2,14 @@ mod camera;
 mod debugging;
 mod game_map;
 mod load;
+mod main_menu;
 mod networking;
 
 use crate::camera::CameraPlugin;
 use crate::debugging::DebuggingPlugin;
 use crate::game_map::GameMapPlugin;
 use crate::load::LoadPlugin;
+use crate::main_menu::MainMenuPlugin;
 use crate::networking::{Network, NetworkPlugin};
 use bevy::prelude::*;
 use bevy::window::PresentMode;
@@ -37,6 +39,8 @@ fn main() {
         .add_plugins(GameMapPlugin)
         .add_plugins(CameraPlugin)
         .add_plugins(LoadPlugin)
+        .add_plugins(MainMenuPlugin)
+        .init_state::<GameState>()
         .init_state::<MouseCursorOverUiState>()
         //.add_systems(Startup, init)
         .run();
@@ -52,4 +56,12 @@ pub enum MouseCursorOverUiState {
     #[default]
     NotOverUI,
     OverUI,
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
+pub enum GameState {
+    #[default]
+    Menu,
+    MapEditor,
+    Game,
 }
