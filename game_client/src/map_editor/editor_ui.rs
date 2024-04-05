@@ -41,6 +41,7 @@ fn tool_view(mut egui: EguiContexts, mut current_tool: ResMut<MapEditorTool>) {
         });
 }
 
+const TEST_MAP_NAME: &str = "test_map.map";
 fn io_buttons(mut egui: EguiContexts, map: Res<GameMap>) {
     egui::Window::new("Save & Load")
         .title_bar(false)
@@ -50,10 +51,10 @@ fn io_buttons(mut egui: EguiContexts, map: Res<GameMap>) {
         .fixed_pos(Pos2::new(-5.0, -5.0))
         .show(egui.ctx_mut(), |ui| {
             if ui.button("Save").clicked() {
-                map.write_to_disk("todo.hexmap");
+                map.write_to_disk(TEST_MAP_NAME);
             }
             if ui.button("Load").clicked() {
-                let _ = GameMap::load_from_file("todo.hexmap");
+                let _ = GameMap::load_from_file(TEST_MAP_NAME);
             }
         });
 }
