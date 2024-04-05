@@ -1,12 +1,14 @@
 use bevy::app::{App, Plugin, Startup};
 use bevy::math::{EulerRot, Quat};
-use bevy::pbr::{AmbientLight, DirectionalLight, DirectionalLightBundle, PbrBundle};
+use bevy::pbr::{
+    AmbientLight, DirectionalLight, DirectionalLightBundle, NotShadowCaster, PbrBundle,
+};
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_mod_raycast::prelude::RaycastMesh;
 use hexx::Hex;
 
-use game_common::game_map::{GameMap, HEX_LAYOUT};
+use game_common::game_map::{Fluid, GameMap, TileData, HEX_LAYOUT};
 pub use tile_cursor::TileRaycastSet;
 
 use crate::load::{HexagonMaterials, HexagonMeshes};
@@ -82,8 +84,10 @@ pub struct MapTileEntities {
 
 #[derive(Debug)]
 pub struct MapTileEntityBundle {
+    pub parent: Entity,
     pub top: Entity,
     pub side: Entity,
+    pub fluid: Option<Entity>,
 }
 
 #[derive(Debug, Component)]
@@ -112,7 +116,7 @@ fn spawn_map_command_listener(
         .id();
 
     let mut entities = HashMap::new();
-    for (hex, data) in &map.tiles {
+    for (hex, tile_data) in &map.tiles {
         let hex = hex.clone();
         let pos = HEX_LAYOUT.hex_to_world_pos(hex);
 
@@ -132,11 +136,11 @@ fn spawn_map_command_listener(
                 PbrBundle {
                     transform: Transform::from_xyz(
                         0.0,
-                        data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
+                        tile_data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
                         0.0,
                     ),
                     mesh: meshes.flat.clone(),
-                    material: materials.top.surface_material(&data),
+                    material: materials.top.surface_material(&tile_data),
                     ..default()
                 },
                 RaycastMesh::<TileRaycastSet>::default(),
@@ -151,10 +155,10 @@ fn spawn_map_command_listener(
                 PbrBundle {
                     mesh: meshes
                         .columns
-                        .get(&data.height)
+                        .get(&tile_data.height)
                         .expect("Meshes for all heights should exist!")
                         .clone(),
-                    material: materials.sides.surface_material(&data),
+                    material: materials.sides.surface_material(&tile_data),
                     ..default()
                 },
                 RaycastMesh::<TileRaycastSet>::default(),
@@ -164,11 +168,65 @@ fn spawn_map_command_listener(
             .set_parent(parent)
             .id();
 
-        entities.insert(hex, MapTileEntityBundle { top, side });
+        let fluid = if let Some(fluid) = &tile_data.fluid {
+            spawn_fluid_entity(
+                &mut commands,
+                &materials,
+                &meshes,
+                tile_data,
+                hex,
+                parent,
+                fluid,
+            )
+        } else {
+            None
+        };
+
+        entities.insert(
+            hex,
+            MapTileEntityBundle {
+                parent,
+                top,
+                side,
+                fluid,
+            },
+        );
     }
 
     commands.insert_resource(MapTileEntities {
         parent: map_parent,
         entities,
     });
+}
+
+pub fn spawn_fluid_entity(
+    commands: &mut Commands,
+    materials: &HexagonMaterials,
+    meshes: &HexagonMeshes,
+    tile_data: &TileData,
+    hex: Hex,
+    parent: Entity,
+    fluid: &Fluid,
+) -> Option<Entity> {
+    Some(
+        commands
+            .spawn((
+                PbrBundle {
+                    transform: Transform::from_xyz(
+                        0.0,
+                        (tile_data.height as f32 + fluid.height) * METERS_PER_TILE_HEIGHT_UNIT,
+                        0.0,
+                    ),
+                    mesh: meshes.flat.clone(),
+                    material: materials.fluid.surface_material(&fluid.kind),
+                    ..default()
+                },
+                RaycastMesh::<TileRaycastSet>::default(),
+                NotShadowCaster,
+                TileCoordinates { hex },
+                Name::new(format!("Tile Fluid [{},{}]", hex.x, hex.y)),
+            ))
+            .set_parent(parent)
+            .id(),
+    )
 }

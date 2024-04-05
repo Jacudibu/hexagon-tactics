@@ -1,5 +1,6 @@
 use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
+use bevy::ecs::query::QueryEntityError;
 use bevy::log::error;
 use bevy::pbr::{NotShadowCaster, PbrBundle};
 use bevy::prelude::*;
@@ -24,8 +25,11 @@ impl Plugin for TileCursorPlugin {
             (
                 update_mouse_cursor.run_if(in_state(MouseCursorOverUiState::NotOverUI)),
                 update_tile_cursor
+                    .run_if(in_state(MouseCursorOverUiState::NotOverUI))
                     .after(update_mouse_cursor)
-                    .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
+                    .after(
+                        bevy_mod_raycast::deferred::update_target_intersections::<TileRaycastSet>,
+                    ),
             )
                 .run_if(in_state(MapState::Loaded)),
         );
@@ -151,7 +155,11 @@ const EXTRA_HEIGHT: f32 = 0.01;
 fn cursor_position_for_tile(map: &GameMap, hex: &Hex) -> Vec3 {
     let position = HEX_LAYOUT.hex_to_world_pos(hex.clone());
     let height = if let Some(tile) = map.tiles.get(hex) {
-        tile.height as f32
+        if let Some(fluid) = &tile.fluid {
+            tile.height as f32 + fluid.height
+        } else {
+            tile.height as f32
+        }
     } else {
         error!("Was unable to find a tile for {:?} in map.", hex);
         0.0

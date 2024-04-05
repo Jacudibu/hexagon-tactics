@@ -7,7 +7,7 @@ use bevy::render::texture::{
 };
 use bevy::utils::HashMap;
 use game_common::game_map;
-use game_common::game_map::{TileData, TileSurface, HEX_LAYOUT};
+use game_common::game_map::{FluidKind, TileData, TileSurface, HEX_LAYOUT};
 use hexx::{ColumnMeshBuilder, HexLayout, MeshInfo, UVOptions};
 
 pub struct LoadPlugin;
@@ -21,6 +21,7 @@ impl Plugin for LoadPlugin {
 pub struct HexagonMaterials {
     pub top: HexagonMaterialsForSideOrTop,
     pub sides: HexagonMaterialsForSideOrTop,
+    pub fluid: HexagonMaterialsForFluid,
 }
 
 #[derive(Debug)]
@@ -46,6 +47,20 @@ impl HexagonMaterialsForSideOrTop {
                 TileSurface::Earth => self.earth.clone(),
                 TileSurface::Water => self.water.clone(),
             }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct HexagonMaterialsForFluid {
+    pub water: Handle<StandardMaterial>,
+}
+
+impl HexagonMaterialsForFluid {
+    #[must_use]
+    pub fn surface_material(&self, fluid: &FluidKind) -> Handle<StandardMaterial> {
+        match fluid {
+            FluidKind::Water => self.water.clone(),
         }
     }
 }
@@ -106,6 +121,12 @@ pub fn load_materials(
         ..default()
     });
 
+    let water = materials.add(StandardMaterial {
+        base_color: Color::rgba(0.0, 0.5, 1.0, 0.5),
+        alpha_mode: AlphaMode::Blend,
+        ..default()
+    });
+
     commands.insert_resource(HexagonMaterials {
         top: {
             HexagonMaterialsForSideOrTop {
@@ -127,6 +148,7 @@ pub fn load_materials(
                 water: materials.add(Color::BLUE),
             }
         },
+        fluid: { HexagonMaterialsForFluid { water } },
     });
 
     commands.insert_resource(CursorMaterials {

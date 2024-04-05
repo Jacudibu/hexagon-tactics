@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use versioned_map_data::VersionedMapData;
 
-#[derive(Debug, Resource, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Resource, Serialize, Deserialize, Clone, PartialEq)]
 pub struct GameMap {
     pub radius: u32,
     pub tiles: HashMap<Hex, TileData>,
@@ -32,6 +32,7 @@ impl GameMap {
                 TileData {
                     height: 1,
                     surface: TileSurface::Grass,
+                    fluid: None,
                 },
             );
         }
@@ -49,10 +50,17 @@ impl GameMap {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TileData {
     pub height: u8,
     pub surface: TileSurface,
+    pub fluid: Option<Fluid>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct Fluid {
+    pub height: f32,
+    pub kind: FluidKind,
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -72,6 +80,19 @@ impl Display for TileSurface {
             TileSurface::Sand => write!(f, "Sand"),
             TileSurface::Earth => write!(f, "Earth"),
             TileSurface::Water => write!(f, "Water"),
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
+pub enum FluidKind {
+    Water,
+}
+
+impl Display for FluidKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FluidKind::Water => write!(f, "Water"),
         }
     }
 }

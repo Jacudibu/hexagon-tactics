@@ -10,7 +10,7 @@ use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::prelude::InputKind;
 use leafwing_input_manager::Actionlike;
 
-use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
+use game_common::game_map::{Fluid, FluidKind, GameMap, TileData, TileSurface, MAX_HEIGHT};
 
 use crate::load::{HexagonMaterials, HexagonMeshes};
 use crate::map::*;
@@ -72,6 +72,8 @@ enum MapEditorTool {
     RaiseTiles,
     LowerTiles,
     PaintSurface(TileSurface),
+    RaiseFluid(FluidKind),
+    LowerFluid,
 }
 
 impl std::fmt::Display for MapEditorTool {
@@ -80,6 +82,8 @@ impl std::fmt::Display for MapEditorTool {
             MapEditorTool::RaiseTiles => write!(f, "Raise Tiles"),
             MapEditorTool::LowerTiles => write!(f, "Lower Tiles"),
             MapEditorTool::PaintSurface(surface) => write!(f, "Paint {}", surface),
+            MapEditorTool::RaiseFluid(fluid) => write!(f, "Fill with {}", fluid),
+            MapEditorTool::LowerFluid => write!(f, "Lower Fluid"),
         }
     }
 }
@@ -93,7 +97,8 @@ enum MapEditorAction {
     PaintStone,
     PaintSand,
     PaintEarth,
-    PaintWater,
+    RaiseWater,
+    LowerFluid,
 }
 
 impl std::fmt::Display for MapEditorAction {
@@ -106,7 +111,8 @@ impl std::fmt::Display for MapEditorAction {
             MapEditorAction::PaintStone => write!(f, "Paint Stone"),
             MapEditorAction::PaintSand => write!(f, "Paint Sand"),
             MapEditorAction::PaintEarth => write!(f, "Paint Earth"),
-            MapEditorAction::PaintWater => write!(f, "Paint Water"),
+            MapEditorAction::RaiseWater => write!(f, "Raise Water"),
+            MapEditorAction::LowerFluid => write!(f, "Lower Water"),
         }
     }
 }
@@ -121,21 +127,23 @@ impl MapEditorAction {
         input_map.insert(Self::PaintStone, KeyCode::Digit2);
         input_map.insert(Self::PaintSand, KeyCode::Digit3);
         input_map.insert(Self::PaintEarth, KeyCode::Digit4);
-        input_map.insert(Self::PaintWater, KeyCode::Digit5);
+        input_map.insert(Self::RaiseWater, KeyCode::Digit5);
+        input_map.insert(Self::LowerFluid, KeyCode::Digit6);
 
         input_map
     }
 }
 
 #[rustfmt::skip]
-const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
+const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 8] = [
     (MapEditorAction::RaiseTiles, MapEditorTool::RaiseTiles),
     (MapEditorAction::LowerTiles, MapEditorTool::LowerTiles),
     (MapEditorAction::PaintGrass, MapEditorTool::PaintSurface(TileSurface::Grass)),
     (MapEditorAction::PaintStone, MapEditorTool::PaintSurface(TileSurface::Stone)),
     (MapEditorAction::PaintSand,  MapEditorTool::PaintSurface(TileSurface::Sand)),
     (MapEditorAction::PaintEarth, MapEditorTool::PaintSurface(TileSurface::Earth)),
-    (MapEditorAction::PaintWater, MapEditorTool::PaintSurface(TileSurface::Water)),
+    (MapEditorAction::RaiseWater, MapEditorTool::RaiseFluid(FluidKind::Water)),
+    (MapEditorAction::LowerFluid, MapEditorTool::LowerFluid),
 ];
 
 fn track_input(
@@ -173,8 +181,12 @@ fn use_tool(
             previously_interacted_tiles.push(x.hex);
             if let Some(tile) = map.tiles.get_mut(&x.hex) {
                 if can_tool_be_used_on_tile(&active_tool, tile) {
+                    let old_data = tile.clone();
                     use_tool_on_tile(&active_tool, tile);
-                    Some(TileChangeEvent { hex: x.hex })
+                    Some(TileChangeEvent {
+                        hex: x.hex,
+                        old_data,
+                    })
                 } else {
                     None
                 }
@@ -192,14 +204,52 @@ fn can_tool_be_used_on_tile(tool: &MapEditorTool, tile: &TileData) -> bool {
         MapEditorTool::RaiseTiles => tile.height < MAX_HEIGHT,
         MapEditorTool::LowerTiles => tile.height > 0,
         MapEditorTool::PaintSurface(_) => true,
+        MapEditorTool::RaiseFluid(_) => true, // TODO: Check tile.height + fluid.height against MAX_HEIGHT
+        MapEditorTool::LowerFluid => tile.fluid.is_some(),
     }
 }
 
 fn use_tool_on_tile(tool: &MapEditorTool, tile: &mut TileData) {
     match tool {
-        MapEditorTool::RaiseTiles => tile.height += 1,
-        MapEditorTool::LowerTiles => tile.height -= 1,
+        MapEditorTool::RaiseTiles => {
+            tile.height += 1;
+            if let Some(ref mut fluid) = tile.fluid {
+                fluid.height -= 1.0;
+
+                if fluid.height < 0.0 {
+                    tile.fluid = None;
+                }
+            }
+        }
+        MapEditorTool::LowerTiles => {
+            tile.height -= 1;
+            if let Some(ref mut fluid) = tile.fluid {
+                fluid.height += 1.0;
+            }
+        }
         MapEditorTool::PaintSurface(surface) => tile.surface = surface.clone(),
+        MapEditorTool::RaiseFluid(kind) => {
+            if let Some(ref mut fluid) = tile.fluid {
+                if &fluid.kind == kind {
+                    fluid.height += 1.0;
+                } else {
+                    fluid.kind = kind.clone();
+                }
+            } else {
+                tile.fluid = Some(Fluid {
+                    kind: kind.clone(),
+                    height: 0.75,
+                })
+            }
+        }
+        MapEditorTool::LowerFluid => {
+            if let Some(ref mut fluid) = tile.fluid {
+                fluid.height -= 1.0;
+                if fluid.height <= 0.0 {
+                    tile.fluid = None;
+                }
+            }
+        }
     }
 }
 
@@ -209,27 +259,34 @@ fn update_tile_entity(
     mut tile_change_event: EventReader<TileChangeEvent>,
     meshes: Res<HexagonMeshes>,
     materials: Res<HexagonMaterials>,
-    tile_entities: Res<MapTileEntities>,
+    mut tile_entities: ResMut<MapTileEntities>,
     mut top_transforms: Query<&mut Transform, With<TileCoordinates>>,
 ) {
+    // TODO: Should probably be part of map and not the editor
     for event in tile_change_event.read() {
-        if let Some(tile) = map.tiles.get(&event.hex) {
-            if let Some(entities) = tile_entities.entities.get(&event.hex) {
+        if let Some(tile_data) = map.tiles.get(&event.hex) {
+            if let Some(entities) = tile_entities.entities.get_mut(&event.hex) {
                 let mut side_commands = commands.entity(entities.side);
-                if let Some(mesh) = meshes.columns.get(&tile.height) {
+                if let Some(mesh) = meshes.columns.get(&tile_data.height) {
                     side_commands.insert(mesh.clone());
                     // FIXME: Temporary fix for https://github.com/bevyengine/bevy/issues/4294 and/or https://github.com/aevyrie/bevy_mod_raycast/issues/42
                     side_commands.remove::<bevy::render::primitives::Aabb>();
                 } else {
-                    error!("Was unable to find hex mesh for height {}!", tile.height);
+                    error!(
+                        "Was unable to find hex mesh for height {}!",
+                        tile_data.height
+                    );
                 }
 
-                side_commands.insert(materials.sides.surface_material(&tile));
+                side_commands.insert(materials.sides.surface_material(&tile_data));
 
                 let mut top_commands = commands.entity(entities.top);
                 if let Ok(mut transform) = top_transforms.get_mut(entities.top) {
-                    transform.translation =
-                        Vec3::new(0.0, tile.height as f32 * METERS_PER_TILE_HEIGHT_UNIT, 0.0);
+                    transform.translation = Vec3::new(
+                        0.0,
+                        tile_data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
+                        0.0,
+                    );
                 } else {
                     error!(
                         "Unable to find a transform for the hex top at {:?}",
@@ -237,7 +294,40 @@ fn update_tile_entity(
                     );
                 }
 
-                top_commands.insert(materials.top.surface_material(&tile));
+                top_commands.insert(materials.top.surface_material(&tile_data));
+
+                if let Some(fluid) = &tile_data.fluid {
+                    if let Some(fluid_entity) = entities.fluid {
+                        if let Ok(mut transform) = top_transforms.get_mut(fluid_entity) {
+                            transform.translation = Vec3::new(
+                                0.0,
+                                (tile_data.height as f32 + fluid.height)
+                                    * METERS_PER_TILE_HEIGHT_UNIT,
+                                0.0,
+                            );
+                        } else {
+                            error!(
+                                "Unable to find a transform for the hex fluid at {:?}",
+                                event.hex
+                            );
+                        }
+                    } else {
+                        entities.fluid = spawn_fluid_entity(
+                            &mut commands,
+                            &materials,
+                            &meshes,
+                            &tile_data,
+                            event.hex,
+                            entities.parent,
+                            &fluid,
+                        );
+                    }
+                } else {
+                    if let Some(fluid_entity) = entities.fluid {
+                        commands.entity(fluid_entity).remove_parent().despawn();
+                        entities.fluid = None;
+                    }
+                }
             } else {
                 error!("Was unable to find hex entity at {:?} in map!", event.hex);
             }
@@ -253,4 +343,5 @@ fn update_tile_entity(
 #[derive(Event)]
 pub struct TileChangeEvent {
     pub hex: Hex,
+    pub old_data: TileData,
 }
