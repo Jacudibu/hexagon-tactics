@@ -6,7 +6,7 @@ edition.workspace = true
 
 [dependencies]
 game-common = { path = "../game_common" }
-bevy = { version = "0.13.1", default-features = false, features = [
+bevy = { version = "0.13.2", default-features = false, features = [
     "animation",
     "bevy_asset",
     "bevy_gilrs",

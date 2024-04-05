@@ -54,14 +54,16 @@ fn menu_buttons(
         .anchor(Align2::RIGHT_TOP, egui::Vec2::new(0.0, 0.0))
         .fixed_pos(Pos2::new(-5.0, -5.0))
         .show(egui.ctx_mut(), |ui| {
-            if ui.button("Save").clicked() {
-                map.write_to_disk(TEST_MAP_NAME);
-            }
-            if ui.button("Load").clicked() {
-                let _ = GameMap::load_from_file(TEST_MAP_NAME);
-            }
-            if ui.button("Back To Menu").clicked() {
-                next_game_state.set(GameState::Menu);
-            }
+            ui.vertical_centered(|ui| {
+                if ui.button("Save").clicked() {
+                    map.write_to_disk(TEST_MAP_NAME);
+                }
+                if ui.button("Load").clicked() {
+                    let _ = GameMap::load_from_file(TEST_MAP_NAME);
+                }
+                if ui.button("Back To Menu").clicked() {
+                    next_game_state.set(GameState::Menu);
+                }
+            })
         });
 }
