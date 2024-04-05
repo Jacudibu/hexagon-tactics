@@ -50,6 +50,7 @@ fn setup_map_editor(mut commands: Commands, spawn_map_command: EventWriter<Spawn
 }
 
 fn exit_map_editor(mut commands: Commands, map_entities: ResMut<MapTileEntities>) {
+    // TODO: These should probably be done by the map itself
     commands.entity(map_entities.parent).despawn_recursive();
     commands.remove_resource::<MapTileEntities>();
 }

@@ -65,7 +65,15 @@ fn menu_buttons(
                     map.write_to_disk(TEST_MAP_NAME);
                 }
                 if ui.button("Load").clicked() {
-                    let _ = GameMap::load_from_file(TEST_MAP_NAME);
+                    match GameMap::load_from_file(TEST_MAP_NAME) {
+                        Ok(map) => {
+                            commands.insert_resource(map);
+                            spawn_new_world_command.send(SpawnMapCommand {});
+                        }
+                        Err(_) => {
+                            // TODO: Error response. Low priority.
+                        }
+                    }
                 }
                 if ui.button("Back To Menu").clicked() {
                     next_game_state.set(GameState::Menu);
