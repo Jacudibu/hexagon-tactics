@@ -9,8 +9,8 @@ use hexx::Hex;
 
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 
-use crate::game_map::editor::TileChangeEvent;
-use crate::game_map::{HexagonMeshes, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::game_map::map_editor::TileChangeEvent;
+use crate::game_map::{HexagonMeshes, MapState, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
 use crate::load::CursorMaterials;
 use crate::MouseCursorOverUiState;
 
@@ -26,9 +26,13 @@ impl Plugin for TileCursorPlugin {
                 update_tile_cursor
                     .after(update_mouse_cursor)
                     .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
-            ),
+            )
+                .run_if(in_state(MapState::Loaded)),
         );
-        app.add_systems(Update, handle_tile_change_event);
+        app.add_systems(
+            Update,
+            handle_tile_change_event.run_if(in_state(MapState::Loaded)),
+        );
     }
 }
 

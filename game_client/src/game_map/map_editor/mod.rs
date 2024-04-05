@@ -12,12 +12,13 @@ use leafwing_input_manager::Actionlike;
 
 use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
 
-use crate::game_map::editor::editor_ui::EditorUiPlugin;
+use crate::game_map::map_editor::editor_ui::MapEditorUiPlugin;
 use crate::game_map::tile_cursor::TileCursor;
 use crate::game_map::{
-    HexagonMaterials, HexagonMeshes, MapTileEntities, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT,
+    spawn_map, HexagonMaterials, HexagonMeshes, MapTileEntities, TileCoordinates,
+    METERS_PER_TILE_HEIGHT_UNIT,
 };
-use crate::MouseCursorOverUiState;
+use crate::{GameState, MouseCursorOverUiState};
 
 mod editor_ui;
 
@@ -25,10 +26,10 @@ pub struct MapEditorPlugin;
 impl Plugin for MapEditorPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<MapEditorAction>::default());
-        app.add_plugins(EditorUiPlugin);
+        app.add_plugins(MapEditorUiPlugin);
         app.init_resource::<ActionState<MapEditorAction>>();
         app.insert_resource(MapEditorAction::default_input_map());
-        app.insert_resource(MapEditorTool::default());
+        app.add_systems(OnEnter(GameState::MapEditor), setup_map_editor);
         app.add_systems(
             Update,
             (
@@ -37,10 +38,26 @@ impl Plugin for MapEditorPlugin {
                     .after(track_input)
                     .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
                 update_tile_entity.after(use_tool),
-            ),
+            )
+                .run_if(in_state(GameState::MapEditor)),
         );
         app.add_event::<TileChangeEvent>();
     }
+}
+
+pub fn setup_map_editor(
+    mut commands: Commands,
+    materials: Res<HexagonMaterials>,
+    meshes: Res<HexagonMeshes>,
+) {
+    commands.insert_resource(MapEditorTool::default());
+
+    let radius = 10;
+    let map = GameMap::new(radius);
+
+    spawn_map(&map, &mut commands, &materials, &meshes);
+
+    commands.insert_resource(map);
 }
 
 #[derive(Resource, Debug, Default)]
@@ -105,7 +122,7 @@ impl MapEditorAction {
 }
 
 #[rustfmt::skip]
-pub(in crate::game_map::editor) const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
+pub(in crate::game_map::map_editor) const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 7] = [
     (MapEditorAction::RaiseTiles, MapEditorTool::RaiseTiles),
     (MapEditorAction::LowerTiles, MapEditorTool::LowerTiles),
     (MapEditorAction::PaintGrass, MapEditorTool::PaintSurface(TileSurface::Grass)),

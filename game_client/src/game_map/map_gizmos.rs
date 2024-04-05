@@ -1,8 +1,9 @@
-use crate::game_map::METERS_PER_TILE_HEIGHT_UNIT;
+use crate::game_map::{MapState, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::math::Vec3;
 use bevy::prelude::{
-    AppGizmoBuilder, Color, GizmoConfigGroup, GizmoConfigStore, Gizmos, Reflect, Res, ResMut,
+    in_state, AppGizmoBuilder, Color, GizmoConfigGroup, GizmoConfigStore, Gizmos,
+    IntoSystemConfigs, Reflect, Res, ResMut,
 };
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 use hexx::{GridVertex, HexLayout};
@@ -11,8 +12,11 @@ pub(in crate::game_map) struct MapGizmosPlugin;
 impl Plugin for MapGizmosPlugin {
     fn build(&self, app: &mut App) {
         app.init_gizmo_group::<MapGizmos>();
-        app.add_systems(Startup, (set_gizmo_config,));
-        app.add_systems(Update, draw_hexagon_gizmos);
+        app.add_systems(Startup, setup_gizmo_config);
+        app.add_systems(
+            Update,
+            draw_hexagon_gizmos.run_if(in_state(MapState::Loaded)),
+        );
     }
 }
 
@@ -72,7 +76,7 @@ fn vertex_coordinates_3d(layout: &HexLayout, vertex: GridVertex, height: f32) ->
     }
 }
 
-fn set_gizmo_config(mut config_store: ResMut<GizmoConfigStore>) {
+fn setup_gizmo_config(mut config_store: ResMut<GizmoConfigStore>) {
     let (config, _) = config_store.config_mut::<MapGizmos>();
     config.depth_bias = -0.00001;
     config.line_width = 20.0;

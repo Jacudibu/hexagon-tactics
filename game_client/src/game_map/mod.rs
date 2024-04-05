@@ -9,13 +9,13 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 pub use tile_cursor::TileRaycastSet;
 
-use crate::game_map::editor::MapEditorPlugin;
+use crate::game_map::map_editor::MapEditorPlugin;
 use crate::game_map::map_gizmos::MapGizmosPlugin;
 use crate::game_map::map_ui::MapUiPlugin;
 use crate::game_map::tile_cursor::TileCursorPlugin;
 use crate::load::{HexagonMaterials, HexagonMeshes};
 
-mod editor;
+mod map_editor;
 mod map_gizmos;
 mod map_ui;
 mod tile_cursor;
@@ -27,17 +27,31 @@ impl Plugin for GameMapPlugin {
         app.add_plugins(MapGizmosPlugin);
         app.add_plugins(MapEditorPlugin);
         app.add_plugins(MapUiPlugin);
+        app.add_systems(Startup, setup_light);
         app.add_systems(
-            Startup,
+            First,
             (
-                setup_debug_map
-                    // TODO: Use Asset Loader instead of making these pub.
-                    .after(crate::load::load_meshes)
-                    .after(crate::load::load_materials),
-                setup_light,
+                on_map_spawned.run_if(resource_added::<MapTileEntities>),
+                on_map_despawned.run_if(resource_removed::<MapTileEntities>()),
             ),
         );
+        app.init_state::<MapState>();
     }
+}
+
+fn on_map_spawned(mut new_map_state: ResMut<NextState<MapState>>) {
+    new_map_state.set(MapState::Loaded);
+}
+
+fn on_map_despawned(mut new_map_state: ResMut<NextState<MapState>>) {
+    new_map_state.set(MapState::Unloaded);
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
+pub enum MapState {
+    #[default]
+    Unloaded,
+    Loaded,
 }
 
 pub const METERS_PER_TILE_HEIGHT_UNIT: f32 = 0.5;
@@ -61,7 +75,6 @@ fn setup_light(mut commands: Commands) {
 
 #[derive(Debug, Resource)]
 struct MapTileEntities {
-    parent: Entity,
     entities: HashMap<Hex, MapTileEntityBundle>,
 }
 
@@ -74,19 +87,6 @@ struct MapTileEntityBundle {
 #[derive(Debug, Component)]
 struct TileCoordinates {
     hex: Hex,
-}
-
-fn setup_debug_map(
-    mut commands: Commands,
-    materials: Res<HexagonMaterials>,
-    meshes: Res<HexagonMeshes>,
-) {
-    let radius = 1;
-    let map = GameMap::new(radius);
-
-    spawn_map(&map, &mut commands, &materials, &meshes);
-
-    commands.insert_resource(map);
 }
 
 fn spawn_map(
@@ -155,8 +155,5 @@ fn spawn_map(
         entities.insert(hex, MapTileEntityBundle { top, side });
     }
 
-    commands.insert_resource(MapTileEntities {
-        parent: map_parent,
-        entities,
-    });
+    commands.insert_resource(MapTileEntities { entities });
 }
