@@ -37,30 +37,32 @@ impl Plugin for MapEditorPlugin {
                     .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
                 update_tile_entity.after(use_tool),
             )
-                .run_if(in_state(GameState::MapEditor)),
+                .run_if(in_state(GameState::MapEditor))
+                .run_if(in_state(MapState::Loaded)),
         );
         app.add_event::<TileChangeEvent>();
     }
 }
 
-fn setup_map_editor(
-    mut commands: Commands,
-    materials: Res<HexagonMaterials>,
-    meshes: Res<HexagonMeshes>,
-) {
+fn setup_map_editor(mut commands: Commands, spawn_map_command: EventWriter<SpawnMapCommand>) {
     commands.insert_resource(MapEditorTool::default());
-
-    let radius = 10;
-    let map = GameMap::new(radius);
-
-    spawn_map(&map, &mut commands, &materials, &meshes);
-
-    commands.insert_resource(map);
+    spawn_empty_map(commands, spawn_map_command);
 }
 
 fn exit_map_editor(mut commands: Commands, map_entities: ResMut<MapTileEntities>) {
     commands.entity(map_entities.parent).despawn_recursive();
     commands.remove_resource::<MapTileEntities>();
+}
+
+pub(in crate::map_editor) fn spawn_empty_map(
+    mut commands: Commands,
+    mut spawn_map_command: EventWriter<SpawnMapCommand>,
+) {
+    let radius = 10;
+    let map = GameMap::new(radius);
+    commands.insert_resource(map);
+
+    spawn_map_command.send(SpawnMapCommand {});
 }
 
 #[derive(Resource, Debug, Default)]

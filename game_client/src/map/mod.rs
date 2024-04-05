@@ -31,9 +31,11 @@ impl Plugin for GameMapPlugin {
             (
                 on_map_spawned.run_if(resource_added::<MapTileEntities>),
                 on_map_despawned.run_if(resource_removed::<MapTileEntities>()),
+                spawn_map_command_listener.run_if(on_event::<SpawnMapCommand>()),
             ),
         );
         app.init_state::<MapState>();
+        app.add_event::<SpawnMapCommand>();
     }
 }
 
@@ -89,12 +91,22 @@ pub struct TileCoordinates {
     hex: Hex,
 }
 
-pub fn spawn_map(
-    map: &GameMap,
-    commands: &mut Commands,
-    materials: &HexagonMaterials,
-    meshes: &HexagonMeshes,
+#[derive(Event)]
+pub struct SpawnMapCommand {}
+
+fn spawn_map_command_listener(
+    mut commands: Commands,
+    map: Res<GameMap>,
+    existing_map_tile_entities: Option<Res<MapTileEntities>>,
+    materials: Res<HexagonMaterials>,
+    meshes: Res<HexagonMeshes>,
 ) {
+    if let Some(map_tile_entities) = existing_map_tile_entities {
+        commands
+            .entity(map_tile_entities.parent)
+            .despawn_recursive()
+    }
+
     let map_parent = commands
         .spawn((SpatialBundle::default(), Name::new("Map")))
         .id();

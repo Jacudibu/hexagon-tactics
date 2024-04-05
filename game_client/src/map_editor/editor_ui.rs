@@ -43,9 +43,11 @@ fn tool_view(mut egui: EguiContexts, mut current_tool: ResMut<MapEditorTool>) {
 
 const TEST_MAP_NAME: &str = "test_map.map";
 fn menu_buttons(
+    mut commands: Commands,
     mut egui: EguiContexts,
     map: Res<GameMap>,
     mut next_game_state: ResMut<NextState<GameState>>,
+    mut spawn_new_world_command: EventWriter<SpawnMapCommand>,
 ) {
     egui::Window::new("Save & Load")
         .title_bar(false)
@@ -55,6 +57,10 @@ fn menu_buttons(
         .fixed_pos(Pos2::new(-5.0, -5.0))
         .show(egui.ctx_mut(), |ui| {
             ui.vertical_centered(|ui| {
+                if ui.button("New").clicked() {
+                    commands.insert_resource(GameMap::new(10));
+                    spawn_new_world_command.send(SpawnMapCommand {});
+                }
                 if ui.button("Save").clicked() {
                     map.write_to_disk(TEST_MAP_NAME);
                 }
