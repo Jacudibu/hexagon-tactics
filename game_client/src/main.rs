@@ -1,16 +1,16 @@
 mod camera;
 mod debugging;
-mod game_map;
 mod load;
 mod main_menu;
+mod map;
 mod map_editor;
 mod networking;
 
 use crate::camera::CameraPlugin;
 use crate::debugging::DebuggingPlugin;
-use crate::game_map::GameMapPlugin;
 use crate::load::LoadPlugin;
 use crate::main_menu::MainMenuPlugin;
+use crate::map::GameMapPlugin;
 use crate::map_editor::MapEditorPlugin;
 use crate::networking::{Network, NetworkPlugin};
 use bevy::prelude::*;

@@ -1,4 +1,4 @@
-use crate::game_map::{MapState, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{MapState, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::math::Vec3;
 use bevy::prelude::{
@@ -8,7 +8,7 @@ use bevy::prelude::{
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 use hexx::{GridVertex, HexLayout};
 
-pub(in crate::game_map) struct MapGizmosPlugin;
+pub(in crate::map) struct MapGizmosPlugin;
 impl Plugin for MapGizmosPlugin {
     fn build(&self, app: &mut App) {
         app.init_gizmo_group::<MapGizmos>();

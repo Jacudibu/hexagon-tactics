@@ -1,4 +1,4 @@
-use crate::game_map::tile_cursor::MouseCursorOnTile;
+use crate::map::tile_cursor::MouseCursorOnTile;
 use crate::MouseCursorOverUiState;
 use bevy::app::{App, First, Plugin, Update};
 use bevy::prelude::*;
@@ -6,7 +6,7 @@ use bevy_egui::egui::Pos2;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::game_map::GameMap;
 
-pub(in crate::game_map) struct MapUiPlugin;
+pub(in crate::map) struct MapUiPlugin;
 impl Plugin for MapUiPlugin {
     fn build(&self, app: &mut App) {
         if !app.is_plugin_added::<EguiPlugin>() {

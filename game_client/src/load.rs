@@ -1,4 +1,4 @@
-use crate::game_map::METERS_PER_TILE_HEIGHT_UNIT;
+use crate::map::METERS_PER_TILE_HEIGHT_UNIT;
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;

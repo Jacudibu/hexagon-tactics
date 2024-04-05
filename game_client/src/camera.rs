@@ -1,4 +1,4 @@
-use crate::{game_map, MouseCursorOverUiState};
+use crate::{map, MouseCursorOverUiState};
 use bevy::prelude::*;
 use bevy_mod_raycast::prelude::RaycastSource;
 use leafwing_input_manager::action_state::ActionState;
@@ -104,7 +104,7 @@ fn init(mut commands: Commands) {
                 },
                 ..default()
             },
-            RaycastSource::<game_map::TileRaycastSet>::new_cursor(),
+            RaycastSource::<map::TileRaycastSet>::new_cursor(),
         ))
         .id();
 

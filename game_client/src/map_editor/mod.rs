@@ -12,8 +12,8 @@ use leafwing_input_manager::Actionlike;
 
 use game_common::game_map::{GameMap, TileData, TileSurface, MAX_HEIGHT};
 
-use crate::game_map::*;
 use crate::load::{HexagonMaterials, HexagonMeshes};
+use crate::map::*;
 use crate::map_editor::editor_ui::MapEditorUiPlugin;
 use crate::{GameState, MouseCursorOverUiState};
 

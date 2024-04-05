@@ -9,10 +9,10 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 pub use tile_cursor::TileRaycastSet;
 
-use crate::game_map::map_gizmos::MapGizmosPlugin;
-use crate::game_map::map_ui::MapUiPlugin;
-use crate::game_map::tile_cursor::TileCursorPlugin;
 use crate::load::{HexagonMaterials, HexagonMeshes};
+use crate::map::map_gizmos::MapGizmosPlugin;
+use crate::map::map_ui::MapUiPlugin;
+use crate::map::tile_cursor::TileCursorPlugin;
 
 mod map_gizmos;
 mod map_ui;

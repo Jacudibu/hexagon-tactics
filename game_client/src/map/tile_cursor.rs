@@ -9,12 +9,12 @@ use hexx::Hex;
 
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 
-use crate::game_map::{HexagonMeshes, MapState, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
 use crate::load::CursorMaterials;
+use crate::map::{HexagonMeshes, MapState, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
 use crate::map_editor::TileChangeEvent;
 use crate::MouseCursorOverUiState;
 
-pub(in crate::game_map) struct TileCursorPlugin;
+pub(in crate::map) struct TileCursorPlugin;
 impl Plugin for TileCursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(DeferredRaycastingPlugin::<TileRaycastSet>::default());
