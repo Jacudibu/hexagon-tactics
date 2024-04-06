@@ -1,8 +1,6 @@
 use crate::load::{HexagonMaterials, HexagonMeshes};
-use crate::map::tile_cursor::TileRaycastSet;
-use crate::map::{
-    MapState, MapTileEntities, MapTileEntityBundle, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT,
-};
+use crate::map::tile_cursor::{SelectableTileComponent, TileRaycastSet};
+use crate::map::{MapState, MapTileEntities, MapTileEntityBundle, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, First, Last, Plugin, Startup};
 use bevy::core::Name;
 use bevy::hierarchy::{BuildChildren, DespawnRecursiveExt};
@@ -11,7 +9,7 @@ use bevy::pbr::{
     AmbientLight, DirectionalLight, DirectionalLightBundle, NotShadowCaster, PbrBundle,
 };
 use bevy::prelude::{
-    default, on_event, resource_added, resource_removed, Commands, Entity, Event,
+    default, on_event, resource_added, resource_removed, Commands, Component, Entity, Event,
     IntoSystemConfigs, NextState, Res, ResMut, SpatialBundle, Transform,
 };
 use bevy::utils::HashMap;
@@ -48,6 +46,13 @@ pub struct SpawnMapCommand {}
 
 #[derive(Event)]
 pub struct DespawnMapCommand {}
+
+#[derive(Component)]
+pub struct HexagonTopMarker {}
+#[derive(Component)]
+pub struct HexagonSideMarker {}
+#[derive(Component)]
+pub struct HexagonFluidMarker {}
 
 fn setup_light(mut commands: Commands) {
     commands.insert_resource(AmbientLight {
@@ -116,8 +121,9 @@ pub fn spawn_map_command_listener(
                     material: materials.top.surface_material(&tile_data),
                     ..default()
                 },
+                HexagonTopMarker {},
                 RaycastMesh::<TileRaycastSet>::default(),
-                TileCoordinates { hex },
+                SelectableTileComponent { hex },
                 Name::new(format!("Tile Top [{},{}]", hex.x, hex.y)),
             ))
             .set_parent(parent)
@@ -134,8 +140,8 @@ pub fn spawn_map_command_listener(
                     material: materials.sides.surface_material(&tile_data),
                     ..default()
                 },
+                HexagonSideMarker {},
                 RaycastMesh::<TileRaycastSet>::default(),
-                TileCoordinates { hex },
                 Name::new(format!("Tile Side [{},{}]", hex.x, hex.y)),
             ))
             .set_parent(parent)
@@ -194,9 +200,10 @@ pub fn spawn_fluid_entity(
                     material: materials.fluid.surface_material(&fluid.kind),
                     ..default()
                 },
+                HexagonFluidMarker {},
                 RaycastMesh::<TileRaycastSet>::default(),
                 NotShadowCaster,
-                TileCoordinates { hex },
+                SelectableTileComponent { hex },
                 Name::new(format!("Tile Fluid [{},{}]", hex.x, hex.y)),
             ))
             .set_parent(parent)

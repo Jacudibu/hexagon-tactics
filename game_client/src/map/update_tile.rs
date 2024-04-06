@@ -10,8 +10,8 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, TileData};
 
 use crate::load::{HexagonMaterials, HexagonMeshes};
-use crate::map::spawning::spawn_fluid_entity;
-use crate::map::{MapTileEntities, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::spawning::{spawn_fluid_entity, HexagonTopMarker};
+use crate::map::{MapTileEntities, METERS_PER_TILE_HEIGHT_UNIT};
 
 /// Listens to `TileChangeEvent`s in order to push those changes into the existing tile entities.
 pub struct TileUpdaterPlugin;
@@ -38,7 +38,7 @@ pub fn update_tile_entity(
     meshes: Res<HexagonMeshes>,
     materials: Res<HexagonMaterials>,
     mut tile_entities: ResMut<MapTileEntities>,
-    mut top_transforms: Query<&mut Transform, With<TileCoordinates>>,
+    mut top_transforms: Query<&mut Transform, With<HexagonTopMarker>>,
 ) {
     for event in tile_change_event.read() {
         if let Some(tile_data) = map.tiles.get(&event.hex) {

@@ -57,8 +57,3 @@ pub(in crate::map) struct MapTileEntityBundle {
     pub side: Entity,
     pub fluid: Option<Entity>,
 }
-
-#[derive(Debug, Component)]
-pub(in crate::map) struct TileCoordinates {
-    hex: Hex,
-}

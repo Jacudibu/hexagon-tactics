@@ -1,5 +1,6 @@
 use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
+use bevy::ecs::query::QueryEntityError;
 use bevy::log::error;
 use bevy::pbr::{NotShadowCaster, PbrBundle};
 use bevy::prelude::*;
@@ -12,7 +13,7 @@ use game_common::game_map::{GameMap, HEX_LAYOUT};
 
 use crate::load::CursorMaterials;
 use crate::map::update_tile::TileChangeEvent;
-use crate::map::{HexagonMeshes, MapState, TileCoordinates, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{HexagonMeshes, MapState, METERS_PER_TILE_HEIGHT_UNIT};
 use crate::MouseCursorOverUiState;
 
 pub(in crate::map) struct TileCursorPlugin;
@@ -58,6 +59,11 @@ fn clean_up(mut commands: Commands, cursors: Query<Entity, With<TileCursor>>) {
     }
 }
 
+#[derive(Component, Debug)]
+pub struct SelectableTileComponent {
+    pub hex: Hex,
+}
+
 #[derive(Reflect)]
 pub struct TileRaycastSet;
 
@@ -75,7 +81,7 @@ pub struct MouseCursorOnTile {
 fn update_mouse_cursor(
     mut commands: Commands,
     tile_ray: Query<&RaycastSource<TileRaycastSet>>,
-    ray_targets: Query<&TileCoordinates, With<RaycastMesh<TileRaycastSet>>>,
+    ray_targets: Query<&SelectableTileComponent, With<RaycastMesh<TileRaycastSet>>>,
 ) {
     for source in tile_ray.iter() {
         if let Some(intersections) = source.get_intersections() {
@@ -91,9 +97,15 @@ fn update_mouse_cursor(
                         });
                         return;
                     }
-                    Err(e) => {
-                        error!("Unexpected error when Raycasting for mouse cursor: {}", e)
-                    }
+                    Err(e) => match e {
+                        QueryEntityError::QueryDoesNotMatch(_) => {
+                            // Hexagon sides don't have SelectableTileComponent, so we reach this
+                            // whenever a raycast gets intercepted by a hexagon side.
+                        }
+                        e => {
+                            error!("Unexpected error when Raycasting for mouse cursor: {}", e)
+                        }
+                    },
                 }
             }
         }
@@ -124,6 +136,10 @@ fn update_tile_cursor(
     map: Res<GameMap>,
 ) {
     let Some(mouse_cursor) = mouse_cursor else {
+        for (entity, _) in tile_cursor_q.iter() {
+            commands.entity(entity).despawn();
+        }
+
         return;
     };
 
