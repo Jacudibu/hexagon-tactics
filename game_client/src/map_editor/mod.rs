@@ -12,7 +12,6 @@ use leafwing_input_manager::Actionlike;
 
 use game_common::game_map::{Fluid, FluidKind, GameMap, TileData, TileSurface, MAX_HEIGHT};
 
-use crate::load::{HexagonMaterials, HexagonMeshes};
 use crate::map::*;
 use crate::map_editor::editor_ui::MapEditorUiPlugin;
 use crate::{GameState, MouseCursorOverUiState};
@@ -35,35 +34,24 @@ impl Plugin for MapEditorPlugin {
                 use_tool
                     .after(track_input)
                     .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
-                update_tile_entity.after(use_tool),
             )
                 .run_if(in_state(GameState::MapEditor))
                 .run_if(in_state(MapState::Loaded)),
         );
-        app.add_event::<TileChangeEvent>();
     }
 }
 
-fn setup_map_editor(mut commands: Commands, spawn_map_command: EventWriter<SpawnMapCommand>) {
+fn setup_map_editor(mut commands: Commands, mut spawn_map_command: EventWriter<SpawnMapCommand>) {
     commands.insert_resource(MapEditorTool::default());
-    spawn_empty_map(commands, spawn_map_command);
-}
-
-fn exit_map_editor(mut commands: Commands, map_entities: ResMut<MapTileEntities>) {
-    // TODO: These should probably be done by the map itself
-    commands.entity(map_entities.parent).despawn_recursive();
-    commands.remove_resource::<MapTileEntities>();
-}
-
-pub(in crate::map_editor) fn spawn_empty_map(
-    mut commands: Commands,
-    mut spawn_map_command: EventWriter<SpawnMapCommand>,
-) {
-    let radius = 10;
-    let map = GameMap::new(radius);
+    let default_radius = 10;
+    let map = GameMap::new(default_radius);
     commands.insert_resource(map);
 
     spawn_map_command.send(SpawnMapCommand {});
+}
+
+fn exit_map_editor(mut despawn_map_command: EventWriter<DespawnMapCommand>) {
+    despawn_map_command.send(DespawnMapCommand {});
 }
 
 #[derive(Resource, Debug, Default)]
@@ -251,97 +239,4 @@ fn use_tool_on_tile(tool: &MapEditorTool, tile: &mut TileData) {
             }
         }
     }
-}
-
-fn update_tile_entity(
-    mut commands: Commands,
-    map: Res<GameMap>,
-    mut tile_change_event: EventReader<TileChangeEvent>,
-    meshes: Res<HexagonMeshes>,
-    materials: Res<HexagonMaterials>,
-    mut tile_entities: ResMut<MapTileEntities>,
-    mut top_transforms: Query<&mut Transform, With<TileCoordinates>>,
-) {
-    // TODO: Should probably be part of map and not the editor
-    for event in tile_change_event.read() {
-        if let Some(tile_data) = map.tiles.get(&event.hex) {
-            if let Some(entities) = tile_entities.entities.get_mut(&event.hex) {
-                let mut side_commands = commands.entity(entities.side);
-                if let Some(mesh) = meshes.columns.get(&tile_data.height) {
-                    side_commands.insert(mesh.clone());
-                    // FIXME: Temporary fix for https://github.com/bevyengine/bevy/issues/4294 and/or https://github.com/aevyrie/bevy_mod_raycast/issues/42
-                    side_commands.remove::<bevy::render::primitives::Aabb>();
-                } else {
-                    error!(
-                        "Was unable to find hex mesh for height {}!",
-                        tile_data.height
-                    );
-                }
-
-                side_commands.insert(materials.sides.surface_material(&tile_data));
-
-                let mut top_commands = commands.entity(entities.top);
-                if let Ok(mut transform) = top_transforms.get_mut(entities.top) {
-                    transform.translation = Vec3::new(
-                        0.0,
-                        tile_data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
-                        0.0,
-                    );
-                } else {
-                    error!(
-                        "Unable to find a transform for the hex top at {:?}",
-                        event.hex
-                    );
-                }
-
-                top_commands.insert(materials.top.surface_material(&tile_data));
-
-                if let Some(fluid) = &tile_data.fluid {
-                    if let Some(fluid_entity) = entities.fluid {
-                        if let Ok(mut transform) = top_transforms.get_mut(fluid_entity) {
-                            transform.translation = Vec3::new(
-                                0.0,
-                                (tile_data.height as f32 + fluid.height)
-                                    * METERS_PER_TILE_HEIGHT_UNIT,
-                                0.0,
-                            );
-                        } else {
-                            error!(
-                                "Unable to find a transform for the hex fluid at {:?}",
-                                event.hex
-                            );
-                        }
-                    } else {
-                        entities.fluid = spawn_fluid_entity(
-                            &mut commands,
-                            &materials,
-                            &meshes,
-                            &tile_data,
-                            event.hex,
-                            entities.parent,
-                            &fluid,
-                        );
-                    }
-                } else {
-                    if let Some(fluid_entity) = entities.fluid {
-                        commands.entity(fluid_entity).remove_parent().despawn();
-                        entities.fluid = None;
-                    }
-                }
-            } else {
-                error!("Was unable to find hex entity at {:?} in map!", event.hex);
-            }
-        } else {
-            error!(
-                "Was unable to find hex tile_data at {:?} in map!",
-                event.hex
-            );
-        }
-    }
-}
-
-#[derive(Event)]
-pub struct TileChangeEvent {
-    pub hex: Hex,
-    pub old_data: TileData,
 }

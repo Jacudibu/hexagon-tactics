@@ -1,6 +1,5 @@
-use crate::{map, MouseCursorOverUiState};
+use crate::MouseCursorOverUiState;
 use bevy::prelude::*;
-use bevy_mod_raycast::prelude::RaycastSource;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
 use leafwing_input_manager::buttonlike::MouseWheelDirection;
@@ -104,7 +103,6 @@ fn init(mut commands: Commands) {
                 },
                 ..default()
             },
-            RaycastSource::<map::TileRaycastSet>::new_cursor(),
         ))
         .id();
 
