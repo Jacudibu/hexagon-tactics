@@ -44,6 +44,11 @@ pub enum MapState {
     Loaded,
 }
 
+#[derive(Component, Debug)]
+pub(in crate::map) struct HexagonTileComponent {
+    pub hex: Hex,
+}
+
 #[derive(Debug, Resource)]
 pub(in crate::map) struct MapTileEntities {
     pub parent: Entity,

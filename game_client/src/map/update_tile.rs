@@ -10,7 +10,8 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, TileData};
 
 use crate::load::{HexagonMaterials, HexagonMeshes};
-use crate::map::spawning::{spawn_fluid_entity, HexagonTopMarker};
+use crate::map::spawning::spawn_fluid_entity;
+use crate::map::HexagonTileComponent;
 use crate::map::{MapTileEntities, METERS_PER_TILE_HEIGHT_UNIT};
 
 /// Listens to `TileChangeEvent`s in order to push those changes into the existing tile entities.
@@ -38,7 +39,7 @@ pub fn update_tile_entity(
     meshes: Res<HexagonMeshes>,
     materials: Res<HexagonMaterials>,
     mut tile_entities: ResMut<MapTileEntities>,
-    mut top_transforms: Query<&mut Transform, With<HexagonTopMarker>>,
+    mut tile_transforms: Query<&mut Transform, With<HexagonTileComponent>>,
 ) {
     for event in tile_change_event.read() {
         if let Some(tile_data) = map.tiles.get(&event.hex) {
@@ -58,7 +59,7 @@ pub fn update_tile_entity(
                 side_commands.insert(materials.sides.surface_material(&tile_data));
 
                 let mut top_commands = commands.entity(entities.top);
-                if let Ok(mut transform) = top_transforms.get_mut(entities.top) {
+                if let Ok(mut transform) = tile_transforms.get_mut(entities.top) {
                     transform.translation = Vec3::new(
                         0.0,
                         tile_data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
@@ -75,7 +76,7 @@ pub fn update_tile_entity(
 
                 if let Some(fluid) = &tile_data.fluid {
                     if let Some(fluid_entity) = entities.fluid {
-                        if let Ok(mut transform) = top_transforms.get_mut(fluid_entity) {
+                        if let Ok(mut transform) = tile_transforms.get_mut(fluid_entity) {
                             transform.translation = Vec3::new(
                                 0.0,
                                 (tile_data.height as f32 + fluid.height)

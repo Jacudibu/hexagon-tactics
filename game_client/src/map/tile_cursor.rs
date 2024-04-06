@@ -12,7 +12,7 @@ use game_common::game_map::{GameMap, HEX_LAYOUT};
 
 use crate::load::CursorMaterials;
 use crate::map::update_tile::TileChangeEvent;
-use crate::map::{HexagonMeshes, MapState, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{HexagonMeshes, HexagonTileComponent, MapState, METERS_PER_TILE_HEIGHT_UNIT};
 use crate::MouseCursorOverUiState;
 
 pub(in crate::map) struct TileCursorPlugin;
@@ -58,11 +58,6 @@ fn clean_up(mut commands: Commands, cursors: Query<Entity, With<TileCursor>>) {
     }
 }
 
-#[derive(Component, Debug)]
-pub struct SelectableTileComponent {
-    pub hex: Hex,
-}
-
 #[derive(Reflect)]
 pub struct TileRaycastSet;
 
@@ -80,7 +75,7 @@ pub struct MouseCursorOnTile {
 fn update_mouse_cursor(
     mut commands: Commands,
     tile_ray: Query<&RaycastSource<TileRaycastSet>>,
-    ray_targets: Query<&SelectableTileComponent, With<RaycastMesh<TileRaycastSet>>>,
+    ray_targets: Query<&HexagonTileComponent, With<RaycastMesh<TileRaycastSet>>>,
 ) {
     for source in tile_ray.iter() {
         if let Some(intersections) = source.get_intersections() {
