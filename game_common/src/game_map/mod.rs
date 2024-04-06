@@ -69,7 +69,6 @@ pub enum TileSurface {
     Stone,
     Sand,
     Earth,
-    Water,
 }
 
 impl Display for TileSurface {
@@ -79,7 +78,6 @@ impl Display for TileSurface {
             TileSurface::Stone => write!(f, "Stone"),
             TileSurface::Sand => write!(f, "Sand"),
             TileSurface::Earth => write!(f, "Earth"),
-            TileSurface::Water => write!(f, "Water"),
         }
     }
 }

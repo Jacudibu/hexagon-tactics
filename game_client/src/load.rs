@@ -31,7 +31,6 @@ pub struct HexagonMaterialsForSideOrTop {
     pub stone: Handle<StandardMaterial>,
     pub sand: Handle<StandardMaterial>,
     pub earth: Handle<StandardMaterial>,
-    pub water: Handle<StandardMaterial>,
 }
 
 impl HexagonMaterialsForSideOrTop {
@@ -45,7 +44,6 @@ impl HexagonMaterialsForSideOrTop {
                 TileSurface::Stone => self.stone.clone(),
                 TileSurface::Sand => self.sand.clone(),
                 TileSurface::Earth => self.earth.clone(),
-                TileSurface::Water => self.water.clone(),
             }
         }
     }
@@ -137,7 +135,6 @@ pub fn load_materials(
                 stone: materials.add(Color::GRAY),
                 sand: materials.add(Color::BEIGE),
                 earth: materials.add(Color::TOMATO),
-                water: materials.add(Color::BLUE),
             }
         },
         sides: {
@@ -147,7 +144,6 @@ pub fn load_materials(
                 stone: materials.add(Color::GRAY),
                 sand: materials.add(Color::BEIGE),
                 earth: materials.add(Color::TOMATO),
-                water: materials.add(Color::BLUE),
             }
         },
         fluid: { HexagonMaterialsForFluid { water } },

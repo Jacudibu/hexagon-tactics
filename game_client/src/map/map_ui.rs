@@ -45,8 +45,13 @@ fn tile_cursor_ui(mut egui: EguiContexts, cursor: Res<MouseCursorOnTile>, map: R
         }
 
         let mut lines = Vec::new();
+        if let Some(fluid) = &tile.fluid {
+            lines.push(format!("Fluid: {}", fluid.kind));
+            lines.push(format!("Depth: {}", fluid.height.ceil()));
+        }
         lines.push(format!("Height: {}", tile.height));
         lines.push(format!("Surface: {}", tile.surface));
+
         lines.join("\n")
     } else {
         String::from("Unable to find tile in Map?!")
