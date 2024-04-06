@@ -1,9 +1,9 @@
-use crate::map::{MapState, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{MapState, TileCursor, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::math::Vec3;
 use bevy::prelude::{
-    in_state, AppGizmoBuilder, Color, GizmoConfigGroup, GizmoConfigStore, Gizmos,
-    IntoSystemConfigs, Reflect, Res, ResMut,
+    error, in_state, AppGizmoBuilder, Color, GizmoConfigGroup, GizmoConfigStore, Gizmos,
+    IntoSystemConfigs, Query, Reflect, Res, ResMut,
 };
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 use hexx::{GridVertex, HexLayout};
@@ -11,19 +11,22 @@ use hexx::{GridVertex, HexLayout};
 pub(in crate::map) struct MapGizmosPlugin;
 impl Plugin for MapGizmosPlugin {
     fn build(&self, app: &mut App) {
-        app.init_gizmo_group::<MapGizmos>();
+        app.init_gizmo_group::<HexagonOutlineGizmos>();
+        app.init_gizmo_group::<CursorGizmos>();
         app.add_systems(Startup, setup_gizmo_config);
         app.add_systems(
             Update,
-            draw_hexagon_gizmos.run_if(in_state(MapState::Loaded)),
+            (draw_hexagon_gizmos, draw_cursor_gizmos).run_if(in_state(MapState::Loaded)),
         );
     }
 }
 
 #[derive(Default, Reflect, GizmoConfigGroup)]
-struct MapGizmos;
+struct HexagonOutlineGizmos;
+#[derive(Default, Reflect, GizmoConfigGroup)]
+struct CursorGizmos;
 
-fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
+fn draw_hexagon_gizmos(mut gizmos: Gizmos<HexagonOutlineGizmos>, map: Res<GameMap>) {
     for (hex, data) in &map.tiles {
         let height = data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT;
         if data.height == 0 {
@@ -57,7 +60,47 @@ fn draw_hexagon_gizmos(mut gizmos: Gizmos<MapGizmos>, map: Res<GameMap>) {
     }
 }
 
-fn connect_hexagon_vertices(gizmos: &mut Gizmos<MapGizmos>, vertices: [Vec3; 6]) {
+fn draw_cursor_gizmos(
+    cursors: Query<&TileCursor>,
+    mut gizmos: Gizmos<CursorGizmos>,
+    map: Res<GameMap>,
+) {
+    for cursor in cursors.iter() {
+        let Some(tile) = map.tiles.get(&cursor.hex) else {
+            error!("Was unable to get map tile at {:?}", cursor.hex);
+            continue;
+        };
+
+        let Some(fluid) = &tile.fluid else {
+            continue;
+        };
+
+        let top_vertices = cursor.hex.all_vertices().map(|x| {
+            vertex_coordinates_3d(
+                &HEX_LAYOUT,
+                x,
+                (tile.height as f32 + fluid.height) * METERS_PER_TILE_HEIGHT_UNIT,
+            )
+        });
+
+        let bottom_vertices = cursor.hex.all_vertices().map(|x| {
+            vertex_coordinates_3d(
+                &HEX_LAYOUT,
+                x,
+                tile.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
+            )
+        });
+
+        gizmos.line(top_vertices[0], bottom_vertices[0], Color::BLACK);
+        gizmos.line(top_vertices[1], bottom_vertices[1], Color::BLACK);
+        gizmos.line(top_vertices[2], bottom_vertices[2], Color::BLACK);
+        gizmos.line(top_vertices[3], bottom_vertices[3], Color::BLACK);
+        gizmos.line(top_vertices[4], bottom_vertices[4], Color::BLACK);
+        gizmos.line(top_vertices[5], bottom_vertices[5], Color::BLACK);
+    }
+}
+
+fn connect_hexagon_vertices<T: GizmoConfigGroup>(gizmos: &mut Gizmos<T>, vertices: [Vec3; 6]) {
     gizmos.line(vertices[0], vertices[1], Color::BLACK);
     gizmos.line(vertices[1], vertices[2], Color::BLACK);
     gizmos.line(vertices[2], vertices[3], Color::BLACK);
@@ -77,7 +120,12 @@ fn vertex_coordinates_3d(layout: &HexLayout, vertex: GridVertex, height: f32) ->
 }
 
 fn setup_gizmo_config(mut config_store: ResMut<GizmoConfigStore>) {
-    let (config, _) = config_store.config_mut::<MapGizmos>();
+    let (config, _) = config_store.config_mut::<HexagonOutlineGizmos>();
+    config.depth_bias = -0.00001;
+    config.line_width = 20.0;
+    config.line_perspective = true;
+
+    let (config, _) = config_store.config_mut::<CursorGizmos>();
     config.depth_bias = -0.00001;
     config.line_width = 20.0;
     config.line_perspective = true;
