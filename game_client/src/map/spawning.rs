@@ -142,6 +142,7 @@ pub fn spawn_map_command_listener(
                 },
                 HexagonSideMarker {},
                 RaycastMesh::<TileRaycastSet>::default(),
+                SelectableTileComponent { hex },
                 Name::new(format!("Tile Side [{},{}]", hex.x, hex.y)),
             ))
             .set_parent(parent)

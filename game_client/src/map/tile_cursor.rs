@@ -97,15 +97,9 @@ fn update_mouse_cursor(
                         });
                         return;
                     }
-                    Err(e) => match e {
-                        QueryEntityError::QueryDoesNotMatch(_) => {
-                            // Hexagon sides don't have SelectableTileComponent, so we reach this
-                            // whenever a raycast gets intercepted by a hexagon side.
-                        }
-                        e => {
-                            error!("Unexpected error when Raycasting for mouse cursor: {}", e)
-                        }
-                    },
+                    Err(e) => {
+                        error!("Unexpected error when Raycasting for mouse cursor: {}", e)
+                    }
                 }
             }
         }
