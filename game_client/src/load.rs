@@ -110,7 +110,7 @@ pub fn load_materials(
 
     let grass_top = materials.add(StandardMaterial {
         base_color_texture: Some(asset_server.load("textures/grass_top.png")),
-        reflectance: 0.0,
+        reflectance: 0.2,
         perceptual_roughness: 0.7,
         ..default()
     });
@@ -118,7 +118,7 @@ pub fn load_materials(
         base_color_texture: Some(
             asset_server.load_with_settings("textures/grass_side.png", settings),
         ),
-        reflectance: 0.0,
+        reflectance: 0.2,
         perceptual_roughness: 0.7,
         ..default()
     });

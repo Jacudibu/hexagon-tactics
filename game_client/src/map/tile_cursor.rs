@@ -1,6 +1,5 @@
 use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
-use bevy::ecs::query::QueryEntityError;
 use bevy::log::error;
 use bevy::pbr::{NotShadowCaster, PbrBundle};
 use bevy::prelude::*;
