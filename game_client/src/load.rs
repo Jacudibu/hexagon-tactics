@@ -91,81 +91,11 @@ pub fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     commands.insert_resource(HexagonMeshes { flat, columns })
 }
 
-pub fn load_materials(
-    mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
-) {
-    let sampler_desc = ImageSamplerDescriptor {
-        address_mode_u: ImageAddressMode::Repeat,
-        address_mode_v: ImageAddressMode::Repeat,
-        ..Default::default()
-    };
-
-    let settings = move |s: &mut ImageLoaderSettings| {
-        s.sampler = ImageSampler::Descriptor(sampler_desc.clone());
-    };
-
-    let grass_top = materials.add(StandardMaterial {
-        base_color_texture: Some(asset_server.load("textures/grass_top.png")),
-        reflectance: 0.2,
-        perceptual_roughness: 0.7,
-        ..default()
-    });
-    let grass_side = materials.add(StandardMaterial {
-        base_color_texture: Some(
-            asset_server.load_with_settings("textures/grass_side.png", settings),
-        ),
-        reflectance: 0.2,
-        perceptual_roughness: 0.7,
-        ..default()
-    });
-
-    let water = materials.add(StandardMaterial {
-        base_color: Color::rgba(0.0, 0.5, 1.0, 0.5),
-        alpha_mode: AlphaMode::Blend,
-        ..default()
-    });
-
-    commands.insert_resource(HexagonMaterials {
-        top: {
-            HexagonMaterialsForSideOrTop {
-                invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
-                grass: grass_top,
-                stone: materials.add(Color::GRAY),
-                sand: materials.add(Color::BEIGE),
-                earth: materials.add(Color::TOMATO),
-            }
-        },
-        sides: {
-            HexagonMaterialsForSideOrTop {
-                invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
-                grass: grass_side,
-                stone: materials.add(Color::GRAY),
-                sand: materials.add(Color::BEIGE),
-                earth: materials.add(Color::TOMATO),
-            }
-        },
-        fluid: { HexagonMaterialsForFluid { water } },
-    });
-
-    commands.insert_resource(CursorMaterials {
-        default: materials.add(StandardMaterial {
-            base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
-            unlit: true,
-            alpha_mode: AlphaMode::Multiply,
-            //base_color_texture: Some(debug_texture.clone()),
-            ..default()
-        }),
-    })
-}
-
 fn generate_hexagon_flat_mesh(hex_layout: &HexLayout) -> Mesh {
     let mesh_info = hexx::mesh::PlaneMeshBuilder::new(hex_layout).build();
     generate_mesh(mesh_info)
 }
 
-/// Compute a bevy mesh from the layout
 fn generate_hexagonal_column_mesh(hex_layout: &HexLayout, height: f32) -> Mesh {
     let mesh_info = ColumnMeshBuilder::new(hex_layout, height)
         .without_bottom_face()
@@ -193,4 +123,105 @@ fn generate_mesh(mesh_info: MeshInfo) -> Mesh {
     .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals)
     .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs)
     .with_inserted_indices(Indices::U16(mesh_info.indices))
+}
+
+pub fn load_materials(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    let grass_top = materials.add(StandardMaterial {
+        base_color_texture: Some(asset_server.load("textures/grass_top.png")),
+        reflectance: 0.2,
+        perceptual_roughness: 0.7,
+        ..default()
+    });
+    let grass_side = materials.add(StandardMaterial {
+        base_color_texture: Some(asset_server.load_with_settings(
+            "textures/grass_side.png",
+            load_image_with_repeated_address_mode,
+        )),
+        reflectance: 0.2,
+        perceptual_roughness: 0.7,
+        ..default()
+    });
+
+    let water = materials.add(StandardMaterial {
+        base_color: Color::rgba(0.0, 0.5, 1.0, 0.5),
+        alpha_mode: AlphaMode::Blend,
+        ..default()
+    });
+
+    commands.insert_resource(HexagonMaterials {
+        top: {
+            HexagonMaterialsForSideOrTop {
+                invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
+                grass: grass_top,
+                stone: generate_generic_top_mat(Color::GRAY, &asset_server, &mut materials),
+                sand: generate_generic_top_mat(Color::BEIGE, &asset_server, &mut materials),
+                earth: generate_generic_top_mat(Color::TOMATO, &asset_server, &mut materials),
+            }
+        },
+        sides: {
+            HexagonMaterialsForSideOrTop {
+                invisible: materials.add(Color::rgba(0.0, 0.0, 0.0, 0.0)),
+                grass: grass_side,
+                stone: generate_generic_side_mat(Color::GRAY, &asset_server, &mut materials),
+                sand: generate_generic_side_mat(Color::BEIGE, &asset_server, &mut materials),
+                earth: generate_generic_side_mat(Color::TOMATO, &asset_server, &mut materials),
+            }
+        },
+        fluid: { HexagonMaterialsForFluid { water } },
+    });
+
+    commands.insert_resource(CursorMaterials {
+        default: materials.add(StandardMaterial {
+            base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
+            unlit: true,
+            alpha_mode: AlphaMode::Multiply,
+            //base_color_texture: Some(debug_texture.clone()),
+            ..default()
+        }),
+    })
+}
+
+fn load_image_with_repeated_address_mode(settings: &mut ImageLoaderSettings) {
+    let sampler = ImageSamplerDescriptor {
+        address_mode_u: ImageAddressMode::Repeat,
+        address_mode_v: ImageAddressMode::Repeat,
+        ..Default::default()
+    };
+
+    settings.sampler = ImageSampler::Descriptor(sampler);
+}
+
+fn generate_generic_top_mat(
+    color: Color,
+    asset_server: &AssetServer,
+    materials: &mut Assets<StandardMaterial>,
+) -> Handle<StandardMaterial> {
+    materials.add(StandardMaterial {
+        base_color: color,
+        base_color_texture: Some(asset_server.load("textures/white_with_highlights_32px.png")),
+        reflectance: 0.2,
+        perceptual_roughness: 0.7,
+        ..default()
+    })
+}
+
+fn generate_generic_side_mat(
+    color: Color,
+    asset_server: &AssetServer,
+    materials: &mut Assets<StandardMaterial>,
+) -> Handle<StandardMaterial> {
+    materials.add(StandardMaterial {
+        base_color: color,
+        base_color_texture: Some(asset_server.load_with_settings(
+            "textures/white_with_highlights_16px.png",
+            load_image_with_repeated_address_mode,
+        )),
+        reflectance: 0.2,
+        perceptual_roughness: 0.7,
+        ..default()
+    })
 }
