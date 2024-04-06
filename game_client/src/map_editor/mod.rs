@@ -5,6 +5,7 @@ use bevy::app::App;
 use bevy::prelude::*;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
+use leafwing_input_manager::axislike::DualAxis;
 use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::prelude::InputKind;
@@ -87,6 +88,7 @@ enum MapEditorAction {
     PaintEarth,
     RaiseWater,
     LowerFluid,
+    MouseMotion,
 }
 
 impl std::fmt::Display for MapEditorAction {
@@ -101,6 +103,12 @@ impl std::fmt::Display for MapEditorAction {
             MapEditorAction::PaintEarth => write!(f, "Paint Earth"),
             MapEditorAction::RaiseWater => write!(f, "Raise Water"),
             MapEditorAction::LowerFluid => write!(f, "Lower Water"),
+            MapEditorAction::MouseMotion => {
+                warn!(
+                    "MapEditorAction::MouseMotion::Display was called. This should never happen?"
+                );
+                write!(f, "Mouse Motion")
+            }
         }
     }
 }
@@ -117,6 +125,7 @@ impl MapEditorAction {
         input_map.insert(Self::PaintEarth, KeyCode::Digit4);
         input_map.insert(Self::RaiseWater, KeyCode::Digit5);
         input_map.insert(Self::LowerFluid, KeyCode::Digit6);
+        input_map.insert(Self::MouseMotion, DualAxis::mouse_motion());
 
         input_map
     }
@@ -146,12 +155,25 @@ fn track_input(
     }
 }
 
+#[derive(Default)]
+struct MultiselectData {
+    total_mouse_delta: f32,
+    previously_selected_tiles: Vec<Hex>,
+}
+
+impl MultiselectData {
+    fn clear(&mut self) {
+        self.total_mouse_delta = 0.0;
+        self.previously_selected_tiles.clear();
+    }
+}
+
 fn use_tool(
-    mut map: ResMut<GameMap>,
+    map: ResMut<GameMap>,
     active_tool: Res<MapEditorTool>,
     current_selection: Query<&TileCursor>,
     input_state: Res<ActionState<MapEditorAction>>,
-    mut previously_interacted_tiles: Local<Vec<Hex>>,
+    mut multiselect_data: Local<MultiselectData>,
     mut tile_change_event: EventWriter<TileChangeEvent>,
 ) {
     if !input_state.pressed(&MapEditorAction::UseTool) {
@@ -159,14 +181,44 @@ fn use_tool(
     }
 
     if input_state.just_pressed(&MapEditorAction::UseTool) {
-        previously_interacted_tiles.deref_mut().clear();
+        multiselect_data.deref_mut().clear();
+        create_tool_events_for_tile(
+            map,
+            &active_tool,
+            current_selection,
+            multiselect_data,
+            &mut tile_change_event,
+        );
+
+        return;
     }
 
+    if let Some(mouse_motion) = input_state.axis_pair(&MapEditorAction::MouseMotion) {
+        multiselect_data.total_mouse_delta += mouse_motion.length();
+        if multiselect_data.total_mouse_delta > 35.0 {
+            create_tool_events_for_tile(
+                map,
+                &active_tool,
+                current_selection,
+                multiselect_data,
+                &mut tile_change_event,
+            );
+        }
+    }
+}
+
+fn create_tool_events_for_tile(
+    mut map: ResMut<GameMap>,
+    active_tool: &Res<MapEditorTool>,
+    current_selection: Query<&TileCursor>,
+    mut multiselect_data: Local<MultiselectData>,
+    tile_change_event: &mut EventWriter<TileChangeEvent>,
+) {
     tile_change_event.send_batch(current_selection.iter().filter_map(|x| {
-        if previously_interacted_tiles.contains(&x.hex) {
+        if multiselect_data.previously_selected_tiles.contains(&x.hex) {
             None
         } else {
-            previously_interacted_tiles.push(x.hex);
+            multiselect_data.previously_selected_tiles.push(x.hex);
             if let Some(tile) = map.tiles.get_mut(&x.hex) {
                 if can_tool_be_used_on_tile(&active_tool, tile) {
                     let old_data = tile.clone();
