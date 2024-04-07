@@ -1,8 +1,8 @@
 use futures::SinkExt;
-use game_common::game_map::GameMap;
 use game_common::game_state::GameState;
-use game_common::network_message::{DebugMessage, LoadMap, NetworkMessage};
-use game_common::TEST_MAP_NAME;
+use game_common::network_events::client_to_server::ClientToServerMessage;
+use game_common::network_events::server_to_client::ServerToClientMessage;
+use game_common::network_events::NetworkMessage;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io;
@@ -55,7 +55,7 @@ struct SharedState {
 }
 
 impl SharedState {
-    async fn broadcast(&mut self, message: &NetworkMessage) {
+    async fn broadcast(&mut self, message: &ServerToClientMessage) {
         match message.serialize() {
             Ok(bytes) => {
                 for (_, tx) in self.connections.iter_mut() {
@@ -140,7 +140,7 @@ async fn process_message_from_client(
     sender: SocketAddr,
     bytes: BytesMut,
 ) {
-    match NetworkMessage::deserialize(&bytes.to_vec()) {
+    match ClientToServerMessage::deserialize(&bytes.to_vec()) {
         Ok(message) => {
             let mut state = state.lock().await;
             info!("Processing message from {}: {:?}", sender, message);

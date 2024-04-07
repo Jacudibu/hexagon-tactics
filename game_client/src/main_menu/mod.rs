@@ -1,5 +1,5 @@
 use crate::map::SpawnMapCommand;
-use crate::networking::{Network, NetworkState, SendNetworkMessage};
+use crate::networking::{Network, NetworkState};
 use crate::ApplicationState;
 use bevy::app::{App, AppExit, Plugin};
 use bevy::prelude::{
@@ -9,7 +9,8 @@ use bevy::prelude::{
 use bevy_egui::egui::Align2;
 use bevy_egui::{egui, EguiContexts};
 use game_common::game_map::GameMap;
-use game_common::network_message::{LoadMap, NetworkMessage};
+use game_common::network_events::client_to_server::ClientToServerMessage;
+use game_common::network_events::server_to_client;
 
 pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
@@ -22,7 +23,10 @@ impl Plugin for MainMenuPlugin {
                 main_menu.run_if(in_state(MenuState::MainMenu)),
                 (
                     connection_menu.run_if(in_state(NetworkState::Disconnected)),
-                    (play_menu, load_map_listener.run_if(on_event::<LoadMap>()))
+                    (
+                        play_menu,
+                        load_map_listener.run_if(on_event::<server_to_client::LoadMap>()),
+                    )
                         .run_if(in_state(NetworkState::Connected)),
                 )
                     .run_if(in_state(MenuState::PlayMenu)),
@@ -94,7 +98,7 @@ fn connection_menu(
 
 fn play_menu(
     mut egui: EguiContexts,
-    mut event_writer: EventWriter<SendNetworkMessage>,
+    mut event_writer: EventWriter<ClientToServerMessage>,
     mut network: ResMut<Network>,
 ) {
     egui::Window::new("Play Menu")
@@ -105,7 +109,7 @@ fn play_menu(
         .show(egui.ctx_mut(), |ui| {
             ui.vertical_centered(|ui| {
                 if ui.button("Start Game").clicked() {
-                    event_writer.send(SendNetworkMessage::new(NetworkMessage::StartGame));
+                    event_writer.send(ClientToServerMessage::StartGame);
                 }
                 if ui.button("Disconnect").clicked() {
                     network.disconnect();
@@ -116,7 +120,7 @@ fn play_menu(
 
 fn load_map_listener(
     mut commands: Commands,
-    mut incoming_events: EventReader<LoadMap>,
+    mut incoming_events: EventReader<server_to_client::LoadMap>,
     mut outgoing_events: EventWriter<SpawnMapCommand>,
     mut next_application_state: ResMut<NextState<ApplicationState>>,
 ) {

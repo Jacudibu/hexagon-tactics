@@ -1,10 +1,11 @@
-use bevy::ecs::event::EventId;
 use bevy::prelude::{
-    error, in_state, info, warn, App, Commands, Event, EventReader, EventWriter, IntoSystemConfigs,
+    error, in_state, info, warn, App, Commands, EventReader, EventWriter, IntoSystemConfigs,
     NextState, Plugin, PostUpdate, PreUpdate, ResMut, Resource, States,
 };
 use futures::SinkExt;
-use game_common::network_message::{LoadMap, NetworkMessage};
+use game_common::network_events::client_to_server::ClientToServerMessage;
+use game_common::network_events::server_to_client::ServerToClientMessage;
+use game_common::network_events::{server_to_client, NetworkMessage};
 use tokio::net::TcpStream;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
@@ -28,8 +29,8 @@ impl Plugin for NetworkPlugin {
 
         app.insert_resource(network)
             .insert_state(NetworkState::Disconnected)
-            .add_event::<SendNetworkMessage>()
-            .add_event::<LoadMap>()
+            .add_event::<ClientToServerMessage>()
+            .add_event::<server_to_client::LoadMap>()
             .add_systems(
                 PreUpdate,
                 (
@@ -138,17 +139,14 @@ fn check_for_connection(
 
 fn receive_updates(
     mut connection: ResMut<ServerConnection>,
-    mut load_map_event_from_server: EventWriter<LoadMap>,
+    mut load_map_event_from_server: EventWriter<server_to_client::LoadMap>,
 ) {
     if let Ok(bytes) = connection.message_rx.try_recv() {
-        match NetworkMessage::deserialize(&bytes) {
+        match ServerToClientMessage::deserialize(&bytes) {
             Ok(message) => match message {
-                NetworkMessage::StartGame => {}
-                NetworkMessage::LoadMap(event) => {
+                ServerToClientMessage::LoadMap(event) => {
                     load_map_event_from_server.send(event);
                 }
-                NetworkMessage::MoveUnit(_) => {}
-                NetworkMessage::DebugMessage(_) => {}
             },
             Err(e) => {
                 error!(
@@ -161,31 +159,20 @@ fn receive_updates(
 }
 
 fn event_processor(
-    mut events: EventReader<SendNetworkMessage>,
+    mut events: EventReader<ClientToServerMessage>,
     connection: ResMut<ServerConnection>,
 ) {
     for event in events.read() {
-        match event.message.serialize() {
+        match event.serialize() {
             Ok(bytes) => {
                 let _ = connection.message_tx.send(bytes);
             }
             Err(e) => {
                 error!(
                     "Failed to serialize NetworkMessage {:?}, Error: {:?}",
-                    event.message, e
+                    event, e
                 )
             }
         }
-    }
-}
-
-#[derive(Event)]
-pub struct SendNetworkMessage {
-    message: NetworkMessage,
-}
-
-impl SendNetworkMessage {
-    pub fn new(message: NetworkMessage) -> Self {
-        Self { message }
     }
 }
