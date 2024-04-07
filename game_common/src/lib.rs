@@ -1,2 +1,3 @@
 pub mod game_map;
-mod units;
+pub mod network_command;
+pub mod units;
