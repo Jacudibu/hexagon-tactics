@@ -1,7 +1,7 @@
 use bevy::input::ButtonInput;
 use bevy::prelude::{
-    error, in_state, info, App, Commands, IntoSystemConfigs, KeyCode, NextState, Plugin,
-    PostUpdate, PreUpdate, Res, ResMut, Resource, States, Time,
+    error, in_state, info, App, Commands, Event, EventReader, IntoSystemConfigs, KeyCode,
+    NextState, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, States, Time,
 };
 use futures::SinkExt;
 use game_common::network_message::{DebugMessage, NetworkMessage};
@@ -28,6 +28,7 @@ impl Plugin for NetworkPlugin {
 
         app.insert_resource(network)
             .insert_state(NetworkState::Disconnected)
+            .add_event::<SendNetworkMessage>()
             .add_systems(
                 PreUpdate,
                 (
@@ -37,7 +38,7 @@ impl Plugin for NetworkPlugin {
             )
             .add_systems(
                 PostUpdate,
-                send_updates.run_if(in_state(NetworkState::Connected)),
+                event_processor.run_if(in_state(NetworkState::Connected)),
             );
     }
 }
@@ -146,26 +147,32 @@ fn receive_updates(mut connection: ResMut<ServerConnection>) {
     }
 }
 
-fn send_updates(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>,
+fn event_processor(
+    mut events: EventReader<SendNetworkMessage>,
     connection: ResMut<ServerConnection>,
 ) {
-    // TODO: Actually send Updates instead of triggering them through key presses
-    for key in keyboard_input.get_just_pressed() {
-        let message = NetworkMessage::DebugMessage(DebugMessage {
-            message: format!("{:?} ({})", key, time.elapsed_seconds()),
-        });
-        match message.serialize() {
+    for event in events.read() {
+        match event.message.serialize() {
             Ok(bytes) => {
                 let _ = connection.message_tx.send(bytes);
             }
             Err(e) => {
                 error!(
                     "Failed to serialize NetworkMessage {:?}, Error: {:?}",
-                    message, e
+                    event.message, e
                 )
             }
         }
+    }
+}
+
+#[derive(Event)]
+pub struct SendNetworkMessage {
+    message: NetworkMessage,
+}
+
+impl SendNetworkMessage {
+    pub fn new(message: NetworkMessage) -> Self {
+        Self { message }
     }
 }

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum NetworkMessage {
+    StartGame,
     LoadMap(LoadMap),
     MoveUnit(MoveUnit),
     DebugMessage(DebugMessage),

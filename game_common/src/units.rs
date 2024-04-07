@@ -1,8 +1,9 @@
 use std::fmt::{Display, Formatter};
 
-type PlayerId = u8;
-type UnitId = u8;
+pub type PlayerId = u8;
+pub type UnitId = u8;
 
+#[derive(Debug)]
 pub struct Unit {
     pub id: UnitId,
     pub owner: PlayerId,
@@ -12,6 +13,13 @@ pub struct Unit {
     pub exp: u32,
     pub base_stats: UnitStats,
     pub stats_after_buffs: UnitStats,
+    pub turn_resources: TurnResources,
+}
+
+impl PartialEq<Self> for Unit {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
 }
 
 impl Display for Unit {
@@ -20,6 +28,7 @@ impl Display for Unit {
     }
 }
 
+#[derive(Debug)]
 pub struct Player {
     pub id: PlayerId,
     pub name: String,
@@ -31,9 +40,15 @@ impl Display for Player {
     }
 }
 
+#[derive(Debug)]
 pub struct UnitStats {
     pub movement: u8,
     pub jump: u8,
     pub strength: u32,
     // ...and other stats later on
+}
+
+#[derive(Debug)]
+pub struct TurnResources {
+    pub remaining_movement: u8,
 }

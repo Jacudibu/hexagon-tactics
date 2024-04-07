@@ -4,6 +4,7 @@ use bevy::app::{App, Plugin};
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::game_map::GameMap;
+use game_common::TEST_MAP_NAME;
 
 pub struct MapEditorUiPlugin;
 impl Plugin for MapEditorUiPlugin {
@@ -41,7 +42,6 @@ fn tool_view(mut egui: EguiContexts, mut current_tool: ResMut<MapEditorTool>) {
         });
 }
 
-const TEST_MAP_NAME: &str = "test_map.map";
 fn menu_buttons(
     mut commands: Commands,
     mut egui: EguiContexts,

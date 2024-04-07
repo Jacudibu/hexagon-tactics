@@ -1,5 +1,8 @@
 use futures::SinkExt;
-use game_common::network_message::{DebugMessage, NetworkMessage};
+use game_common::game_map::GameMap;
+use game_common::game_state::GameState;
+use game_common::network_message::{DebugMessage, LoadMap, NetworkMessage};
+use game_common::TEST_MAP_NAME;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io;
@@ -12,6 +15,8 @@ use tokio_util::bytes::BytesMut;
 use tokio_util::codec::{BytesCodec, Framed};
 use tracing::{debug, error, info, Level};
 use tracing_subscriber::EnvFilter;
+
+mod message_processor;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -46,6 +51,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 #[derive(Default)]
 struct SharedState {
     connections: HashMap<SocketAddr, mpsc::UnboundedSender<Vec<u8>>>,
+    game_states: Vec<GameState>,
 }
 
 impl SharedState {
@@ -140,7 +146,7 @@ async fn process_message_from_client(
             info!("Processing message from {}: {:?}", sender, message);
 
             // TODO: Execute fancy game logic, broadcast result
-            match process_message(message) {
+            match message_processor::process_message(&mut state, message) {
                 Ok(resulting_message) => {
                     state.broadcast(&resulting_message).await;
                 }
@@ -156,12 +162,4 @@ async fn process_message_from_client(
             )
         }
     }
-}
-
-fn process_message(message: NetworkMessage) -> Result<NetworkMessage, ()> {
-    // TODO: Validate message, then return it so it can be broadcasted to clients. Otherwise, Error out.
-
-    Ok(NetworkMessage::DebugMessage(DebugMessage {
-        message: format!("received {:?}", message),
-    }))
 }
