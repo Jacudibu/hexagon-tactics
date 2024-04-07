@@ -15,7 +15,7 @@ use game_common::game_map::{Fluid, FluidKind, GameMap, TileData, TileSurface, MA
 
 use crate::map::*;
 use crate::map_editor::editor_ui::MapEditorUiPlugin;
-use crate::{GameState, MouseCursorOverUiState};
+use crate::{ApplicationState, MouseCursorOverUiState};
 
 mod editor_ui;
 
@@ -26,8 +26,8 @@ impl Plugin for MapEditorPlugin {
         app.add_plugins(MapEditorUiPlugin);
         app.init_resource::<ActionState<MapEditorAction>>();
         app.insert_resource(MapEditorAction::default_input_map());
-        app.add_systems(OnEnter(GameState::MapEditor), setup_map_editor);
-        app.add_systems(OnExit(GameState::MapEditor), exit_map_editor);
+        app.add_systems(OnEnter(ApplicationState::MapEditor), setup_map_editor);
+        app.add_systems(OnExit(ApplicationState::MapEditor), exit_map_editor);
         app.add_systems(
             Update,
             (
@@ -36,7 +36,7 @@ impl Plugin for MapEditorPlugin {
                     .after(track_input)
                     .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
             )
-                .run_if(in_state(GameState::MapEditor))
+                .run_if(in_state(ApplicationState::MapEditor))
                 .run_if(in_state(MapState::Loaded)),
         );
     }

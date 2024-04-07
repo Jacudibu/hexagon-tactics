@@ -1,10 +1,10 @@
-use bevy::input::ButtonInput;
+use bevy::ecs::event::EventId;
 use bevy::prelude::{
-    error, in_state, info, App, Commands, Event, EventReader, IntoSystemConfigs, KeyCode,
-    NextState, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, States, Time,
+    error, in_state, info, warn, App, Commands, Event, EventReader, EventWriter, IntoSystemConfigs,
+    NextState, Plugin, PostUpdate, PreUpdate, ResMut, Resource, States,
 };
 use futures::SinkExt;
-use game_common::network_message::{DebugMessage, NetworkMessage};
+use game_common::network_message::{LoadMap, NetworkMessage};
 use tokio::net::TcpStream;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
@@ -29,6 +29,7 @@ impl Plugin for NetworkPlugin {
         app.insert_resource(network)
             .insert_state(NetworkState::Disconnected)
             .add_event::<SendNetworkMessage>()
+            .add_event::<LoadMap>()
             .add_systems(
                 PreUpdate,
                 (
@@ -59,7 +60,7 @@ pub struct ServerConnection {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
-enum NetworkState {
+pub enum NetworkState {
     #[default]
     Disconnected,
     Connected,
@@ -116,6 +117,11 @@ impl Network {
             }
         });
     }
+
+    pub fn disconnect(&mut self) {
+        // TODO
+        warn!("Disconnecting isn't yet implemented. You are forever trapped here! :^)")
+    }
 }
 
 fn check_for_connection(
@@ -130,13 +136,20 @@ fn check_for_connection(
     }
 }
 
-fn receive_updates(mut connection: ResMut<ServerConnection>) {
+fn receive_updates(
+    mut connection: ResMut<ServerConnection>,
+    mut load_map_event_from_server: EventWriter<LoadMap>,
+) {
     if let Ok(bytes) = connection.message_rx.try_recv() {
         match NetworkMessage::deserialize(&bytes) {
-            Ok(message) => {
-                info!("Received message {:?}", message);
-                // TODO: Create Event to process it properly
-            }
+            Ok(message) => match message {
+                NetworkMessage::StartGame => {}
+                NetworkMessage::LoadMap(event) => {
+                    load_map_event_from_server.send(event);
+                }
+                NetworkMessage::MoveUnit(_) => {}
+                NetworkMessage::DebugMessage(_) => {}
+            },
             Err(e) => {
                 error!(
                     "Failed deserializing NetworkMessage! Error: {:?} Bytes: {:?}",

@@ -1,5 +1,5 @@
 use crate::map_editor::*;
-use crate::GameState;
+use crate::ApplicationState;
 use bevy::app::{App, Plugin};
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
@@ -15,7 +15,7 @@ impl Plugin for MapEditorUiPlugin {
 
         app.add_systems(
             Update,
-            (tool_view, menu_buttons).run_if(in_state(GameState::MapEditor)),
+            (tool_view, menu_buttons).run_if(in_state(ApplicationState::MapEditor)),
         );
     }
 }
@@ -46,7 +46,7 @@ fn menu_buttons(
     mut commands: Commands,
     mut egui: EguiContexts,
     map: Res<GameMap>,
-    mut next_game_state: ResMut<NextState<GameState>>,
+    mut next_application_state: ResMut<NextState<ApplicationState>>,
     mut spawn_new_world_command: EventWriter<SpawnMapCommand>,
 ) {
     egui::Window::new("Save & Load")
@@ -76,7 +76,7 @@ fn menu_buttons(
                     }
                 }
                 if ui.button("Back To Menu").clicked() {
-                    next_game_state.set(GameState::Menu);
+                    next_application_state.set(ApplicationState::MainMenu);
                 }
             })
         });

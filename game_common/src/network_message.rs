@@ -1,3 +1,4 @@
+use bevy::prelude::Event;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +10,7 @@ pub enum NetworkMessage {
     DebugMessage(DebugMessage),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct LoadMap {
     // TODO: Either send some kind of map identifier or just the entire GameMap struct
     pub path: String,

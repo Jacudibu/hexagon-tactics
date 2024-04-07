@@ -12,7 +12,7 @@ use crate::load::LoadPlugin;
 use crate::main_menu::MainMenuPlugin;
 use crate::map::GameMapPlugin;
 use crate::map_editor::MapEditorPlugin;
-use crate::networking::{Network, NetworkPlugin};
+use crate::networking::NetworkPlugin;
 use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy_kira_audio::AudioPlugin;
@@ -43,15 +43,9 @@ fn main() {
         .add_plugins(CameraPlugin)
         .add_plugins(LoadPlugin)
         .add_plugins(MainMenuPlugin)
-        .init_state::<GameState>()
+        .init_state::<ApplicationState>()
         .init_state::<MouseCursorOverUiState>()
-        .add_systems(Startup, init_networking)
         .run();
-}
-
-// Placeholder
-fn init_networking(mut network: ResMut<Network>) {
-    network.connect();
 }
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
@@ -62,9 +56,9 @@ pub enum MouseCursorOverUiState {
 }
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
-pub enum GameState {
+pub enum ApplicationState {
     #[default]
-    Menu,
+    MainMenu,
     MapEditor,
-    Game,
+    InGame,
 }
