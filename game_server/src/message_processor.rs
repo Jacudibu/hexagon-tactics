@@ -1,3 +1,4 @@
+use crate::ServerState::InGame;
 use crate::SharedState;
 use game_common::game_map::GameMap;
 use game_common::game_state::GameState;
@@ -10,22 +11,24 @@ pub fn process_message(
     message: ClientToServerMessage,
 ) -> Result<ServerToClientMessage, ()> {
     match message {
-        ClientToServerMessage::StartGame => {
-            let map = match GameMap::load_from_file(TEST_MAP_NAME) {
-                Ok(map) => map,
-                Err(_) => return Err(()),
-            };
-            let game_state = GameState {
-                map,
-                units: Default::default(),
-                unit_positions: Default::default(),
-                turn_order: Default::default(),
-            };
-            shared_state.game_states.push(game_state);
-
-            Ok(ServerToClientMessage::LoadMap(LoadMap {
-                path: TEST_MAP_NAME.into(),
-            }))
-        }
+        ClientToServerMessage::StartGame => start_game(shared_state),
     }
+}
+
+fn start_game(shared_state: &mut SharedState) -> Result<ServerToClientMessage, ()> {
+    let map = match GameMap::load_from_file(TEST_MAP_NAME) {
+        Ok(map) => map,
+        Err(_) => return Err(()),
+    };
+    let game_state = GameState {
+        map,
+        units: Default::default(),
+        unit_positions: Default::default(),
+        turn_order: Default::default(),
+    };
+    shared_state.server_state = InGame(game_state);
+
+    Ok(ServerToClientMessage::LoadMap(StartGameAndLoadMap {
+        path: TEST_MAP_NAME.into(),
+    }))
 }

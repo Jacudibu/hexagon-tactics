@@ -1,5 +1,5 @@
 use bevy::prelude::{
-    error, in_state, info, warn, App, Commands, EventReader, EventWriter, IntoSystemConfigs,
+    error, in_state, info, trace, warn, App, Commands, EventReader, EventWriter, IntoSystemConfigs,
     NextState, Plugin, PostUpdate, PreUpdate, ResMut, Resource, States,
 };
 use futures::SinkExt;
@@ -14,7 +14,6 @@ use tokio_util::bytes::BytesMut;
 use tokio_util::codec::{BytesCodec, Framed};
 
 pub struct NetworkPlugin;
-
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         let tokio_runtime = Runtime::new().unwrap();
@@ -30,7 +29,7 @@ impl Plugin for NetworkPlugin {
         app.insert_resource(network)
             .insert_state(NetworkState::Disconnected)
             .add_event::<ClientToServerMessage>()
-            .add_event::<server_to_client::LoadMap>()
+            .add_event::<server_to_client::StartGameAndLoadMap>()
             .add_systems(
                 PreUpdate,
                 (
@@ -84,10 +83,10 @@ impl Network {
                     };
                     match connection_tx.send(connection) {
                         Ok(_) => {
-                            info!("Connection has been sent to main thread.");
+                            trace!("Connection has been sent to main thread.");
                         }
                         Err(e) => {
-                            info!("Internal error while persisting connection: {:?}", e);
+                            error!("Internal error while persisting connection: {:?}", e);
                         }
                     }
 
@@ -113,7 +112,7 @@ impl Network {
                     }
                 }
                 Err(e) => {
-                    info!("Error while connecting: {:?}", e);
+                    error!("Error while connecting: {:?}", e);
                 }
             }
         });
@@ -139,7 +138,7 @@ fn check_for_connection(
 
 fn receive_updates(
     mut connection: ResMut<ServerConnection>,
-    mut load_map_event_from_server: EventWriter<server_to_client::LoadMap>,
+    mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
 ) {
     if let Ok(bytes) = connection.message_rx.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {

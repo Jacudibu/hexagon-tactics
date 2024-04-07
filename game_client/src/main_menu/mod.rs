@@ -25,7 +25,8 @@ impl Plugin for MainMenuPlugin {
                     connection_menu.run_if(in_state(NetworkState::Disconnected)),
                     (
                         play_menu,
-                        load_map_listener.run_if(on_event::<server_to_client::LoadMap>()),
+                        load_map_listener
+                            .run_if(on_event::<server_to_client::StartGameAndLoadMap>()),
                     )
                         .run_if(in_state(NetworkState::Connected)),
                 )
@@ -120,7 +121,7 @@ fn play_menu(
 
 fn load_map_listener(
     mut commands: Commands,
-    mut incoming_events: EventReader<server_to_client::LoadMap>,
+    mut incoming_events: EventReader<server_to_client::StartGameAndLoadMap>,
     mut outgoing_events: EventWriter<SpawnMapCommand>,
     mut next_application_state: ResMut<NextState<ApplicationState>>,
 ) {

@@ -13,7 +13,7 @@ use tokio::sync::{mpsc, Mutex};
 use tokio_stream::StreamExt;
 use tokio_util::bytes::BytesMut;
 use tokio_util::codec::{BytesCodec, Framed};
-use tracing::{debug, error, info, Level};
+use tracing::{debug, error, info, trace, Level};
 use tracing_subscriber::EnvFilter;
 
 mod message_processor;
@@ -49,9 +49,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 #[derive(Default)]
+enum ServerState {
+    #[default]
+    WaitingForConnection,
+    InGame(GameState),
+}
+
+#[derive(Default)]
 struct SharedState {
     connections: HashMap<SocketAddr, mpsc::UnboundedSender<Vec<u8>>>,
-    game_states: Vec<GameState>,
+    server_state: ServerState,
 }
 
 impl SharedState {
@@ -143,9 +150,7 @@ async fn process_message_from_client(
     match ClientToServerMessage::deserialize(&bytes.to_vec()) {
         Ok(message) => {
             let mut state = state.lock().await;
-            info!("Processing message from {}: {:?}", sender, message);
-
-            // TODO: Execute fancy game logic, broadcast result
+            trace!("Processing message from {}: {:?}", sender, message);
             match message_processor::process_message(&mut state, message) {
                 Ok(resulting_message) => {
                     state.broadcast(&resulting_message).await;
