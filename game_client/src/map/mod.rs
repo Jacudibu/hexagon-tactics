@@ -59,6 +59,6 @@ pub(in crate::map) struct MapTileEntities {
 pub(in crate::map) struct MapTileEntityBundle {
     pub parent: Entity,
     pub top: Entity,
-    pub side: Entity,
+    pub side: Option<Entity>,
     pub fluid: Option<Entity>,
 }

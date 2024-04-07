@@ -124,23 +124,11 @@ pub fn spawn_map_command_listener(
             .set_parent(parent)
             .id();
 
-        let side = commands
-            .spawn((
-                PbrBundle {
-                    mesh: meshes
-                        .columns
-                        .get(&tile_data.height)
-                        .expect("Meshes for all heights should exist!")
-                        .clone(),
-                    material: materials.sides.surface_material(&tile_data),
-                    ..default()
-                },
-                RaycastMesh::<TileRaycastSet>::default(),
-                HexagonTileComponent { hex },
-                Name::new(format!("Tile Side [{},{}]", hex.x, hex.y)),
-            ))
-            .set_parent(parent)
-            .id();
+        let side = if are_tile_sides_necessary(&map, tile_data, &hex) {
+            spawn_side_entity(&mut commands, &materials, &meshes, &tile_data, hex, parent)
+        } else {
+            None
+        };
 
         let fluid = if let Some(fluid) = &tile_data.fluid {
             spawn_fluid_entity(
@@ -171,6 +159,46 @@ pub fn spawn_map_command_listener(
         parent: map_parent,
         entities,
     });
+}
+
+pub fn spawn_side_entity(
+    commands: &mut Commands,
+    materials: &HexagonMaterials,
+    meshes: &HexagonMeshes,
+    tile_data: &TileData,
+    hex: Hex,
+    parent: Entity,
+) -> Option<Entity> {
+    Some(
+        commands
+            .spawn((
+                PbrBundle {
+                    mesh: meshes
+                        .columns
+                        .get(&tile_data.height)
+                        .expect("Meshes for all heights should exist!")
+                        .clone(),
+                    material: materials.sides.surface_material(&tile_data),
+                    ..default()
+                },
+                RaycastMesh::<TileRaycastSet>::default(),
+                HexagonTileComponent { hex },
+                Name::new(format!("Tile Side [{},{}]", hex.x, hex.y)),
+            ))
+            .set_parent(parent)
+            .id(),
+    )
+}
+
+pub fn are_tile_sides_necessary(map: &GameMap, tile_data: &TileData, hex: &Hex) -> bool {
+    if tile_data.height == 0 {
+        return false;
+    }
+
+    hex.all_neighbors().iter().any(|x| match map.tiles.get(x) {
+        None => true,
+        Some(neighbor) => neighbor.height != tile_data.height,
+    })
 }
 
 pub fn spawn_fluid_entity(

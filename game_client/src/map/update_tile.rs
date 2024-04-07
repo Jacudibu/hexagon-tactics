@@ -10,7 +10,7 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, TileData};
 
 use crate::load::{HexagonMaterials, HexagonMeshes};
-use crate::map::spawning::spawn_fluid_entity;
+use crate::map::spawning::{are_tile_sides_necessary, spawn_fluid_entity, spawn_side_entity};
 use crate::map::HexagonTileComponent;
 use crate::map::{MapTileEntities, METERS_PER_TILE_HEIGHT_UNIT};
 
@@ -44,19 +44,40 @@ pub fn update_tile_entity(
     for event in tile_change_event.read() {
         if let Some(tile_data) = map.tiles.get(&event.hex) {
             if let Some(entities) = tile_entities.entities.get_mut(&event.hex) {
-                let mut side_commands = commands.entity(entities.side);
-                if let Some(mesh) = meshes.columns.get(&tile_data.height) {
-                    side_commands.insert(mesh.clone());
-                    // FIXME: Temporary fix for https://github.com/bevyengine/bevy/issues/4294 and/or https://github.com/aevyrie/bevy_mod_raycast/issues/42
-                    side_commands.remove::<bevy::render::primitives::Aabb>();
+                if let Some(side) = entities.side {
+                    // Sides still necessary?
+                    let mut side_commands = commands.entity(side);
+                    if are_tile_sides_necessary(&map, tile_data, &event.hex) {
+                        if let Some(mesh) = meshes.columns.get(&tile_data.height) {
+                            side_commands.insert(mesh.clone());
+                            // FIXME: Temporary fix for https://github.com/bevyengine/bevy/issues/4294 and/or https://github.com/aevyrie/bevy_mod_raycast/issues/42
+                            side_commands.remove::<bevy::render::primitives::Aabb>();
+                        } else {
+                            error!(
+                                "Was unable to find hex mesh for height {}!",
+                                tile_data.height
+                            );
+                        }
+                        side_commands.insert(materials.sides.surface_material(&tile_data));
+                    } else {
+                        side_commands.remove_parent();
+                        side_commands.despawn();
+                        entities.side = None;
+                    }
                 } else {
-                    error!(
-                        "Was unable to find hex mesh for height {}!",
-                        tile_data.height
-                    );
+                    if are_tile_sides_necessary(&map, tile_data, &event.hex) {
+                        entities.side = spawn_side_entity(
+                            &mut commands,
+                            &materials,
+                            &meshes,
+                            tile_data,
+                            event.hex,
+                            entities.parent,
+                        );
+                    } else {
+                        // Do nothing
+                    }
                 }
-
-                side_commands.insert(materials.sides.surface_material(&tile_data));
 
                 let mut top_commands = commands.entity(entities.top);
                 if let Ok(mut transform) = tile_transforms.get_mut(entities.top) {
