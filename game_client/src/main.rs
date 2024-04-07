@@ -45,12 +45,12 @@ fn main() {
         .add_plugins(MainMenuPlugin)
         .init_state::<GameState>()
         .init_state::<MouseCursorOverUiState>()
-        //.add_systems(Startup, init)
+        .add_systems(Startup, init_networking)
         .run();
 }
 
 // Placeholder
-fn init(mut network: ResMut<Network>) {
+fn init_networking(mut network: ResMut<Network>) {
     network.connect();
 }
 

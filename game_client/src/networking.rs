@@ -1,17 +1,16 @@
-use bevy::input::keyboard::KeyboardInput;
 use bevy::input::ButtonInput;
 use bevy::prelude::{
-    error, in_state, info, trace, App, Commands, IntoSystemConfigs, KeyCode, Local, NextState,
-    OnEnter, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, StateTransition, States, Time,
+    error, in_state, info, App, Commands, IntoSystemConfigs, KeyCode, NextState, Plugin,
+    PostUpdate, PreUpdate, Res, ResMut, Resource, States, Time,
 };
 use futures::SinkExt;
-use std::string::FromUtf8Error;
-use tokio::io::{AsyncReadExt, AsyncWriteExt, ReadHalf};
+use game_common::network_message::{DebugMessage, NetworkMessage};
 use tokio::net::TcpStream;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
-use tokio_util::codec::{Framed, LinesCodec};
+use tokio_util::bytes::BytesMut;
+use tokio_util::codec::{BytesCodec, Framed};
 
 pub struct NetworkPlugin;
 
@@ -73,12 +72,7 @@ impl Network {
 
         tokio::spawn(async move {
             match TcpStream::connect("127.0.0.1:1337").await {
-                Ok(mut stream) => {
-                    info!("created stream");
-
-                    let result = stream.write_all(b"Hello world").await;
-                    info!("wrote to stream; success={:?}", result.is_ok());
-
+                Ok(stream) => {
                     let (tx_rx, rx_rx) = mpsc::unbounded_channel();
                     let (tx_tx, mut rx_tx) = mpsc::unbounded_channel();
                     let connection = ServerConnection {
@@ -94,19 +88,18 @@ impl Network {
                         }
                     }
 
-                    let mut lines = Framed::new(stream, LinesCodec::new());
+                    let mut frame = Framed::new(stream, BytesCodec::new());
                     loop {
                         tokio::select! {
                             // Sending
-                            Some(msg) = rx_tx.recv() => {
-                                let msg = String::from_utf8(msg).expect("");
-                                let _ = lines.send(&msg).await;
+                            Some(bytes) = rx_tx.recv() => {
+                                let bytes = BytesMut::from_iter(bytes);
+                                let _ = frame.send(bytes).await;
                             }
                             // Receiving
-                            result = lines.next() => match result {
-                                Some(Ok(msg)) => {
-                                    let msg = msg.as_bytes().to_vec();
-                                    let _ = tx_rx.send(msg);
+                            result = frame.next() => match result {
+                                Some(Ok(bytes)) => {
+                                    let _ = tx_rx.send(bytes.to_vec());
                                 }
                                 Some(Err(e)) => {
                                     error!("Error when receiving data from server: {:?}", e)
@@ -137,28 +130,42 @@ fn check_for_connection(
 }
 
 fn receive_updates(mut connection: ResMut<ServerConnection>) {
-    if let Ok(msg) = connection.message_rx.try_recv() {
-        match String::from_utf8(msg) {
-            Ok(msg) => {
-                info!("Received {}", msg);
+    if let Ok(bytes) = connection.message_rx.try_recv() {
+        match NetworkMessage::deserialize(&bytes) {
+            Ok(message) => {
+                info!("Received message {:?}", message);
+                // TODO: Create Event to process it properly
             }
-            Err(_) => {
-                todo!()
+            Err(e) => {
+                error!(
+                    "Failed deserializing NetworkMessage! Error: {:?} Bytes: {:?}",
+                    e, bytes
+                )
             }
         }
-
-        // TODO: Create Events for incoming updates
     }
 }
 
 fn send_updates(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
-    mut connection: ResMut<ServerConnection>,
+    connection: ResMut<ServerConnection>,
 ) {
     // TODO: Actually send Updates instead of triggering them through key presses
     for key in keyboard_input.get_just_pressed() {
-        let data = format!("{:?} ({})", key, time.elapsed_seconds()).into_bytes();
-        let bytes = connection.message_tx.send(data);
+        let message = NetworkMessage::DebugMessage(DebugMessage {
+            message: format!("{:?} ({})", key, time.elapsed_seconds()),
+        });
+        match message.serialize() {
+            Ok(bytes) => {
+                let _ = connection.message_tx.send(bytes);
+            }
+            Err(e) => {
+                error!(
+                    "Failed to serialize NetworkMessage {:?}, Error: {:?}",
+                    message, e
+                )
+            }
+        }
     }
 }

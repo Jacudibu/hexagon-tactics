@@ -1,15 +1,16 @@
 use futures::SinkExt;
+use game_common::network_message::{DebugMessage, NetworkMessage};
 use std::collections::HashMap;
 use std::error::Error;
 use std::io;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::io::AsyncReadExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::StreamExt;
-use tokio_util::codec::{Framed, LinesCodec};
-use tracing_subscriber::fmt::format::FmtSpan;
+use tokio_util::bytes::BytesMut;
+use tokio_util::codec::{BytesCodec, Framed};
+use tracing::{debug, error, info, Level};
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -19,13 +20,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
             EnvFilter::from_default_env(), //    .add_directive("tokio=trace".parse()?)
         )
         //.with_span_events(FmtSpan::FULL)
-        .with_max_level(tracing::Level::DEBUG)
+        .with_max_level(Level::DEBUG)
         .init();
 
     let addr = "127.0.0.1:1337";
     let listener = TcpListener::bind(addr).await.unwrap();
 
-    tracing::info!("server running on {}", addr);
+    info!("server running on {}", addr);
 
     let state = Arc::new(Mutex::new(SharedState::default()));
 
@@ -34,9 +35,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let state = Arc::clone(&state);
 
         tokio::spawn(async move {
-            tracing::debug!("accepted connection");
+            debug!("accepted connection");
             if let Err(e) = process_incoming_connection(state, stream, addr).await {
-                tracing::info!("an error occurred; error = {:?}", e);
+                info!("an error occurred; error = {:?}", e);
             }
         });
     }
@@ -44,56 +45,67 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 #[derive(Default)]
 struct SharedState {
-    connections: HashMap<SocketAddr, mpsc::UnboundedSender<String>>,
+    connections: HashMap<SocketAddr, mpsc::UnboundedSender<Vec<u8>>>,
 }
 
 impl SharedState {
-    async fn broadcast(&mut self, message: &str) {
-        for (addr, tx) in self.connections.iter_mut() {
-            let _ = tx.send(message.into());
+    async fn broadcast(&mut self, message: &NetworkMessage) {
+        match message.serialize() {
+            Ok(bytes) => {
+                for (_, tx) in self.connections.iter_mut() {
+                    // Wonder if there's some way of doing this without cloning?
+                    let _ = tx.send(bytes.clone());
+                }
+            }
+            Err(e) => {
+                error!(
+                    "Error when trying to serialize NetworkMessage {:?} - Error: {:?}",
+                    message, e
+                );
+            }
         }
     }
 }
 
 struct ConnectedClient {
-    lines: Framed<TcpStream, LinesCodec>,
-    rx: mpsc::UnboundedReceiver<String>,
+    frame: Framed<TcpStream, BytesCodec>,
+    rx: mpsc::UnboundedReceiver<Vec<u8>>,
 }
 
 impl ConnectedClient {
     async fn new(
         state: Arc<Mutex<SharedState>>,
-        lines: Framed<TcpStream, LinesCodec>,
+        frame: Framed<TcpStream, BytesCodec>,
     ) -> io::Result<ConnectedClient> {
-        let addr = lines.get_ref().peer_addr()?;
+        let addr = frame.get_ref().peer_addr()?;
         let (tx, rx) = mpsc::unbounded_channel();
         state.lock().await.connections.insert(addr, tx);
-        Ok(ConnectedClient { lines, rx })
+        Ok(ConnectedClient { frame, rx })
     }
 }
 
 async fn process_incoming_connection(
     state: Arc<Mutex<SharedState>>,
-    mut stream: TcpStream,
+    stream: TcpStream,
     addr: SocketAddr,
 ) -> Result<(), Box<dyn Error>> {
-    let mut lines = Framed::new(stream, LinesCodec::new());
-    let mut client = ConnectedClient::new(state.clone(), lines).await?;
+    let frame = Framed::new(stream, BytesCodec::new());
+    let mut client = ConnectedClient::new(state.clone(), frame).await?;
 
     loop {
         tokio::select! {
-            // A message was scheduled to be sent to this client
+            // Outgoing
             Some(msg) = client.rx.recv() => {
-                client.lines.send(&msg).await?;
+                let bytes = BytesMut::from_iter(msg);
+                client.frame.send(bytes).await?;
             }
-            result = client.lines.next() => match result {
-                // A message was received from the client
+            // Incoming
+            result = client.frame.next() => match result {
                 Some(Ok(msg)) => {
                     process_message_from_client(Arc::clone(&state), addr, msg).await;
                 }
-                // An error occurred.
                 Some(Err(e)) => {
-                    tracing::error!(
+                    error!(
                         "an error occurred while processing messages for {}; error = {:?}",
                         addr,
                         e
@@ -111,7 +123,7 @@ async fn process_incoming_connection(
         state.connections.remove(&addr);
 
         let msg = format!("{} disconnected.", addr);
-        tracing::info!("{}", msg);
+        info!("{}", msg);
     }
 
     Ok(())
@@ -120,16 +132,36 @@ async fn process_incoming_connection(
 async fn process_message_from_client(
     state: Arc<Mutex<SharedState>>,
     sender: SocketAddr,
-    message: String,
+    bytes: BytesMut,
 ) {
-    let mut state = state.lock().await;
-    tracing::info!("Processing message from {}: {}", sender, message);
+    match NetworkMessage::deserialize(&bytes.to_vec()) {
+        Ok(message) => {
+            let mut state = state.lock().await;
+            info!("Processing message from {}: {:?}", sender, message);
 
-    // TODO: Execute fancy game logic, broadcast result
+            // TODO: Execute fancy game logic, broadcast result
+            match process_message(message) {
+                Ok(resulting_message) => {
+                    state.broadcast(&resulting_message).await;
+                }
+                Err(_) => {
+                    // TODO: Send error to client.
+                }
+            }
+        }
+        Err(e) => {
+            error!(
+                "Was unable to deserialize message from bytes! Error: {:?}",
+                e
+            )
+        }
+    }
+}
 
-    let result = format!(
-        "This should contain the result for the message received from {} ({})",
-        sender, message
-    );
-    state.broadcast(&result).await;
+fn process_message(message: NetworkMessage) -> Result<NetworkMessage, ()> {
+    // TODO: Validate message, then return it so it can be broadcasted to clients. Otherwise, Error out.
+
+    Ok(NetworkMessage::DebugMessage(DebugMessage {
+        message: format!("received {:?}", message),
+    }))
 }

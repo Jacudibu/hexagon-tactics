@@ -2,9 +2,10 @@ use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
-pub enum NetworkCommand {
+pub enum NetworkMessage {
     LoadMap(LoadMap),
     MoveUnit(MoveUnit),
+    DebugMessage(DebugMessage),
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -19,7 +20,12 @@ pub struct MoveUnit {
     pub path: Vec<Hex>,
 }
 
-impl NetworkCommand {
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct DebugMessage {
+    pub message: String,
+}
+
+impl NetworkMessage {
     pub fn serialize(&self) -> bincode::Result<Vec<u8>> {
         bincode::serialize(self)
     }
