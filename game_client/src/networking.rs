@@ -30,6 +30,7 @@ impl Plugin for NetworkPlugin {
             .insert_state(NetworkState::Disconnected)
             .add_event::<ClientToServerMessage>()
             .add_event::<server_to_client::StartGameAndLoadMap>()
+            .add_event::<server_to_client::PlayerIsReady>()
             .add_systems(
                 PreUpdate,
                 (
@@ -139,21 +140,23 @@ fn check_for_connection(
 fn receive_updates(
     mut connection: ResMut<ServerConnection>,
     mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
+    mut player_is_ready: EventWriter<server_to_client::PlayerIsReady>,
 ) {
     if let Ok(bytes) = connection.message_rx.try_recv() {
-        match ServerToClientMessage::deserialize(&bytes) {
+        // Technically we don't need the event_id, but grabbing it allows us to not use braces, yay!
+        let _event_id = match ServerToClientMessage::deserialize(&bytes) {
             Ok(message) => match message {
-                ServerToClientMessage::LoadMap(event) => {
-                    load_map_event_from_server.send(event);
-                }
+                ServerToClientMessage::LoadMap(event) => load_map_event_from_server.send(event).id,
+                ServerToClientMessage::PlayerIsReady(event) => player_is_ready.send(event).id,
             },
             Err(e) => {
                 error!(
                     "Failed deserializing NetworkMessage! Error: {:?} Bytes: {:?}",
                     e, bytes
-                )
+                );
+                return;
             }
-        }
+        };
     }
 }
 

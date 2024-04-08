@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let addr = "127.0.0.1:1337";
     let listener = TcpListener::bind(addr).await.unwrap();
 
-    info!("server running on {}", addr);
+    info!("Server running on {}", addr);
 
     let state = Arc::new(Mutex::new(SharedState::default()));
 
@@ -40,9 +40,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let state = Arc::clone(&state);
 
         tokio::spawn(async move {
-            debug!("accepted connection from {:?}", addr);
+            debug!("Accepted connection from {:?}", addr);
             if let Err(e) = process_incoming_connection(state, stream, addr).await {
-                info!("an error occurred; error = {:?}", e);
+                info!("An error occurred; error = {:?}", e);
             }
         });
     }

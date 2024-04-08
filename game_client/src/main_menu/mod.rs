@@ -4,8 +4,7 @@ use crate::ApplicationState;
 use bevy::app::{App, AppExit, Plugin};
 use bevy::prelude::{
     error, in_state, info, on_event, resource_exists, warn, Commands, Event, EventReader,
-    EventWriter, IntoSystemConfigs, NextState, OnEnter, Reflect, Res, ResMut, Resource, States,
-    Update,
+    EventWriter, IntoSystemConfigs, NextState, OnEnter, Reflect, ResMut, Resource, States, Update,
 };
 use bevy_egui::egui::Align2;
 use bevy_egui::{egui, EguiContexts};

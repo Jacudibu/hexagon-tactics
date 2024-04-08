@@ -1,4 +1,5 @@
 mod camera;
+mod combat;
 mod debugging;
 mod load;
 mod main_menu;

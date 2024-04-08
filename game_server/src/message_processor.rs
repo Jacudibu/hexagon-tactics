@@ -12,6 +12,7 @@ pub fn process_message(
 ) -> Result<ServerToClientMessage, ()> {
     match message {
         ClientToServerMessage::StartGame => start_game(shared_state),
+        ClientToServerMessage::FinishedLoading => finish_loading(shared_state),
     }
 }
 
@@ -30,5 +31,16 @@ fn start_game(shared_state: &mut SharedState) -> Result<ServerToClientMessage, (
 
     Ok(ServerToClientMessage::LoadMap(StartGameAndLoadMap {
         path: TEST_MAP_NAME.into(),
+    }))
+}
+
+fn finish_loading(shared_state: &mut SharedState) -> Result<ServerToClientMessage, ()> {
+    // TODO: Check if all players are ready
+    // TODO: Acquire Actual PlayerId
+    let player_id = 1;
+
+    // TODO: Add a way to send multiple events in case all players are ready
+    Ok(ServerToClientMessage::PlayerIsReady(PlayerIsReady {
+        player_id,
     }))
 }
