@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let state = Arc::clone(&state);
 
         tokio::spawn(async move {
-            debug!("accepted connection");
+            debug!("accepted connection from {:?}", addr);
             if let Err(e) = process_incoming_connection(state, stream, addr).await {
                 info!("an error occurred; error = {:?}", e);
             }

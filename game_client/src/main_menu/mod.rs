@@ -3,26 +3,34 @@ use crate::networking::{Network, NetworkState};
 use crate::ApplicationState;
 use bevy::app::{App, AppExit, Plugin};
 use bevy::prelude::{
-    error, in_state, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, NextState,
-    OnEnter, Reflect, ResMut, States, Update,
+    error, in_state, info, on_event, resource_exists, warn, Commands, Event, EventReader,
+    EventWriter, IntoSystemConfigs, NextState, OnEnter, Reflect, Res, ResMut, Resource, States,
+    Update,
 };
 use bevy_egui::egui::Align2;
 use bevy_egui::{egui, EguiContexts};
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client;
+use std::process::Child;
 
 pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<MenuState>();
+        app.add_event::<HostLocalServerCommand>();
         app.add_systems(OnEnter(ApplicationState::MainMenu), setup);
         app.add_systems(
             Update,
             (
                 main_menu.run_if(in_state(MenuState::MainMenu)),
                 (
-                    connection_menu.run_if(in_state(NetworkState::Disconnected)),
+                    (
+                        connection_menu,
+                        host_local_server.run_if(on_event::<HostLocalServerCommand>()),
+                        connect_to_local_host.run_if(resource_exists::<LocalHost>),
+                    )
+                        .run_if(in_state(NetworkState::Disconnected)),
                     (
                         play_menu,
                         load_map_listener
@@ -76,8 +84,9 @@ fn main_menu(
 
 fn connection_menu(
     mut egui: EguiContexts,
-    mut next_menu_state: ResMut<NextState<MenuState>>,
     mut network: ResMut<Network>,
+    mut next_menu_state: ResMut<NextState<MenuState>>,
+    mut host_command: EventWriter<HostLocalServerCommand>,
 ) {
     egui::Window::new("Connection Menu")
         .collapsible(false)
@@ -86,6 +95,9 @@ fn connection_menu(
         .anchor(Align2::CENTER_CENTER, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| {
             ui.vertical_centered(|ui| {
+                if ui.button("Host").clicked() {
+                    host_command.send(HostLocalServerCommand {});
+                }
                 if ui.button("Connect").clicked() {
                     // TODO: Acquire the IP from somewhere
                     network.connect();
@@ -135,6 +147,45 @@ fn load_map_listener(
             Err(e) => {
                 error!("Failed to load map {} - error: {:?}", event.path, e)
             }
+        }
+    }
+}
+
+#[derive(Resource)]
+struct LocalHost {
+    child: Child,
+}
+
+fn connect_to_local_host(mut network: ResMut<Network>) {
+    network.connect()
+}
+
+#[derive(Event)]
+struct HostLocalServerCommand {}
+
+fn host_local_server(mut commands: Commands, existing_local_server: Option<ResMut<LocalHost>>) {
+    if let Some(mut existing_local_server) = existing_local_server {
+        warn!("A local host was already running. Attempting to kill it.");
+        if let Err(e) = existing_local_server.child.kill() {
+            error!(
+                "Failed to kill existing local host. Cancelling operation. Error: {:?}",
+                e
+            );
+            return;
+        }
+    }
+
+    let args = Vec::<String>::new();
+    match std::process::Command::new("target/debug/game-server")
+        .args(args)
+        .spawn()
+    {
+        Ok(child) => {
+            info!("Launched server!");
+            commands.insert_resource(LocalHost { child })
+        }
+        Err(e) => {
+            info!("Something went wrong when launching server! {:?}", e)
         }
     }
 }
