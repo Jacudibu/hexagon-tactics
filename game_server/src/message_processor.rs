@@ -6,20 +6,34 @@ use game_common::network_events::client_to_server::*;
 use game_common::network_events::server_to_client::*;
 use game_common::TEST_MAP_NAME;
 
+pub enum ServerToClientMessageVariant {
+    SendToSender(ServerToClientMessage),
+    SendToEveryoneExceptSender(ServerToClientMessage),
+    Broadcast(ServerToClientMessage),
+}
+
 pub fn process_message(
     shared_state: &mut SharedState,
     message: ClientToServerMessage,
-) -> Result<ServerToClientMessage, ()> {
+) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     match message {
         ClientToServerMessage::StartGame => start_game(shared_state),
         ClientToServerMessage::FinishedLoading => finish_loading(shared_state),
     }
 }
 
-fn start_game(shared_state: &mut SharedState) -> Result<ServerToClientMessage, ()> {
+fn start_game(
+    shared_state: &mut SharedState,
+) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     let map = match GameMap::load_from_file(TEST_MAP_NAME) {
         Ok(map) => map,
-        Err(_) => return Err(()),
+        Err(_) => {
+            return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
+                ErrorWhenProcessingMessage {
+                    message: "Server failed to load map!".into(),
+                },
+            ))
+        }
     };
     let game_state = GameState {
         map,
@@ -29,18 +43,22 @@ fn start_game(shared_state: &mut SharedState) -> Result<ServerToClientMessage, (
     };
     shared_state.server_state = InGame(game_state);
 
-    Ok(ServerToClientMessage::LoadMap(StartGameAndLoadMap {
-        path: TEST_MAP_NAME.into(),
-    }))
+    Ok(vec![ServerToClientMessageVariant::Broadcast(
+        ServerToClientMessage::LoadMap(StartGameAndLoadMap {
+            path: TEST_MAP_NAME.into(),
+        }),
+    )])
 }
 
-fn finish_loading(shared_state: &mut SharedState) -> Result<ServerToClientMessage, ()> {
+fn finish_loading(
+    shared_state: &mut SharedState,
+) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     // TODO: Check if all players are ready
     // TODO: Acquire Actual PlayerId
     let player_id = 1;
 
     // TODO: Add a way to send multiple events in case all players are ready
-    Ok(ServerToClientMessage::PlayerIsReady(PlayerIsReady {
-        player_id,
-    }))
+    Ok(vec![ServerToClientMessageVariant::Broadcast(
+        ServerToClientMessage::PlayerIsReady(PlayerIsReady { player_id }),
+    )])
 }

@@ -148,6 +148,10 @@ fn receive_updates(
             Ok(message) => match message {
                 ServerToClientMessage::LoadMap(event) => load_map_event_from_server.send(event).id,
                 ServerToClientMessage::PlayerIsReady(event) => player_is_ready.send(event).id,
+                ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
+                    error!("Server responded with an error: {:?}", e);
+                    0
+                }
             },
             Err(e) => {
                 error!(

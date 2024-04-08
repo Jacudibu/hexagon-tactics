@@ -1,3 +1,4 @@
+use crate::message_processor::ServerToClientMessageVariant;
 use futures::SinkExt;
 use game_common::game_state::GameState;
 use game_common::network_events::client_to_server::ClientToServerMessage;
@@ -62,12 +63,54 @@ struct SharedState {
 }
 
 impl SharedState {
-    async fn broadcast(&mut self, message: &ServerToClientMessage) {
+    fn broadcast(&mut self, message: ServerToClientMessage) {
         match message.serialize() {
             Ok(bytes) => {
                 for (_, tx) in self.connections.iter_mut() {
                     // Wonder if there's some way of doing this without cloning?
                     let _ = tx.send(bytes.clone());
+                }
+            }
+            Err(e) => {
+                error!(
+                    "Error when trying to serialize NetworkMessage {:?} - Error: {:?}",
+                    message, e
+                );
+            }
+        }
+    }
+
+    fn send_to(&mut self, sender: &SocketAddr, message: ServerToClientMessage) {
+        match message.serialize() {
+            Ok(bytes) => match self.connections.get(&sender) {
+                None => {
+                    error!("Unable to send Response {:?} - Sender {:?} of message was not found inside the connections array?", message, sender)
+                }
+                Some(connection) => {
+                    let _ = connection.send(bytes);
+                }
+            },
+            Err(e) => {
+                error!(
+                    "Error when trying to serialize NetworkMessage {:?} - Error: {:?}",
+                    message, e
+                );
+            }
+        }
+    }
+
+    fn send_to_everyone_except_one(
+        &mut self,
+        exception: &SocketAddr,
+        message: ServerToClientMessage,
+    ) {
+        match message.serialize() {
+            Ok(bytes) => {
+                for (addr, tx) in self.connections.iter_mut() {
+                    if addr != exception {
+                        // Wonder if there's some way of doing this without cloning?
+                        let _ = tx.send(bytes.clone());
+                    }
                 }
             }
             Err(e) => {
@@ -152,11 +195,23 @@ async fn process_message_from_client(
             let mut state = state.lock().await;
             trace!("Processing message from {}: {:?}", sender, message);
             match message_processor::process_message(&mut state, message) {
-                Ok(resulting_message) => {
-                    state.broadcast(&resulting_message).await;
+                Ok(outgoing_messages) => {
+                    for message in outgoing_messages {
+                        match message {
+                            ServerToClientMessageVariant::SendToSender(message) => {
+                                state.send_to(&sender, message);
+                            }
+                            ServerToClientMessageVariant::SendToEveryoneExceptSender(message) => {
+                                state.send_to_everyone_except_one(&sender, message);
+                            }
+                            ServerToClientMessageVariant::Broadcast(message) => {
+                                state.broadcast(message);
+                            }
+                        }
+                    }
                 }
-                Err(_) => {
-                    // TODO: Send error to client.
+                Err(error_message) => {
+                    state.send_to(&sender, error_message);
                 }
             }
         }

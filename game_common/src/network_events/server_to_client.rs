@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub enum ServerToClientMessage {
     LoadMap(StartGameAndLoadMap),
     PlayerIsReady(PlayerIsReady),
+    ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 }
 
 impl NetworkMessage for ServerToClientMessage {}
@@ -20,4 +21,9 @@ pub struct StartGameAndLoadMap {
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PlayerIsReady {
     pub player_id: PlayerId,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct ErrorWhenProcessingMessage {
+    pub message: String,
 }
