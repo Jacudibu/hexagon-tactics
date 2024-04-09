@@ -1,4 +1,3 @@
-use crate::network_events::NetworkMessage;
 use bevy::prelude::Event;
 use serde::{Deserialize, Serialize};
 
@@ -8,5 +7,3 @@ pub enum ClientToServerMessage {
     StartGame,
     FinishedLoading,
 }
-
-impl NetworkMessage<'_> for ClientToServerMessage {}

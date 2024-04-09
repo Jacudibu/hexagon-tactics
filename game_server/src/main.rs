@@ -111,28 +111,37 @@ async fn process_message_from_client(
     bytes: Vec<u8>,
 ) {
     match ClientToServerMessage::deserialize(&bytes.to_vec()) {
-        Ok(message) => {
+        Ok(messages) => {
             let mut state = state.lock().await;
-            debug!("Processing message from {}: {:?}", sender, message);
-            match message_processor::process_message(&mut state, message) {
-                Ok(outgoing_messages) => {
-                    for message in outgoing_messages {
-                        debug!("Sending {:?}", message);
-                        match message {
-                            ServerToClientMessageVariant::SendToSender(message) => {
-                                state.send_to(&sender, message);
-                            }
-                            ServerToClientMessageVariant::SendToEveryoneExceptSender(message) => {
-                                state.send_to_everyone_except_one(&sender, message);
-                            }
-                            ServerToClientMessageVariant::Broadcast(message) => {
-                                state.broadcast(message);
+            debug!(
+                "Received {} bytes from {}: {:?}",
+                bytes.len(),
+                sender,
+                messages
+            );
+            for message in messages {
+                match message_processor::process_message(&mut state, message) {
+                    Ok(outgoing_messages) => {
+                        for message in outgoing_messages {
+                            debug!("Sending {:?}", message);
+                            match message {
+                                ServerToClientMessageVariant::SendToSender(message) => {
+                                    state.send_to(&sender, message);
+                                }
+                                ServerToClientMessageVariant::SendToEveryoneExceptSender(
+                                    message,
+                                ) => {
+                                    state.send_to_everyone_except_one(&sender, message);
+                                }
+                                ServerToClientMessageVariant::Broadcast(message) => {
+                                    state.broadcast(message);
+                                }
                             }
                         }
                     }
-                }
-                Err(error_message) => {
-                    state.send_to(&sender, error_message);
+                    Err(error_message) => {
+                        state.send_to(&sender, error_message);
+                    }
                 }
             }
         }

@@ -6,7 +6,7 @@ use std::io;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
 use tracing::error;
-use wtransport::{Connection, SessionId};
+use wtransport::Connection;
 
 #[derive(Default)]
 pub enum ServerState {

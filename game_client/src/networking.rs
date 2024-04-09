@@ -186,25 +186,27 @@ fn receive_updates(
 ) {
     if let Ok(bytes) = connection.message_rx.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
-            Ok(message) => {
-                debug!("Received {} bytes: {:?}", bytes.len(), message);
-                match message {
-                    ServerToClientMessage::LoadMap(event) => {
-                        load_map_event_from_server.send(event);
-                    }
+            Ok(messages) => {
+                debug!("Received {} bytes: {:?}", bytes.len(), messages);
+                for message in messages {
+                    match message {
+                        ServerToClientMessage::LoadMap(event) => {
+                            load_map_event_from_server.send(event);
+                        }
 
-                    ServerToClientMessage::PlayerIsReady(event) => {
-                        player_is_ready.send(event);
-                    }
+                        ServerToClientMessage::PlayerIsReady(event) => {
+                            player_is_ready.send(event);
+                        }
 
-                    ServerToClientMessage::AddUnitToPlayer(event) => {
-                        add_unit_to_player.send(event);
-                    }
+                        ServerToClientMessage::AddUnitToPlayer(event) => {
+                            add_unit_to_player.send(event);
+                        }
 
-                    ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
-                        error!("Server responded with an error: {:?}", e);
-                    }
-                };
+                        ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
+                            error!("Server responded with an error: {:?}", e);
+                        }
+                    };
+                }
             }
             Err(e) => {
                 error!(

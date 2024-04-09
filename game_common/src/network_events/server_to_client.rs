@@ -1,4 +1,3 @@
-use crate::network_events::NetworkMessage;
 use crate::units::{PlayerId, Unit};
 use bevy::prelude::Event;
 use serde::{Deserialize, Serialize};
@@ -11,8 +10,6 @@ pub enum ServerToClientMessage {
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 }
-
-impl NetworkMessage<'_> for ServerToClientMessage {}
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct StartGameAndLoadMap {
