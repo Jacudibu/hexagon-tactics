@@ -4,6 +4,7 @@ pub mod server_to_client;
 use bevy::prelude::error;
 use bincode::config::Configuration;
 use bincode::error::EncodeError;
+use bytes::Bytes;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
@@ -11,7 +12,7 @@ use std::time::Duration;
 pub const NETWORK_IDLE_TIMEOUT: Duration = Duration::new(30, 0);
 
 pub trait NetworkMessage: DeserializeOwned + Serialize {
-    fn serialize(&self) -> Result<Vec<u8>, EncodeError>;
+    fn serialize(&self) -> Result<Bytes, EncodeError>;
     fn deserialize(bytes: &[u8]) -> Result<Vec<Self>, ()>;
 }
 
@@ -19,9 +20,12 @@ impl<T> NetworkMessage for T
 where
     T: DeserializeOwned + Serialize,
 {
-    fn serialize(&self) -> Result<Vec<u8>, EncodeError> {
+    fn serialize(&self) -> Result<Bytes, EncodeError> {
         let config = bincode::config::standard();
-        bincode::serde::encode_to_vec(self, config)
+        match bincode::serde::encode_to_vec(self, config) {
+            Ok(result) => Ok(Bytes::from(result)),
+            Err(e) => Err(e),
+        }
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Vec<T>, ()> {

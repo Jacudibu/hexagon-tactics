@@ -230,7 +230,6 @@ fn event_processor(
     for event in events.read() {
         match event.serialize() {
             Ok(bytes) => {
-                let bytes = Bytes::from(bytes);
                 let _ = connection.message_tx.send(bytes);
                 keep_alive_timer.timer.reset();
             }

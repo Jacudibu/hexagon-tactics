@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use game_common::game_state::GameState;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::NetworkMessage;
@@ -17,7 +18,7 @@ pub enum ServerState {
 
 #[derive(Default)]
 pub struct SharedState {
-    pub connections: HashMap<usize, mpsc::UnboundedSender<Vec<u8>>>,
+    pub connections: HashMap<usize, mpsc::UnboundedSender<Bytes>>,
     pub server_state: ServerState,
 }
 
@@ -26,7 +27,6 @@ impl SharedState {
         match message.serialize() {
             Ok(bytes) => {
                 for (_, tx) in self.connections.iter_mut() {
-                    // Wonder if there's some way of doing this without cloning?
                     let _ = tx.send(bytes.clone());
                 }
             }
@@ -67,7 +67,6 @@ impl SharedState {
             Ok(bytes) => {
                 for (addr, tx) in self.connections.iter_mut() {
                     if addr != exception {
-                        // Wonder if there's some way of doing this without cloning?
                         let _ = tx.send(bytes.clone());
                     }
                 }
@@ -83,7 +82,7 @@ impl SharedState {
 }
 
 pub struct ConnectedClient {
-    pub rx: mpsc::UnboundedReceiver<Vec<u8>>,
+    pub rx: mpsc::UnboundedReceiver<Bytes>,
     pub id: usize, // TODO: Use the id the server assigns when the connection is initialized in main instead
 }
 
