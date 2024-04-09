@@ -1,11 +1,12 @@
 use bevy::prelude::{
-    debug, error, in_state, info, warn, App, Commands, EventReader, EventWriter, IntoSystemConfigs,
-    NextState, Plugin, PostUpdate, PreUpdate, ResMut, Resource, States,
+    debug, error, in_state, info, not, on_event, warn, App, Commands, EventReader, EventWriter,
+    IntoSystemConfigs, NextState, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, States,
+    Timer, TimerMode,
 };
+use bevy::time::Time;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::ServerToClientMessage;
-use game_common::network_events::{server_to_client, NetworkMessage};
-use std::time::Duration;
+use game_common::network_events::{server_to_client, NetworkMessage, NETWORK_IDLE_TIMEOUT};
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
 use wtransport::{ClientConfig, Endpoint};
@@ -38,8 +39,36 @@ impl Plugin for NetworkPlugin {
             )
             .add_systems(
                 PostUpdate,
-                event_processor.run_if(in_state(NetworkState::Connected)),
+                (
+                    heartbeat.run_if(not(on_event::<ClientToServerMessage>())),
+                    event_processor.run_if(on_event::<ClientToServerMessage>()),
+                )
+                    .chain()
+                    .run_if(in_state(NetworkState::Connected)),
             );
+    }
+}
+
+fn heartbeat(
+    time: Res<Time>,
+    mut timer: ResMut<HeartbeatTimer>,
+    mut event_writer: EventWriter<ClientToServerMessage>,
+) {
+    if timer.timer.tick(time.delta()).just_finished() {
+        event_writer.send(ClientToServerMessage::Heartbeat);
+    }
+}
+
+#[derive(Resource)]
+pub struct HeartbeatTimer {
+    timer: Timer,
+}
+
+impl Default for HeartbeatTimer {
+    fn default() -> Self {
+        HeartbeatTimer {
+            timer: Timer::new(NETWORK_IDLE_TIMEOUT / 3, TimerMode::Repeating),
+        }
     }
 }
 
@@ -75,7 +104,7 @@ impl Network {
             let config = ClientConfig::builder()
                 .with_bind_default()
                 .with_no_cert_validation()
-                .max_idle_timeout(Some(Duration::new(30, 0)))
+                .max_idle_timeout(Some(NETWORK_IDLE_TIMEOUT))
                 .unwrap()
                 .build();
 
@@ -143,6 +172,7 @@ fn check_for_connection(
 ) {
     if let Ok(connection) = network.connection_rx.try_recv() {
         commands.insert_resource(connection);
+        commands.insert_resource(HeartbeatTimer::default());
         next_network_state.set(NetworkState::Connected);
         info!("Connection Resource has been created.")
     }
@@ -190,11 +220,13 @@ fn receive_updates(
 fn event_processor(
     mut events: EventReader<ClientToServerMessage>,
     connection: ResMut<ServerConnection>,
+    mut heartbeat_timer: ResMut<HeartbeatTimer>,
 ) {
     for event in events.read() {
         match event.serialize() {
             Ok(bytes) => {
                 let _ = connection.message_tx.send(bytes);
+                heartbeat_timer.timer.reset();
             }
             Err(e) => {
                 error!(

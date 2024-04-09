@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub enum ClientToServerMessage {
+    Heartbeat,
     StartGame,
     FinishedLoading,
 }

@@ -1,15 +1,14 @@
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::NetworkMessage;
+use game_common::network_events::{NetworkMessage, NETWORK_IDLE_TIMEOUT};
 use state::{ConnectedClient, SharedState};
 use std::error::Error;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::Mutex;
 use tracing::{debug, error, info, info_span, Instrument, Level};
 use tracing_subscriber::EnvFilter;
 use wtransport::endpoint::IncomingSession;
-use wtransport::{Endpoint, Identity, ServerConfig, SessionId};
+use wtransport::{Endpoint, Identity, ServerConfig};
 
 mod message_processor;
 mod state;
@@ -28,7 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let config = ServerConfig::builder()
         .with_bind_default(port)
         .with_identity(&Identity::self_signed(["localhost"]))
-        .max_idle_timeout(Some(Duration::new(30, 0)))
+        .max_idle_timeout(Some(NETWORK_IDLE_TIMEOUT))
         .unwrap()
         .build();
 
