@@ -40,7 +40,7 @@ impl Plugin for NetworkPlugin {
             .add_systems(
                 PostUpdate,
                 (
-                    heartbeat.run_if(not(on_event::<ClientToServerMessage>())),
+                    keep_alive.run_if(not(on_event::<ClientToServerMessage>())),
                     event_processor.run_if(on_event::<ClientToServerMessage>()),
                 )
                     .chain()
@@ -49,24 +49,24 @@ impl Plugin for NetworkPlugin {
     }
 }
 
-fn heartbeat(
+fn keep_alive(
     time: Res<Time>,
-    mut timer: ResMut<HeartbeatTimer>,
+    mut timer: ResMut<KeepAliveTimer>,
     mut event_writer: EventWriter<ClientToServerMessage>,
 ) {
     if timer.timer.tick(time.delta()).just_finished() {
-        event_writer.send(ClientToServerMessage::Heartbeat);
+        event_writer.send(ClientToServerMessage::KeepAlive);
     }
 }
 
 #[derive(Resource)]
-pub struct HeartbeatTimer {
+pub struct KeepAliveTimer {
     timer: Timer,
 }
 
-impl Default for HeartbeatTimer {
+impl Default for KeepAliveTimer {
     fn default() -> Self {
-        HeartbeatTimer {
+        KeepAliveTimer {
             timer: Timer::new(NETWORK_IDLE_TIMEOUT / 3, TimerMode::Repeating),
         }
     }
@@ -136,7 +136,7 @@ impl Network {
                                     result = receive_stream.read(&mut buffer) => match result {
                                         Ok(Some(bytes)) => {
                                             // TODO: use bytes to determine how much we need to copy
-                                            let _ = tx_rx.send(buffer[0..bytes].to_vec());
+                                            let _ = tx_rx.send(buffer[..bytes].to_vec());
                                             //let _ = send_stream.write_all(b"ACK").await;
                                         }
                                         Ok(None) => {break;},
@@ -172,7 +172,7 @@ fn check_for_connection(
 ) {
     if let Ok(connection) = network.connection_rx.try_recv() {
         commands.insert_resource(connection);
-        commands.insert_resource(HeartbeatTimer::default());
+        commands.insert_resource(KeepAliveTimer::default());
         next_network_state.set(NetworkState::Connected);
         info!("Connection Resource has been created.")
     }
@@ -220,13 +220,13 @@ fn receive_updates(
 fn event_processor(
     mut events: EventReader<ClientToServerMessage>,
     connection: ResMut<ServerConnection>,
-    mut heartbeat_timer: ResMut<HeartbeatTimer>,
+    mut keep_alive_timer: ResMut<KeepAliveTimer>,
 ) {
     for event in events.read() {
         match event.serialize() {
             Ok(bytes) => {
                 let _ = connection.message_tx.send(bytes);
-                heartbeat_timer.timer.reset();
+                keep_alive_timer.timer.reset();
             }
             Err(e) => {
                 error!(

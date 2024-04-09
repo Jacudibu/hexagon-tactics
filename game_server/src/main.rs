@@ -87,7 +87,7 @@ async fn handle_connection_impl(
             result = receive_stream.read(&mut buffer) => match result {
                 Ok(Some(bytes)) => {
                     //send_stream.write_all(b"ACK").await?;
-                    process_message_from_client(Arc::clone(&state), client.id, buffer[0..bytes].to_vec()).await;
+                    process_message_from_client(Arc::clone(&state), client.id, buffer[..bytes].to_vec()).await;
                 }
                 Err(e) => {
                     error!(

@@ -20,7 +20,7 @@ pub fn process_message(
     message: ClientToServerMessage,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     match message {
-        ClientToServerMessage::Heartbeat => Ok(Vec::new()),
+        ClientToServerMessage::KeepAlive => Ok(Vec::new()),
         ClientToServerMessage::StartGame => start_game(shared_state),
         ClientToServerMessage::FinishedLoading => finish_loading(shared_state),
     }
