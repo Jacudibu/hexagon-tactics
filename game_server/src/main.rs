@@ -1,11 +1,13 @@
 use crate::message_processor::ServerToClientMessageVariant;
+use bytes::{Bytes, BytesMut};
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{NetworkMessage, NETWORK_IDLE_TIMEOUT};
 use state::{ConnectedClient, SharedState};
 use std::error::Error;
 use std::sync::Arc;
+use tokio::io::AsyncReadExt;
 use tokio::sync::Mutex;
-use tracing::{debug, error, info, info_span, Instrument, Level};
+use tracing::{debug, error, info, info_span, warn, Instrument, Level};
 use tracing_subscriber::EnvFilter;
 use wtransport::endpoint::IncomingSession;
 use wtransport::{Endpoint, Identity, ServerConfig};
@@ -58,9 +60,7 @@ async fn handle_connection_impl(
     incoming_session: IncomingSession,
     state: Arc<Mutex<SharedState>>,
 ) -> Result<(), Box<dyn Error>> {
-    let mut buffer = vec![0; 65536].into_boxed_slice();
-
-    info!("Waiting for session request...");
+    let mut buffer = BytesMut::with_capacity(1024);
 
     let session_request = incoming_session.await?;
 
@@ -71,23 +71,21 @@ async fn handle_connection_impl(
     );
 
     let connection = session_request.accept().await?;
-
-    info!("Waiting for data from client...");
-
     let mut client = ConnectedClient::new(state.clone(), &connection).await?;
-
     let (mut send_stream, mut receive_stream) = connection.accept_bi().await?;
-    info!("Accepted BI stream");
 
     loop {
         tokio::select! {
             Some(msg) = client.rx.recv() => {
                 send_stream.write_all(&msg).await?;
             }
-            result = receive_stream.read(&mut buffer) => match result {
-                Ok(Some(bytes)) => {
-                    //send_stream.write_all(b"ACK").await?;
-                    process_message_from_client(Arc::clone(&state), client.id, buffer[..bytes].to_vec()).await;
+            result = receive_stream.read_buf(&mut buffer) => match result {
+                Ok(bytes) => {
+                    if bytes == 0 {
+                        warn!("Bytes was 0!");
+                        break;
+                    }
+                    process_message_from_client(Arc::clone(&state), client.id, buffer.split().freeze()).await;
                 }
                 Err(e) => {
                     error!(
@@ -96,8 +94,6 @@ async fn handle_connection_impl(
                         e
                     );
                 }
-                // The stream has been exhausted.
-                Ok(None) => {break;}
             }
         }
     }
@@ -105,11 +101,7 @@ async fn handle_connection_impl(
     Ok(())
 }
 
-async fn process_message_from_client(
-    state: Arc<Mutex<SharedState>>,
-    sender: usize,
-    bytes: Vec<u8>,
-) {
+async fn process_message_from_client(state: Arc<Mutex<SharedState>>, sender: usize, bytes: Bytes) {
     match ClientToServerMessage::deserialize(&bytes.to_vec()) {
         Ok(messages) => {
             let mut state = state.lock().await;

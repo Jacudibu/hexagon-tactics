@@ -4,9 +4,11 @@ use bevy::prelude::{
     Timer, TimerMode,
 };
 use bevy::time::Time;
+use bytes::{Bytes, BytesMut};
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::{server_to_client, NetworkMessage, NETWORK_IDLE_TIMEOUT};
+use tokio::io::AsyncReadExt;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
 use wtransport::{ClientConfig, Endpoint};
@@ -83,8 +85,8 @@ pub struct Network {
 
 #[derive(Resource)]
 pub struct ServerConnection {
-    message_rx: mpsc::UnboundedReceiver<Vec<u8>>,
-    message_tx: mpsc::UnboundedSender<Vec<u8>>,
+    message_rx: mpsc::UnboundedReceiver<Bytes>,
+    message_tx: mpsc::UnboundedSender<Bytes>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
@@ -114,7 +116,7 @@ impl Network {
                 .await
             {
                 Ok(connection) => {
-                    let mut buffer = vec![0; 65536].into_boxed_slice();
+                    let mut buffer = BytesMut::with_capacity(1024);
                     match connection.open_bi().await.unwrap().await {
                         Ok((mut send_stream, mut receive_stream)) => {
                             let (tx_rx, rx_rx) = mpsc::unbounded_channel();
@@ -133,13 +135,14 @@ impl Network {
                                     Some(bytes) = rx_tx.recv() => {
                                         let _ = send_stream.write_all(&bytes).await;
                                     }
-                                    result = receive_stream.read(&mut buffer) => match result {
-                                        Ok(Some(bytes)) => {
-                                            // TODO: use bytes to determine how much we need to copy
-                                            let _ = tx_rx.send(buffer[..bytes].to_vec());
-                                            //let _ = send_stream.write_all(b"ACK").await;
+                                    result = receive_stream.read_buf(&mut buffer) => match result {
+                                        Ok(bytes) => {
+                                            if bytes == 0 {
+                                                info!("Bytes was 0!");
+                                                break;
+                                            }
+                                            let _ = tx_rx.send(buffer.split().freeze());
                                         }
-                                        Ok(None) => {break;},
                                         Err(e) => {
                                             error!("Error when receiving data from server: {:?}", e);
                                         }
@@ -227,6 +230,7 @@ fn event_processor(
     for event in events.read() {
         match event.serialize() {
             Ok(bytes) => {
+                let bytes = Bytes::from(bytes);
                 let _ = connection.message_tx.send(bytes);
                 keep_alive_timer.timer.reset();
             }
