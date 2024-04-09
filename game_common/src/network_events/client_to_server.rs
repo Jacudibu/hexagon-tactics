@@ -8,4 +8,4 @@ pub enum ClientToServerMessage {
     FinishedLoading,
 }
 
-impl NetworkMessage for ClientToServerMessage {}
+impl NetworkMessage<'_> for ClientToServerMessage {}
