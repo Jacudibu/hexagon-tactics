@@ -2,8 +2,8 @@ use crate::map::MapState;
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::{
-    debug, in_state, info, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs,
-    OnEnter, Plugin, Reflect, Res, ResMut, States, Update,
+    in_state, info, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, OnEnter,
+    Plugin, Reflect, Res, ResMut, States, Update,
 };
 use game_common::game_map::GameMap;
 use game_common::game_state::GameState;

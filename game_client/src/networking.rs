@@ -2,16 +2,13 @@ use bevy::prelude::{
     debug, error, in_state, info, warn, App, Commands, EventReader, EventWriter, IntoSystemConfigs,
     NextState, Plugin, PostUpdate, PreUpdate, ResMut, Resource, States,
 };
-use futures::SinkExt;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::{server_to_client, NetworkMessage};
-use tokio::net::TcpStream;
+use std::time::Duration;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
-use tokio_stream::StreamExt;
-use tokio_util::bytes::BytesMut;
-use tokio_util::codec::{BytesCodec, Framed};
+use wtransport::{ClientConfig, Endpoint};
 
 pub struct NetworkPlugin;
 impl Plugin for NetworkPlugin {
@@ -75,44 +72,61 @@ impl Network {
         let connection_tx = self.connection_tx.clone();
 
         tokio::spawn(async move {
-            match TcpStream::connect("127.0.0.1:1337").await {
-                Ok(stream) => {
-                    let (tx_rx, rx_rx) = mpsc::unbounded_channel();
-                    let (tx_tx, mut rx_tx) = mpsc::unbounded_channel();
-                    let connection = ServerConnection {
-                        message_tx: tx_tx,
-                        message_rx: rx_rx,
-                    };
-                    if let Err(e) = connection_tx.send(connection) {
-                        error!("Internal error while persisting connection: {:?}", e);
-                        return;
-                    }
+            let config = ClientConfig::builder()
+                .with_bind_default()
+                .with_no_cert_validation()
+                .max_idle_timeout(Some(Duration::new(30, 0)))
+                .unwrap()
+                .build();
 
-                    let mut frame = Framed::new(stream, BytesCodec::new());
-                    loop {
-                        tokio::select! {
-                            // Sending
-                            Some(bytes) = rx_tx.recv() => {
-                                let bytes = BytesMut::from_iter(bytes);
-                                let _ = frame.send(bytes).await;
+            match Endpoint::client(config)
+                .unwrap()
+                .connect("https://[::1]:4433")
+                .await
+            {
+                Ok(connection) => {
+                    let mut buffer = vec![0; 65536].into_boxed_slice();
+                    match connection.open_bi().await.unwrap().await {
+                        Ok((mut send_stream, mut receive_stream)) => {
+                            let (tx_rx, rx_rx) = mpsc::unbounded_channel();
+                            let (tx_tx, mut rx_tx) = mpsc::unbounded_channel();
+                            let connection = ServerConnection {
+                                message_tx: tx_tx,
+                                message_rx: rx_rx,
+                            };
+                            if let Err(e) = connection_tx.send(connection) {
+                                error!("Internal error while persisting connection: {:?}", e);
+                                return;
                             }
-                            // Receiving
-                            result = frame.next() => match result {
-                                Some(Ok(bytes)) => {
-                                    let _ = tx_rx.send(bytes.to_vec());
+
+                            loop {
+                                tokio::select! {
+                                    Some(bytes) = rx_tx.recv() => {
+                                        let _ = send_stream.write_all(&bytes).await;
+                                    }
+                                    result = receive_stream.read(&mut buffer) => match result {
+                                        Ok(Some(bytes)) => {
+                                            // TODO: use bytes to determine how much we need to copy
+                                            let _ = tx_rx.send(buffer[0..bytes].to_vec());
+                                            //let _ = send_stream.write_all(b"ACK").await;
+                                        }
+                                        Ok(None) => {break;},
+                                        Err(e) => {
+                                            error!("Error when receiving data from server: {:?}", e);
+                                        }
+                                    }
                                 }
-                                Some(Err(e)) => {
-                                    error!("Error when receiving data from server: {:?}", e)
-                                }
-                                None => break,
                             }
+                        }
+                        Err(e) => {
+                            error!("Error while opening stream: {:?}", e);
                         }
                     }
                 }
                 Err(e) => {
                     error!("Error while connecting: {:?}", e);
                 }
-            }
+            };
         });
     }
 
@@ -143,7 +157,7 @@ fn receive_updates(
     if let Ok(bytes) = connection.message_rx.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
             Ok(message) => {
-                debug!("Received {:?}", message);
+                debug!("Received {} bytes: {:?}", bytes.len(), message);
                 match message {
                     ServerToClientMessage::LoadMap(event) => {
                         load_map_event_from_server.send(event);

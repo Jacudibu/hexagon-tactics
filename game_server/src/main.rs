@@ -1,23 +1,18 @@
 use crate::message_processor::ServerToClientMessageVariant;
-use futures::SinkExt;
-use game_common::game_state::GameState;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::NetworkMessage;
-use std::collections::HashMap;
+use state::{ConnectedClient, SharedState};
 use std::error::Error;
-use std::io;
-use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{mpsc, Mutex};
-use tokio_stream::StreamExt;
-use tokio_util::bytes::BytesMut;
-use tokio_util::codec::{BytesCodec, Framed};
-use tracing::{debug, error, info, trace, Level};
+use std::time::Duration;
+use tokio::sync::Mutex;
+use tracing::{debug, error, info, info_span, Instrument, Level};
 use tracing_subscriber::EnvFilter;
+use wtransport::endpoint::IncomingSession;
+use wtransport::{Endpoint, Identity, ServerConfig, SessionId};
 
 mod message_processor;
+mod state;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -29,157 +24,83 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .with_max_level(Level::DEBUG)
         .init();
 
-    let addr = "127.0.0.1:1337";
-    let listener = TcpListener::bind(addr).await.unwrap();
+    let port = 4433;
+    let config = ServerConfig::builder()
+        .with_bind_default(port)
+        .with_identity(&Identity::self_signed(["localhost"]))
+        .max_idle_timeout(Some(Duration::new(30, 0)))
+        .unwrap()
+        .build();
 
-    info!("Server running on {}", addr);
+    info!("Server running on port {}", port);
+
+    let server = Endpoint::server(config)?;
 
     let state = Arc::new(Mutex::new(SharedState::default()));
 
-    loop {
-        let (stream, addr) = listener.accept().await?;
+    for id in 0.. {
+        let incoming_session = server.accept().await;
         let state = Arc::clone(&state);
 
-        tokio::spawn(async move {
-            debug!("Accepted connection from {:?}", addr);
-            if let Err(e) = process_incoming_connection(state, stream, addr).await {
-                info!("An error occurred; error = {:?}", e);
-            }
-        });
-    }
-}
-
-#[derive(Default)]
-enum ServerState {
-    #[default]
-    WaitingForConnection,
-    InGame(GameState),
-}
-
-#[derive(Default)]
-struct SharedState {
-    connections: HashMap<SocketAddr, mpsc::UnboundedSender<Vec<u8>>>,
-    server_state: ServerState,
-}
-
-impl SharedState {
-    fn broadcast(&mut self, message: ServerToClientMessage) {
-        match message.serialize() {
-            Ok(bytes) => {
-                for (_, tx) in self.connections.iter_mut() {
-                    // Wonder if there's some way of doing this without cloning?
-                    let _ = tx.send(bytes.clone());
-                }
-            }
-            Err(e) => {
-                error!(
-                    "Error when trying to serialize NetworkMessage {:?} - Error: {:?}",
-                    message, e
-                );
-            }
-        }
+        tokio::spawn(
+            handle_connection(incoming_session, state).instrument(info_span!("Connection", id)),
+        );
     }
 
-    fn send_to(&mut self, sender: &SocketAddr, message: ServerToClientMessage) {
-        match message.serialize() {
-            Ok(bytes) => match self.connections.get(&sender) {
-                None => {
-                    error!("Unable to send Response {:?} - Sender {:?} of message was not found inside the connections array?", message, sender)
-                }
-                Some(tx) => {
-                    let _ = tx.send(bytes);
-                }
-            },
-            Err(e) => {
-                error!(
-                    "Error when trying to serialize NetworkMessage {:?} - Error: {:?}",
-                    message, e
-                );
-            }
-        }
-    }
-
-    fn send_to_everyone_except_one(
-        &mut self,
-        exception: &SocketAddr,
-        message: ServerToClientMessage,
-    ) {
-        match message.serialize() {
-            Ok(bytes) => {
-                for (addr, tx) in self.connections.iter_mut() {
-                    if addr != exception {
-                        // Wonder if there's some way of doing this without cloning?
-                        let _ = tx.send(bytes.clone());
-                    }
-                }
-            }
-            Err(e) => {
-                error!(
-                    "Error when trying to serialize NetworkMessage {:?} - Error: {:?}",
-                    message, e
-                );
-            }
-        }
-    }
+    Ok(())
 }
 
-struct ConnectedClient {
-    frame: Framed<TcpStream, BytesCodec>,
-    rx: mpsc::UnboundedReceiver<Vec<u8>>,
+async fn handle_connection(incoming_session: IncomingSession, state: Arc<Mutex<SharedState>>) {
+    let result = handle_connection_impl(incoming_session, state).await;
+    error!("{:?}", result);
 }
 
-impl ConnectedClient {
-    async fn new(
-        state: Arc<Mutex<SharedState>>,
-        frame: Framed<TcpStream, BytesCodec>,
-    ) -> io::Result<ConnectedClient> {
-        let addr = frame.get_ref().peer_addr()?;
-        let (tx, rx) = mpsc::unbounded_channel();
-        state.lock().await.connections.insert(addr, tx);
-        Ok(ConnectedClient { frame, rx })
-    }
-}
-
-async fn process_incoming_connection(
+async fn handle_connection_impl(
+    incoming_session: IncomingSession,
     state: Arc<Mutex<SharedState>>,
-    stream: TcpStream,
-    addr: SocketAddr,
 ) -> Result<(), Box<dyn Error>> {
-    let frame = Framed::new(stream, BytesCodec::new());
-    let mut client = ConnectedClient::new(state.clone(), frame).await?;
+    let mut buffer = vec![0; 65536].into_boxed_slice();
+
+    info!("Waiting for session request...");
+
+    let session_request = incoming_session.await?;
+
+    info!(
+        "New session: Authority: '{}', Path: '{}'",
+        session_request.authority(),
+        session_request.path()
+    );
+
+    let connection = session_request.accept().await?;
+
+    info!("Waiting for data from client...");
+
+    let mut client = ConnectedClient::new(state.clone(), &connection).await?;
+
+    let (mut send_stream, mut receive_stream) = connection.accept_bi().await?;
+    info!("Accepted BI stream");
 
     loop {
         tokio::select! {
-            // Outgoing
             Some(msg) = client.rx.recv() => {
-                let bytes = BytesMut::from_iter(msg);
-                client.frame.send(bytes).await?;
+                send_stream.write_all(&msg).await?;
             }
-            // Incoming
-            result = client.frame.next() => match result {
-                Some(Ok(msg)) => {
-                    process_message_from_client(Arc::clone(&state), addr, msg).await;
+            result = receive_stream.read(&mut buffer) => match result {
+                Ok(Some(bytes)) => {
+                    //send_stream.write_all(b"ACK").await?;
+                    process_message_from_client(Arc::clone(&state), client.id, buffer[0..bytes].to_vec()).await;
                 }
-                Some(Err(e)) => {
+                Err(e) => {
                     error!(
                         "an error occurred while processing messages for {}; error = {:?}",
-                        addr,
+                        client.id,
                         e
                     );
                 }
                 // The stream has been exhausted.
-                None => break,
-            },
+                Ok(None) => {break;}
+            }
         }
-    }
-
-    // If this section is reached it means that the client was disconnected!
-    {
-        let mut state = state.lock().await;
-        state.connections.remove(&addr);
-
-        let msg = format!("{} disconnected.", addr);
-        info!("{}", msg);
     }
 
     Ok(())
@@ -187,8 +108,8 @@ async fn process_incoming_connection(
 
 async fn process_message_from_client(
     state: Arc<Mutex<SharedState>>,
-    sender: SocketAddr,
-    bytes: BytesMut,
+    sender: usize,
+    bytes: Vec<u8>,
 ) {
     match ClientToServerMessage::deserialize(&bytes.to_vec()) {
         Ok(message) => {

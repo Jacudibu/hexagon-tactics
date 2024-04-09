@@ -1,5 +1,5 @@
-use crate::ServerState::InGame;
-use crate::{ServerState, SharedState};
+use crate::state::ServerState::InGame;
+use crate::state::{ServerState, SharedState};
 use game_common::game_map::GameMap;
 use game_common::game_state::GameState;
 use game_common::network_events::client_to_server::*;
