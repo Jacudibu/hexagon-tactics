@@ -1,5 +1,5 @@
 use bevy::prelude::{
-    error, in_state, info, trace, warn, App, Commands, EventReader, EventWriter, IntoSystemConfigs,
+    debug, error, in_state, info, warn, App, Commands, EventReader, EventWriter, IntoSystemConfigs,
     NextState, Plugin, PostUpdate, PreUpdate, ResMut, Resource, States,
 };
 use futures::SinkExt;
@@ -31,6 +31,7 @@ impl Plugin for NetworkPlugin {
             .add_event::<ClientToServerMessage>()
             .add_event::<server_to_client::StartGameAndLoadMap>()
             .add_event::<server_to_client::PlayerIsReady>()
+            .add_event::<server_to_client::AddUnitToPlayer>()
             .add_systems(
                 PreUpdate,
                 (
@@ -82,13 +83,9 @@ impl Network {
                         message_tx: tx_tx,
                         message_rx: rx_rx,
                     };
-                    match connection_tx.send(connection) {
-                        Ok(_) => {
-                            trace!("Connection has been sent to main thread.");
-                        }
-                        Err(e) => {
-                            error!("Internal error while persisting connection: {:?}", e);
-                        }
+                    if let Err(e) = connection_tx.send(connection) {
+                        error!("Internal error while persisting connection: {:?}", e);
+                        return;
                     }
 
                     let mut frame = Framed::new(stream, BytesCodec::new());
@@ -141,18 +138,30 @@ fn receive_updates(
     mut connection: ResMut<ServerConnection>,
     mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
     mut player_is_ready: EventWriter<server_to_client::PlayerIsReady>,
+    mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayer>,
 ) {
     if let Ok(bytes) = connection.message_rx.try_recv() {
-        // Technically we don't need the event_id, but grabbing it allows us to not use braces, yay!
-        let _event_id = match ServerToClientMessage::deserialize(&bytes) {
-            Ok(message) => match message {
-                ServerToClientMessage::LoadMap(event) => load_map_event_from_server.send(event).id,
-                ServerToClientMessage::PlayerIsReady(event) => player_is_ready.send(event).id,
-                ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
-                    error!("Server responded with an error: {:?}", e);
-                    0
-                }
-            },
+        match ServerToClientMessage::deserialize(&bytes) {
+            Ok(message) => {
+                debug!("Received {:?}", message);
+                match message {
+                    ServerToClientMessage::LoadMap(event) => {
+                        load_map_event_from_server.send(event);
+                    }
+
+                    ServerToClientMessage::PlayerIsReady(event) => {
+                        player_is_ready.send(event);
+                    }
+
+                    ServerToClientMessage::AddUnitToPlayer(event) => {
+                        add_unit_to_player.send(event);
+                    }
+
+                    ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
+                        error!("Server responded with an error: {:?}", e);
+                    }
+                };
+            }
             Err(e) => {
                 error!(
                     "Failed deserializing NetworkMessage! Error: {:?} Bytes: {:?}",

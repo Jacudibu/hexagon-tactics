@@ -8,6 +8,7 @@ mod map_editor;
 mod networking;
 
 use crate::camera::CameraPlugin;
+use crate::combat::CombatPlugin;
 use crate::debugging::DebuggingPlugin;
 use crate::load::LoadPlugin;
 use crate::main_menu::MainMenuPlugin;
@@ -31,6 +32,11 @@ fn main() {
                         ..default()
                     }),
                     ..default()
+                })
+                .set(bevy::log::LogPlugin {
+                    level: bevy::log::Level::DEBUG,
+                    filter: "bevy=info,wgpu=error,naga=warn,mygame=debug".into(),
+                    ..default()
                 }),
             AudioPlugin,
         ))
@@ -44,6 +50,7 @@ fn main() {
         .add_plugins(CameraPlugin)
         .add_plugins(LoadPlugin)
         .add_plugins(MainMenuPlugin)
+        .add_plugins(CombatPlugin)
         .init_state::<ApplicationState>()
         .init_state::<MouseCursorOverUiState>()
         .run();

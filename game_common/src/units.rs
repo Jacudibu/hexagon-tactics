@@ -1,9 +1,10 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 pub type PlayerId = u8;
 pub type UnitId = u8;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Unit {
     pub id: UnitId,
     pub owner: PlayerId,
@@ -28,6 +29,34 @@ impl Display for Unit {
     }
 }
 
+impl Unit {
+    pub fn create_debug_unit(id: UnitId, owner: PlayerId, name: String) -> Self {
+        let movement = 4;
+
+        Unit {
+            id,
+            owner,
+            name,
+            hp: 10,
+            mp: 10,
+            exp: 0,
+            base_stats: UnitStats {
+                movement,
+                jump: 3,
+                strength: 10,
+            },
+            stats_after_buffs: UnitStats {
+                movement,
+                jump: 3,
+                strength: 10,
+            },
+            turn_resources: TurnResources {
+                remaining_movement: movement,
+            },
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Player {
     pub id: PlayerId,
@@ -40,7 +69,7 @@ impl Display for Player {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UnitStats {
     pub movement: u8,
     pub jump: u8,
@@ -48,7 +77,7 @@ pub struct UnitStats {
     // ...and other stats later on
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TurnResources {
     pub remaining_movement: u8,
 }

@@ -1,14 +1,16 @@
 use crate::game_map::GameMap;
 use crate::units::{Unit, UnitId};
+use bevy::prelude::Resource;
 use bevy::utils::HashMap;
 use hexx::Hex;
 
-#[derive(PartialEq, Debug)]
+#[derive(Resource, PartialEq, Debug)]
 pub struct GameState {
     pub map: GameMap,
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,
     pub turn_order: HashMap<u32, UnitId>,
+    pub units_that_can_still_be_placed: Vec<Unit>,
 }
 
 impl GameState {

@@ -86,8 +86,8 @@ impl SharedState {
                 None => {
                     error!("Unable to send Response {:?} - Sender {:?} of message was not found inside the connections array?", message, sender)
                 }
-                Some(connection) => {
-                    let _ = connection.send(bytes);
+                Some(tx) => {
+                    let _ = tx.send(bytes);
                 }
             },
             Err(e) => {
@@ -193,10 +193,11 @@ async fn process_message_from_client(
     match ClientToServerMessage::deserialize(&bytes.to_vec()) {
         Ok(message) => {
             let mut state = state.lock().await;
-            trace!("Processing message from {}: {:?}", sender, message);
+            debug!("Processing message from {}: {:?}", sender, message);
             match message_processor::process_message(&mut state, message) {
                 Ok(outgoing_messages) => {
                     for message in outgoing_messages {
+                        debug!("Sending {:?}", message);
                         match message {
                             ServerToClientMessageVariant::SendToSender(message) => {
                                 state.send_to(&sender, message);
