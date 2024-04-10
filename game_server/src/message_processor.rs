@@ -4,6 +4,7 @@ use game_common::game_map::GameMap;
 use game_common::game_state::CombatData;
 use game_common::network_events::client_to_server::*;
 use game_common::network_events::server_to_client::*;
+use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
 use game_common::units::Unit;
 use game_common::TEST_MAP_NAME;
 use tracing::error;
@@ -62,8 +63,7 @@ fn start_game(
 fn finish_loading(
     shared_state: &mut SharedState,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
-    // TODO: Acquire Actual PlayerId
-    let player_id = 1;
+    let player_id = CONSTANT_LOCAL_PLAYER_ID;
 
     let unit_a = Unit::create_debug_unit(1, player_id, "Unit A".into());
     let unit_b = Unit::create_debug_unit(2, player_id, "Unit B".into());
@@ -77,19 +77,33 @@ fn finish_loading(
             server_data
                 .combat_state
                 .units_that_can_still_be_placed
-                .push(unit_a.clone());
+                .push(unit_a.id);
             server_data
                 .combat_state
                 .units_that_can_still_be_placed
-                .push(unit_b.clone());
+                .push(unit_b.id);
             server_data
                 .combat_state
                 .units_that_can_still_be_placed
-                .push(unit_c.clone());
+                .push(unit_c.id);
+
+            server_data
+                .combat_state
+                .units
+                .insert(unit_a.id, unit_a.clone());
+            server_data
+                .combat_state
+                .units
+                .insert(unit_b.id, unit_b.clone());
+            server_data
+                .combat_state
+                .units
+                .insert(unit_c.id, unit_c.clone());
         }
     }
 
     // TODO: Check if all players are ready
+    // TODO: Determine who starts
     Ok(vec![
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerIsReady(
             PlayerIsReady { player_id },
@@ -102,6 +116,11 @@ fn finish_loading(
         )),
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::AddUnitToPlayer(
             AddUnitToPlayer { unit: unit_c },
+        )),
+        ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerTurnToPlaceUnit(
+            PlayerTurnToPlaceUnit {
+                player: CONSTANT_LOCAL_PLAYER_ID,
+            },
         )),
     ])
 }

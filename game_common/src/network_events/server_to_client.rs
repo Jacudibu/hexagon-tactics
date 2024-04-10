@@ -7,6 +7,7 @@ pub enum ServerToClientMessage {
     LoadMap(StartGameAndLoadMap),
     PlayerIsReady(PlayerIsReady),
     AddUnitToPlayer(AddUnitToPlayer),
+    PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit),
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 }
@@ -30,4 +31,9 @@ pub struct ErrorWhenProcessingMessage {
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct AddUnitToPlayer {
     pub unit: Unit,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct PlayerTurnToPlaceUnit {
+    pub player: PlayerId,
 }

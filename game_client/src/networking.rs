@@ -32,6 +32,7 @@ impl Plugin for NetworkPlugin {
             .add_event::<server_to_client::StartGameAndLoadMap>()
             .add_event::<server_to_client::PlayerIsReady>()
             .add_event::<server_to_client::AddUnitToPlayer>()
+            .add_event::<server_to_client::PlayerTurnToPlaceUnit>()
             .add_systems(
                 PreUpdate,
                 (
@@ -212,6 +213,7 @@ fn receive_updates(
     mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
     mut player_is_ready: EventWriter<server_to_client::PlayerIsReady>,
     mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayer>,
+    mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
 ) {
     if let Ok(bytes) = connection.message_rx.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
@@ -233,6 +235,9 @@ fn receive_updates(
 
                         ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
                             error!("Server responded with an error: {:?}", e);
+                        }
+                        ServerToClientMessage::PlayerTurnToPlaceUnit(event) => {
+                            player_turn_to_place_unit.send(event);
                         }
                     };
                 }

@@ -6,8 +6,8 @@ use bevy::utils::HashMap;
 use hexx::Hex;
 
 pub use {
-    spawning::DespawnMapCommand, spawning::SpawnMapCommand, tile_cursor::TileCursor,
-    update_tile::TileChangeEvent,
+    spawning::DespawnMapCommand, spawning::SpawnMapCommand, tile_cursor::MouseCursorOnTile,
+    tile_cursor::TileCursor, update_tile::TileChangeEvent,
 };
 
 use crate::load::HexagonMeshes;

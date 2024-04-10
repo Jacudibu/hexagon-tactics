@@ -9,7 +9,7 @@ pub struct CombatData {
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,
     pub turn_order: HashMap<u32, UnitId>,
-    pub units_that_can_still_be_placed: Vec<Unit>,
+    pub units_that_can_still_be_placed: Vec<UnitId>,
 }
 
 impl CombatData {

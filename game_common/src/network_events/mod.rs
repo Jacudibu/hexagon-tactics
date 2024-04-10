@@ -1,6 +1,7 @@
 pub mod client_to_server;
 pub mod server_to_client;
 
+use crate::units::PlayerId;
 use bevy::prelude::error;
 use bincode::config::Configuration;
 use bincode::error::EncodeError;
@@ -10,6 +11,7 @@ use serde::Serialize;
 use std::time::Duration;
 
 pub const NETWORK_IDLE_TIMEOUT: Duration = Duration::new(5, 0);
+pub const CONSTANT_LOCAL_PLAYER_ID: PlayerId = 1;
 
 pub trait NetworkMessage: DeserializeOwned + Serialize {
     fn serialize(&self) -> Result<Bytes, EncodeError>;
