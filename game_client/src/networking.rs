@@ -35,7 +35,7 @@ impl Plugin for NetworkPlugin {
             .add_systems(
                 PreUpdate,
                 (
-                    check_for_connection.run_if(in_state(NetworkState::Disconnected)),
+                    check_for_connection.run_if(in_state(NetworkState::Connecting)),
                     receive_updates.run_if(in_state(NetworkState::Connected)),
                 ),
             )
@@ -93,6 +93,7 @@ pub struct ServerConnection {
 pub enum NetworkState {
     #[default]
     Disconnected,
+    Connecting,
     Connected,
 }
 

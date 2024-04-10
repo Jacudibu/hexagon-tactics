@@ -155,8 +155,12 @@ struct LocalHost {
     child: Child,
 }
 
-fn connect_to_local_host(mut network: ResMut<Network>) {
-    network.connect()
+fn connect_to_local_host(
+    mut network: ResMut<Network>,
+    mut connection_state: ResMut<NextState<NetworkState>>,
+) {
+    network.connect();
+    connection_state.set(NetworkState::Connecting);
 }
 
 #[derive(Event)]
