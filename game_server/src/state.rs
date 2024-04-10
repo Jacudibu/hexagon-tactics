@@ -18,7 +18,7 @@ pub enum ServerState {
 
 #[derive(Default)]
 pub struct SharedState {
-    pub connections: HashMap<usize, mpsc::UnboundedSender<Bytes>>,
+    pub connections: HashMap<ClientId, mpsc::UnboundedSender<Bytes>>,
     pub server_state: ServerState,
 }
 
@@ -39,9 +39,9 @@ impl SharedState {
         }
     }
 
-    pub fn send_to(&mut self, sender: &usize, message: ServerToClientMessage) {
+    pub fn send_to(&mut self, sender: &ClientId, message: ServerToClientMessage) {
         match message.serialize() {
-            Ok(bytes) => match self.connections.get(&sender) {
+            Ok(bytes) => match self.connections.get(sender) {
                 None => {
                     error!("Unable to send Response {:?} - Sender {:?} of message was not found inside the connections array?", message, sender)
                 }
@@ -60,13 +60,13 @@ impl SharedState {
 
     pub fn send_to_everyone_except_one(
         &mut self,
-        exception: &usize,
+        id_to_ignore: &ClientId,
         message: ServerToClientMessage,
     ) {
         match message.serialize() {
             Ok(bytes) => {
-                for (addr, tx) in self.connections.iter_mut() {
-                    if addr != exception {
+                for (id, tx) in self.connections.iter_mut() {
+                    if id != id_to_ignore {
                         let _ = tx.send(bytes.clone());
                     }
                 }
@@ -81,19 +81,8 @@ impl SharedState {
     }
 }
 
+pub type ClientId = u32;
 pub struct ConnectedClient {
-    pub rx: mpsc::UnboundedReceiver<Bytes>,
-    pub id: usize, // TODO: Use the id the server assigns when the connection is initialized in main instead
-}
-
-impl ConnectedClient {
-    pub async fn new(
-        state: Arc<Mutex<SharedState>>,
-        connection: &Connection,
-    ) -> io::Result<ConnectedClient> {
-        let (tx, rx) = mpsc::unbounded_channel();
-        let id = connection.stable_id();
-        state.lock().await.connections.insert(id, tx);
-        Ok(ConnectedClient { id, rx })
-    }
+    pub receiver: mpsc::UnboundedReceiver<Bytes>,
+    pub id: ClientId,
 }
