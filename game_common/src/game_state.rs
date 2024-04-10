@@ -5,17 +5,17 @@ use bevy::utils::HashMap;
 use hexx::Hex;
 
 #[derive(Resource, PartialEq, Debug)]
-pub struct GameState {
-    pub map: GameMap,
+pub struct CombatData {
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,
     pub turn_order: HashMap<u32, UnitId>,
     pub units_that_can_still_be_placed: Vec<Unit>,
 }
 
-impl GameState {
+impl CombatData {
     pub fn validate_path(
         &self,
+        map: &GameMap,
         start: &Hex,
         path: Vec<&Hex>,
         unit: &Unit,
@@ -24,14 +24,14 @@ impl GameState {
             return Err(ValidationError::new("Not enough movement."));
         }
 
-        let mut last_height = match self.map.tiles.get(start) {
+        let mut last_height = match map.tiles.get(start) {
             None => {
                 return Err(ValidationError::new("Starting Tile doesn't exist?"));
             }
             Some(tile_data) => tile_data.height,
         };
         for hex in path {
-            match self.map.tiles.get(hex) {
+            match map.tiles.get(hex) {
                 None => {
                     return Err(ValidationError::new("Tile doesn't exist?"));
                 }

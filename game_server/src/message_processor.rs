@@ -1,7 +1,7 @@
 use crate::state::ServerState::InGame;
-use crate::state::{ServerState, SharedState};
+use crate::state::{ServerData, ServerState, SharedState};
 use game_common::game_map::GameMap;
-use game_common::game_state::GameState;
+use game_common::game_state::CombatData;
 use game_common::network_events::client_to_server::*;
 use game_common::network_events::server_to_client::*;
 use game_common::units::Unit;
@@ -39,14 +39,18 @@ fn start_game(
             ))
         }
     };
-    let game_state = GameState {
-        map,
+    let combat_state = CombatData {
         units: Default::default(),
         unit_positions: Default::default(),
         turn_order: Default::default(),
         units_that_can_still_be_placed: Default::default(),
     };
-    shared_state.server_state = InGame(game_state);
+    let server_data = ServerData {
+        combat_state,
+        loaded_map: map,
+    };
+
+    shared_state.server_state = InGame(server_data);
 
     Ok(vec![ServerToClientMessageVariant::Broadcast(
         ServerToClientMessage::LoadMap(StartGameAndLoadMap {
@@ -69,14 +73,17 @@ fn finish_loading(
         ServerState::WaitingForConnection => {
             error!("Wrong server state to receive FinishLoading events!")
         }
-        InGame(ref mut game_state) => {
-            game_state
+        InGame(ref mut server_data) => {
+            server_data
+                .combat_state
                 .units_that_can_still_be_placed
                 .push(unit_a.clone());
-            game_state
+            server_data
+                .combat_state
                 .units_that_can_still_be_placed
                 .push(unit_b.clone());
-            game_state
+            server_data
+                .combat_state
                 .units_that_can_still_be_placed
                 .push(unit_c.clone());
         }

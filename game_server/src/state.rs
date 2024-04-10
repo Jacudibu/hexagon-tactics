@@ -1,19 +1,22 @@
 use bytes::Bytes;
-use game_common::game_state::GameState;
+use game_common::game_map::GameMap;
+use game_common::game_state::CombatData;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::NetworkMessage;
 use std::collections::HashMap;
-use std::io;
-use std::sync::Arc;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
 use tracing::error;
-use wtransport::Connection;
 
 #[derive(Default)]
 pub enum ServerState {
     #[default]
     WaitingForConnection,
-    InGame(GameState),
+    InGame(ServerData),
+}
+
+pub struct ServerData {
+    pub loaded_map: GameMap,
+    pub combat_state: CombatData,
 }
 
 #[derive(Default)]

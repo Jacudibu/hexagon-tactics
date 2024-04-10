@@ -3,10 +3,9 @@ use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::{
     in_state, info, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, OnEnter,
-    Plugin, Reflect, Res, ResMut, States, Update,
+    Plugin, Reflect, ResMut, States, Update,
 };
-use game_common::game_map::GameMap;
-use game_common::game_state::GameState;
+use game_common::game_state::CombatData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::AddUnitToPlayer;
 
@@ -35,13 +34,9 @@ pub enum CombatState {
 
 pub fn on_finish_loading(
     mut commands: Commands,
-    map: Res<GameMap>,
     mut network_event: EventWriter<ClientToServerMessage>,
 ) {
-    let map = map.clone(); // TODO: No. Nope. Nada. Extract GameMap from GameState.
-
-    commands.insert_resource(GameState {
-        map,
+    commands.insert_resource(CombatData {
         units: Default::default(),
         unit_positions: Default::default(),
         turn_order: Default::default(),
@@ -53,7 +48,7 @@ pub fn on_finish_loading(
 
 pub fn on_add_unit_to_player(
     mut add_unit_to_player_event: EventReader<AddUnitToPlayer>,
-    mut game_state: ResMut<GameState>,
+    mut game_state: ResMut<CombatData>,
 ) {
     for x in add_unit_to_player_event.read() {
         game_state
