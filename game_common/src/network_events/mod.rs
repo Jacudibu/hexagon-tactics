@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
 
-pub const NETWORK_IDLE_TIMEOUT: Duration = Duration::new(30, 0);
+pub const NETWORK_IDLE_TIMEOUT: Duration = Duration::new(5, 0);
 
 pub trait NetworkMessage: DeserializeOwned + Serialize {
     fn serialize(&self) -> Result<Bytes, EncodeError>;

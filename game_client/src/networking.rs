@@ -35,7 +35,8 @@ impl Plugin for NetworkPlugin {
             .add_systems(
                 PreUpdate,
                 (
-                    check_for_connection.run_if(in_state(NetworkState::Connecting)),
+                    check_for_connection_updates.run_if(in_state(NetworkState::Connecting)),
+                    check_for_connection_updates.run_if(in_state(NetworkState::Connected)),
                     receive_updates.run_if(in_state(NetworkState::Connected)),
                 ),
             )
@@ -79,8 +80,13 @@ pub struct Network {
     _tokio_runtime: Runtime,
     tokio_handle: Handle,
 
-    connection_rx: mpsc::UnboundedReceiver<ServerConnection>,
-    connection_tx: mpsc::UnboundedSender<ServerConnection>,
+    connection_rx: mpsc::UnboundedReceiver<ServerConnectionUpdate>,
+    connection_tx: mpsc::UnboundedSender<ServerConnectionUpdate>,
+}
+
+pub enum ServerConnectionUpdate {
+    ConnectionCreated(ServerConnection),
+    ConnectionDropped,
 }
 
 #[derive(Resource)]
@@ -126,8 +132,12 @@ impl Network {
                                 message_tx: tx_tx,
                                 message_rx: rx_rx,
                             };
-                            if let Err(e) = connection_tx.send(connection) {
+                            if let Err(e) = connection_tx
+                                .send(ServerConnectionUpdate::ConnectionCreated(connection))
+                            {
                                 error!("Internal error while persisting connection: {:?}", e);
+                                let _ =
+                                    connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
                                 return;
                             }
 
@@ -139,13 +149,16 @@ impl Network {
                                     result = receive_stream.read_buf(&mut buffer) => match result {
                                         Ok(bytes) => {
                                             if bytes == 0 {
-                                                info!("Bytes was 0!");
+                                                error!("Bytes was 0!");
+                                                let _ = connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
                                                 break;
                                             }
                                             let _ = tx_rx.send(buffer.split().freeze());
                                         }
                                         Err(e) => {
                                             error!("Error when receiving data from server: {:?}", e);
+                                            let _ = connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
+                                            break;
                                         }
                                     }
                                 }
@@ -153,11 +166,13 @@ impl Network {
                         }
                         Err(e) => {
                             error!("Error while opening stream: {:?}", e);
+                            let _ = connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
                         }
                     }
                 }
                 Err(e) => {
                     error!("Error while connecting: {:?}", e);
+                    let _ = connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
                 }
             };
         });
@@ -169,16 +184,26 @@ impl Network {
     }
 }
 
-fn check_for_connection(
+fn check_for_connection_updates(
     mut commands: Commands,
     mut network: ResMut<Network>,
     mut next_network_state: ResMut<NextState<NetworkState>>,
 ) {
-    if let Ok(connection) = network.connection_rx.try_recv() {
-        commands.insert_resource(connection);
-        commands.insert_resource(KeepAliveTimer::default());
-        next_network_state.set(NetworkState::Connected);
-        info!("Connection Resource has been created.")
+    if let Ok(update) = network.connection_rx.try_recv() {
+        match update {
+            ServerConnectionUpdate::ConnectionCreated(connection) => {
+                commands.insert_resource(KeepAliveTimer::default());
+                commands.insert_resource(connection);
+                next_network_state.set(NetworkState::Connected);
+                info!("Connection Resource has been created.")
+            }
+            ServerConnectionUpdate::ConnectionDropped => {
+                commands.remove_resource::<KeepAliveTimer>();
+                commands.remove_resource::<ServerConnection>();
+                next_network_state.set(NetworkState::Disconnected);
+                info!("Connection has been dropped.")
+            }
+        }
     }
 }
 

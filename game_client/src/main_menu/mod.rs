@@ -4,9 +4,10 @@ use crate::ApplicationState;
 use bevy::app::{App, AppExit, Plugin};
 use bevy::prelude::{
     error, in_state, info, on_event, resource_exists, warn, Commands, Event, EventReader,
-    EventWriter, IntoSystemConfigs, NextState, OnEnter, Reflect, ResMut, Resource, States, Update,
+    EventWriter, IntoSystemConfigs, NextState, OnEnter, Reflect, Res, ResMut, Resource, State,
+    States, Update,
 };
-use bevy_egui::egui::Align2;
+use bevy_egui::egui::{Align2, Button};
 use bevy_egui::{egui, EguiContexts};
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
@@ -30,6 +31,7 @@ impl Plugin for MainMenuPlugin {
                         connect_to_local_host.run_if(resource_exists::<LocalHost>),
                     )
                         .run_if(in_state(NetworkState::Disconnected)),
+                    (connection_menu).run_if(in_state(NetworkState::Connecting)),
                     (
                         play_menu,
                         load_map_listener
@@ -84,6 +86,8 @@ fn main_menu(
 fn connection_menu(
     mut egui: EguiContexts,
     mut network: ResMut<Network>,
+    network_state: Res<State<NetworkState>>,
+    mut next_network_state: ResMut<NextState<NetworkState>>,
     mut next_menu_state: ResMut<NextState<MenuState>>,
     mut host_command: EventWriter<HostLocalServerCommand>,
 ) {
@@ -94,13 +98,16 @@ fn connection_menu(
         .anchor(Align2::CENTER_CENTER, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| {
             ui.vertical_centered(|ui| {
-                if ui.button("Host").clicked() {
-                    host_command.send(HostLocalServerCommand {});
-                }
-                if ui.button("Connect").clicked() {
-                    // TODO: Acquire the IP from somewhere
-                    network.connect();
-                }
+                ui.add_enabled_ui(network_state.get() != &NetworkState::Connecting, |ui| {
+                    if ui.button("Host").clicked() {
+                        host_command.send(HostLocalServerCommand {});
+                    }
+                    if ui.button("Connect").clicked() {
+                        // TODO: Acquire the IP from somewhere
+                        network.connect();
+                        next_network_state.set(NetworkState::Connecting);
+                    }
+                });
                 if ui.button("Back to Menu").clicked() {
                     next_menu_state.set(MenuState::MainMenu);
                 }
