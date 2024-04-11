@@ -29,7 +29,7 @@ fn receive_updates(
     mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
     mut place_unit: EventWriter<server_to_client::PlaceUnit>,
 ) {
-    if let Ok(bytes) = connection.message_rx.try_recv() {
+    if let Ok(bytes) = connection.message_receiver.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
             Ok(messages) => {
                 debug!("Received {} bytes: {:?}", bytes.len(), messages);

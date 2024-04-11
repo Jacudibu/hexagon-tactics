@@ -1,17 +1,15 @@
 use crate::networking::incoming_message_processor::IncomingMessageProcessorPlugin;
+use crate::networking::network::Network;
 use bevy::prelude::{
-    error, in_state, info, not, on_event, warn, App, Commands, EventReader, EventWriter,
+    error, in_state, info, not, on_event, App, Commands, EventReader, EventWriter,
     IntoSystemConfigs, NextState, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, States,
     Timer, TimerMode,
 };
 use bevy::time::Time;
-use bytes::{Bytes, BytesMut};
+use bytes::Bytes;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{NetworkMessage, NETWORK_IDLE_TIMEOUT};
-use tokio::io::AsyncReadExt;
-use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
-use wtransport::{ClientConfig, Endpoint};
 
 pub struct NetworkPlugin;
 impl Plugin for NetworkPlugin {
@@ -62,29 +60,6 @@ impl Default for KeepAliveTimer {
     }
 }
 
-#[derive(Resource)]
-pub struct Network {
-    _tokio_runtime: Runtime,
-    tokio_handle: Handle,
-
-    connection_receiver: mpsc::UnboundedReceiver<ServerConnectionUpdate>,
-    connection_sender: mpsc::UnboundedSender<ServerConnectionUpdate>,
-}
-
-impl Default for Network {
-    fn default() -> Self {
-        let tokio_runtime = Runtime::new().unwrap();
-        let tokio_handle = tokio_runtime.handle().clone();
-        let (tx, rx) = mpsc::unbounded_channel();
-        Network {
-            _tokio_runtime: tokio_runtime,
-            tokio_handle,
-            connection_sender: tx,
-            connection_receiver: rx,
-        }
-    }
-}
-
 pub enum ServerConnectionUpdate {
     ConnectionCreated(ServerConnection),
     ConnectionDropped,
@@ -92,8 +67,8 @@ pub enum ServerConnectionUpdate {
 
 #[derive(Resource)]
 pub struct ServerConnection {
-    pub message_rx: mpsc::UnboundedReceiver<Bytes>,
-    pub message_tx: mpsc::UnboundedSender<Bytes>,
+    pub message_receiver: mpsc::UnboundedReceiver<Bytes>,
+    pub message_sender: mpsc::UnboundedSender<Bytes>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
@@ -102,87 +77,6 @@ pub enum NetworkState {
     Disconnected,
     Connecting,
     Connected,
-}
-
-impl Network {
-    pub fn connect(&mut self) {
-        let _guard = self.tokio_handle.enter();
-
-        let connection_tx = self.connection_sender.clone();
-
-        tokio::spawn(async move {
-            let config = ClientConfig::builder()
-                .with_bind_default()
-                .with_no_cert_validation()
-                .max_idle_timeout(Some(NETWORK_IDLE_TIMEOUT))
-                .unwrap()
-                .build();
-
-            match Endpoint::client(config)
-                .unwrap()
-                .connect("https://[::1]:4433")
-                .await
-            {
-                Ok(connection) => {
-                    let mut buffer = BytesMut::with_capacity(1024);
-                    match connection.open_bi().await.unwrap().await {
-                        Ok((mut send_stream, mut receive_stream)) => {
-                            let (tx_rx, rx_rx) = mpsc::unbounded_channel();
-                            let (tx_tx, mut rx_tx) = mpsc::unbounded_channel();
-                            let connection = ServerConnection {
-                                message_tx: tx_tx,
-                                message_rx: rx_rx,
-                            };
-                            if let Err(e) = connection_tx
-                                .send(ServerConnectionUpdate::ConnectionCreated(connection))
-                            {
-                                error!("Internal error while persisting connection: {:?}", e);
-                                let _ =
-                                    connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
-                                return;
-                            }
-
-                            loop {
-                                tokio::select! {
-                                    Some(bytes) = rx_tx.recv() => {
-                                        let _ = send_stream.write_all(&bytes).await;
-                                    }
-                                    result = receive_stream.read_buf(&mut buffer) => match result {
-                                        Ok(bytes) => {
-                                            if bytes == 0 {
-                                                error!("Bytes was 0!");
-                                                let _ = connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
-                                                break;
-                                            }
-                                            let _ = tx_rx.send(buffer.split().freeze());
-                                        }
-                                        Err(e) => {
-                                            error!("Error when receiving data from server: {:?}", e);
-                                            let _ = connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            error!("Error while opening stream: {:?}", e);
-                            let _ = connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
-                        }
-                    }
-                }
-                Err(e) => {
-                    error!("Error while connecting: {:?}", e);
-                    let _ = connection_tx.send(ServerConnectionUpdate::ConnectionDropped);
-                }
-            };
-        });
-    }
-
-    pub fn disconnect(&mut self) {
-        // TODO
-        warn!("Disconnecting isn't yet implemented. You are forever trapped here! :^)")
-    }
 }
 
 fn check_for_connection_updates(
@@ -216,7 +110,7 @@ fn event_processor(
     for event in events.read() {
         match event.serialize() {
             Ok(bytes) => {
-                let _ = connection.message_tx.send(bytes);
+                let _ = connection.message_sender.send(bytes);
                 keep_alive_timer.timer.reset();
             }
             Err(e) => {

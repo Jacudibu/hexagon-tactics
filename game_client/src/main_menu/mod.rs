@@ -1,5 +1,6 @@
 use crate::map::SpawnMapCommand;
-use crate::networking::{Network, NetworkState};
+use crate::networking::Network;
+use crate::networking::NetworkState;
 use crate::ApplicationState;
 use bevy::app::{App, AppExit, Plugin};
 use bevy::prelude::{
