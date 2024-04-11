@@ -41,6 +41,7 @@ impl Network {
             let config = ClientConfig::builder()
                 .with_bind_default()
                 .with_no_cert_validation()
+                .keep_alive_interval(Some(NETWORK_IDLE_TIMEOUT / 3))
                 .max_idle_timeout(Some(NETWORK_IDLE_TIMEOUT))
                 .unwrap()
                 .build();

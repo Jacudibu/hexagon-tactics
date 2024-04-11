@@ -21,7 +21,6 @@ pub fn process_message(
     message: ClientToServerMessage,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     match message {
-        ClientToServerMessage::KeepAlive => Ok(Vec::new()),
         ClientToServerMessage::StartGame => start_game(shared_state),
         ClientToServerMessage::FinishedLoading => finish_loading(shared_state),
         ClientToServerMessage::PlaceUnit(data) => place_unit(shared_state, data),
