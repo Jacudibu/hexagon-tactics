@@ -1,5 +1,6 @@
-use crate::units::{PlayerId, Unit};
+use crate::units::{PlayerId, Unit, UnitId};
 use bevy::prelude::Event;
+use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -8,6 +9,7 @@ pub enum ServerToClientMessage {
     PlayerIsReady(PlayerIsReady),
     AddUnitToPlayer(AddUnitToPlayer),
     PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit),
+    PlaceUnit(PlaceUnit),
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 }
@@ -36,4 +38,10 @@ pub struct AddUnitToPlayer {
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PlayerTurnToPlaceUnit {
     pub player: PlayerId,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct PlaceUnit {
+    pub unit_id: UnitId,
+    pub hex: Hex,
 }

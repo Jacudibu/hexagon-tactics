@@ -33,6 +33,7 @@ impl Plugin for NetworkPlugin {
             .add_event::<server_to_client::PlayerIsReady>()
             .add_event::<server_to_client::AddUnitToPlayer>()
             .add_event::<server_to_client::PlayerTurnToPlaceUnit>()
+            .add_event::<server_to_client::PlaceUnit>()
             .add_systems(
                 PreUpdate,
                 (
@@ -214,6 +215,7 @@ fn receive_updates(
     mut player_is_ready: EventWriter<server_to_client::PlayerIsReady>,
     mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayer>,
     mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
+    mut place_unit: EventWriter<server_to_client::PlaceUnit>,
 ) {
     if let Ok(bytes) = connection.message_rx.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
@@ -238,6 +240,9 @@ fn receive_updates(
                         }
                         ServerToClientMessage::PlayerTurnToPlaceUnit(event) => {
                             player_turn_to_place_unit.send(event);
+                        }
+                        ServerToClientMessage::PlaceUnit(event) => {
+                            place_unit.send(event);
                         }
                     };
                 }

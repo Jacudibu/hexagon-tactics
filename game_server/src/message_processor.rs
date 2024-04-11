@@ -4,7 +4,7 @@ use game_common::game_map::GameMap;
 use game_common::game_state::CombatData;
 use game_common::network_events::client_to_server::*;
 use game_common::network_events::server_to_client::*;
-use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
+use game_common::network_events::{client_to_server, server_to_client, CONSTANT_LOCAL_PLAYER_ID};
 use game_common::units::Unit;
 use game_common::TEST_MAP_NAME;
 use tracing::error;
@@ -24,6 +24,7 @@ pub fn process_message(
         ClientToServerMessage::KeepAlive => Ok(Vec::new()),
         ClientToServerMessage::StartGame => start_game(shared_state),
         ClientToServerMessage::FinishedLoading => finish_loading(shared_state),
+        ClientToServerMessage::PlaceUnit(data) => place_unit(shared_state, data),
     }
 }
 
@@ -122,5 +123,44 @@ fn finish_loading(
                 player: CONSTANT_LOCAL_PLAYER_ID,
             },
         )),
+    ])
+}
+
+fn place_unit(
+    shared_state: &mut SharedState,
+    data: client_to_server::PlaceUnit,
+) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
+    // TODO: Consider moving state validation out. We don't need the whole shared state in these command processors.
+    let InGame(server_data) = &mut shared_state.server_state else {
+        error!("Something just went horribly wrong");
+        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
+            ErrorWhenProcessingMessage {
+                message: "Something just went horribly wrong, yay!".into(),
+            },
+        ));
+    };
+
+    // TODO: Validation
+
+    server_data
+        .combat_state
+        .unit_positions
+        .insert(data.hex, data.unit_id);
+
+    // TODO: Check if all units have been placed, and if so, proceed to very first unit turn
+    let next = ServerToClientMessageVariant::Broadcast(
+        ServerToClientMessage::PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit {
+            player: CONSTANT_LOCAL_PLAYER_ID,
+        }),
+    );
+
+    Ok(vec![
+        ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlaceUnit(
+            server_to_client::PlaceUnit {
+                unit_id: data.unit_id,
+                hex: data.hex,
+            },
+        )),
+        next,
     ])
 }
