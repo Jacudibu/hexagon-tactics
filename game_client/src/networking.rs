@@ -1,7 +1,7 @@
 use bevy::prelude::{
     debug, error, in_state, info, not, on_event, warn, App, Commands, EventReader, EventWriter,
-    IntoSystemConfigs, NextState, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, States,
-    Timer, TimerMode,
+    IntoSystemConfigs, Local, NextState, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource,
+    States, Timer, TimerMode,
 };
 use bevy::time::Time;
 use bytes::{Bytes, BytesMut};
@@ -209,8 +209,28 @@ fn check_for_connection_updates(
     }
 }
 
+#[derive(Default)]
+struct IncomingNetworkEventQueue {
+    queue: Vec<ServerToClientMessage>,
+}
+
+impl IncomingNetworkEventQueue {
+    pub fn push(&mut self, message: ServerToClientMessage) {
+        self.queue.push(message);
+    }
+
+    pub fn pop_front(&mut self) -> Option<ServerToClientMessage> {
+        if self.queue.is_empty() {
+            None
+        } else {
+            Some(self.queue.remove(0))
+        }
+    }
+}
+
 fn receive_updates(
     mut connection: ResMut<ServerConnection>,
+    mut event_queue: Local<IncomingNetworkEventQueue>,
     mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
     mut player_is_ready: EventWriter<server_to_client::PlayerIsReady>,
     mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayer>,
@@ -222,29 +242,7 @@ fn receive_updates(
             Ok(messages) => {
                 debug!("Received {} bytes: {:?}", bytes.len(), messages);
                 for message in messages {
-                    match message {
-                        ServerToClientMessage::LoadMap(event) => {
-                            load_map_event_from_server.send(event);
-                        }
-
-                        ServerToClientMessage::PlayerIsReady(event) => {
-                            player_is_ready.send(event);
-                        }
-
-                        ServerToClientMessage::AddUnitToPlayer(event) => {
-                            add_unit_to_player.send(event);
-                        }
-
-                        ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
-                            error!("Server responded with an error: {:?}", e);
-                        }
-                        ServerToClientMessage::PlayerTurnToPlaceUnit(event) => {
-                            player_turn_to_place_unit.send(event);
-                        }
-                        ServerToClientMessage::PlaceUnit(event) => {
-                            place_unit.send(event);
-                        }
-                    };
+                    event_queue.push(message);
                 }
             }
             Err(e) => {
@@ -253,6 +251,29 @@ fn receive_updates(
                     e, bytes
                 );
                 return;
+            }
+        };
+    }
+
+    if let Some(message) = event_queue.pop_front() {
+        match message {
+            ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
+                error!("Server responded with an error: {:?}", e);
+            }
+            ServerToClientMessage::LoadMap(event) => {
+                load_map_event_from_server.send(event);
+            }
+            ServerToClientMessage::PlayerIsReady(event) => {
+                player_is_ready.send(event);
+            }
+            ServerToClientMessage::AddUnitToPlayer(event) => {
+                add_unit_to_player.send(event);
+            }
+            ServerToClientMessage::PlayerTurnToPlaceUnit(event) => {
+                player_turn_to_place_unit.send(event);
+            }
+            ServerToClientMessage::PlaceUnit(event) => {
+                place_unit.send(event);
             }
         };
     }
