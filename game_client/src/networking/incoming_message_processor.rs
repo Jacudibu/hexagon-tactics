@@ -1,0 +1,91 @@
+use crate::networking::network_plugin::{NetworkState, ServerConnection};
+use bevy::app::{App, Plugin, PreUpdate};
+use bevy::log::{debug, error};
+use bevy::prelude::{in_state, EventWriter, IntoSystemConfigs, Local, ResMut};
+use game_common::network_events::server_to_client::ServerToClientMessage;
+use game_common::network_events::{server_to_client, NetworkMessage};
+
+pub struct IncomingMessageProcessorPlugin;
+impl Plugin for IncomingMessageProcessorPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<server_to_client::StartGameAndLoadMap>()
+            .add_event::<server_to_client::PlayerIsReady>()
+            .add_event::<server_to_client::AddUnitToPlayer>()
+            .add_event::<server_to_client::PlayerTurnToPlaceUnit>()
+            .add_event::<server_to_client::PlaceUnit>()
+            .add_systems(
+                PreUpdate,
+                receive_updates.run_if(in_state(NetworkState::Connected)),
+            );
+    }
+}
+
+fn receive_updates(
+    mut connection: ResMut<ServerConnection>,
+    mut event_queue: Local<IncomingNetworkEventQueue>,
+    mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
+    mut player_is_ready: EventWriter<server_to_client::PlayerIsReady>,
+    mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayer>,
+    mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
+    mut place_unit: EventWriter<server_to_client::PlaceUnit>,
+) {
+    if let Ok(bytes) = connection.message_rx.try_recv() {
+        match ServerToClientMessage::deserialize(&bytes) {
+            Ok(messages) => {
+                debug!("Received {} bytes: {:?}", bytes.len(), messages);
+                for message in messages {
+                    event_queue.push(message);
+                }
+            }
+            Err(e) => {
+                error!(
+                    "Failed deserializing NetworkMessage! Error: {:?} Bytes: {:?}",
+                    e, bytes
+                );
+                return;
+            }
+        };
+    }
+
+    if let Some(message) = event_queue.pop_front() {
+        match message {
+            ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
+                error!("Server responded with an error: {:?}", e);
+            }
+            ServerToClientMessage::LoadMap(event) => {
+                load_map_event_from_server.send(event);
+            }
+            ServerToClientMessage::PlayerIsReady(event) => {
+                player_is_ready.send(event);
+            }
+            ServerToClientMessage::AddUnitToPlayer(event) => {
+                add_unit_to_player.send(event);
+            }
+            ServerToClientMessage::PlayerTurnToPlaceUnit(event) => {
+                player_turn_to_place_unit.send(event);
+            }
+            ServerToClientMessage::PlaceUnit(event) => {
+                place_unit.send(event);
+            }
+        };
+    }
+}
+
+#[derive(Default)]
+struct IncomingNetworkEventQueue {
+    queue: Vec<ServerToClientMessage>,
+}
+
+impl IncomingNetworkEventQueue {
+    pub fn push(&mut self, message: ServerToClientMessage) {
+        self.queue.push(message);
+    }
+
+    pub fn pop_front(&mut self) -> Option<ServerToClientMessage> {
+        if self.queue.is_empty() {
+            None
+        } else {
+            Some(self.queue.remove(0))
+        }
+    }
+}

@@ -1,13 +1,13 @@
+use crate::networking::incoming_message_processor::IncomingMessageProcessorPlugin;
 use bevy::prelude::{
-    debug, error, in_state, info, not, on_event, warn, App, Commands, EventReader, EventWriter,
-    IntoSystemConfigs, Local, NextState, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource,
-    States, Timer, TimerMode,
+    error, in_state, info, not, on_event, warn, App, Commands, EventReader, EventWriter,
+    IntoSystemConfigs, NextState, Plugin, PostUpdate, PreUpdate, Res, ResMut, Resource, States,
+    Timer, TimerMode,
 };
 use bevy::time::Time;
 use bytes::{Bytes, BytesMut};
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::server_to_client::ServerToClientMessage;
-use game_common::network_events::{server_to_client, NetworkMessage, NETWORK_IDLE_TIMEOUT};
+use game_common::network_events::{NetworkMessage, NETWORK_IDLE_TIMEOUT};
 use tokio::io::AsyncReadExt;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
@@ -16,30 +16,15 @@ use wtransport::{ClientConfig, Endpoint};
 pub struct NetworkPlugin;
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
-        let tokio_runtime = Runtime::new().unwrap();
-        let tokio_handle = tokio_runtime.handle().clone();
-        let (tx, rx) = mpsc::unbounded_channel();
-        let network = Network {
-            _tokio_runtime: tokio_runtime,
-            tokio_handle,
-            connection_tx: tx,
-            connection_rx: rx,
-        };
-
-        app.insert_resource(network)
+        app.insert_resource(Network::default())
             .insert_state(NetworkState::Disconnected)
+            .add_plugins(IncomingMessageProcessorPlugin)
             .add_event::<ClientToServerMessage>()
-            .add_event::<server_to_client::StartGameAndLoadMap>()
-            .add_event::<server_to_client::PlayerIsReady>()
-            .add_event::<server_to_client::AddUnitToPlayer>()
-            .add_event::<server_to_client::PlayerTurnToPlaceUnit>()
-            .add_event::<server_to_client::PlaceUnit>()
             .add_systems(
                 PreUpdate,
                 (
                     check_for_connection_updates.run_if(in_state(NetworkState::Connecting)),
                     check_for_connection_updates.run_if(in_state(NetworkState::Connected)),
-                    receive_updates.run_if(in_state(NetworkState::Connected)),
                 ),
             )
             .add_systems(
@@ -82,8 +67,22 @@ pub struct Network {
     _tokio_runtime: Runtime,
     tokio_handle: Handle,
 
-    connection_rx: mpsc::UnboundedReceiver<ServerConnectionUpdate>,
-    connection_tx: mpsc::UnboundedSender<ServerConnectionUpdate>,
+    connection_receiver: mpsc::UnboundedReceiver<ServerConnectionUpdate>,
+    connection_sender: mpsc::UnboundedSender<ServerConnectionUpdate>,
+}
+
+impl Default for Network {
+    fn default() -> Self {
+        let tokio_runtime = Runtime::new().unwrap();
+        let tokio_handle = tokio_runtime.handle().clone();
+        let (tx, rx) = mpsc::unbounded_channel();
+        Network {
+            _tokio_runtime: tokio_runtime,
+            tokio_handle,
+            connection_sender: tx,
+            connection_receiver: rx,
+        }
+    }
 }
 
 pub enum ServerConnectionUpdate {
@@ -93,8 +92,8 @@ pub enum ServerConnectionUpdate {
 
 #[derive(Resource)]
 pub struct ServerConnection {
-    message_rx: mpsc::UnboundedReceiver<Bytes>,
-    message_tx: mpsc::UnboundedSender<Bytes>,
+    pub message_rx: mpsc::UnboundedReceiver<Bytes>,
+    pub message_tx: mpsc::UnboundedSender<Bytes>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
@@ -109,7 +108,7 @@ impl Network {
     pub fn connect(&mut self) {
         let _guard = self.tokio_handle.enter();
 
-        let connection_tx = self.connection_tx.clone();
+        let connection_tx = self.connection_sender.clone();
 
         tokio::spawn(async move {
             let config = ClientConfig::builder()
@@ -191,7 +190,7 @@ fn check_for_connection_updates(
     mut network: ResMut<Network>,
     mut next_network_state: ResMut<NextState<NetworkState>>,
 ) {
-    if let Ok(update) = network.connection_rx.try_recv() {
+    if let Ok(update) = network.connection_receiver.try_recv() {
         match update {
             ServerConnectionUpdate::ConnectionCreated(connection) => {
                 commands.insert_resource(KeepAliveTimer::default());
@@ -206,76 +205,6 @@ fn check_for_connection_updates(
                 info!("Connection has been dropped.")
             }
         }
-    }
-}
-
-#[derive(Default)]
-struct IncomingNetworkEventQueue {
-    queue: Vec<ServerToClientMessage>,
-}
-
-impl IncomingNetworkEventQueue {
-    pub fn push(&mut self, message: ServerToClientMessage) {
-        self.queue.push(message);
-    }
-
-    pub fn pop_front(&mut self) -> Option<ServerToClientMessage> {
-        if self.queue.is_empty() {
-            None
-        } else {
-            Some(self.queue.remove(0))
-        }
-    }
-}
-
-fn receive_updates(
-    mut connection: ResMut<ServerConnection>,
-    mut event_queue: Local<IncomingNetworkEventQueue>,
-    mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
-    mut player_is_ready: EventWriter<server_to_client::PlayerIsReady>,
-    mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayer>,
-    mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
-    mut place_unit: EventWriter<server_to_client::PlaceUnit>,
-) {
-    if let Ok(bytes) = connection.message_rx.try_recv() {
-        match ServerToClientMessage::deserialize(&bytes) {
-            Ok(messages) => {
-                debug!("Received {} bytes: {:?}", bytes.len(), messages);
-                for message in messages {
-                    event_queue.push(message);
-                }
-            }
-            Err(e) => {
-                error!(
-                    "Failed deserializing NetworkMessage! Error: {:?} Bytes: {:?}",
-                    e, bytes
-                );
-                return;
-            }
-        };
-    }
-
-    if let Some(message) = event_queue.pop_front() {
-        match message {
-            ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
-                error!("Server responded with an error: {:?}", e);
-            }
-            ServerToClientMessage::LoadMap(event) => {
-                load_map_event_from_server.send(event);
-            }
-            ServerToClientMessage::PlayerIsReady(event) => {
-                player_is_ready.send(event);
-            }
-            ServerToClientMessage::AddUnitToPlayer(event) => {
-                add_unit_to_player.send(event);
-            }
-            ServerToClientMessage::PlayerTurnToPlaceUnit(event) => {
-                player_turn_to_place_unit.send(event);
-            }
-            ServerToClientMessage::PlaceUnit(event) => {
-                place_unit.send(event);
-            }
-        };
     }
 }
 
