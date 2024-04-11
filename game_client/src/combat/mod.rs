@@ -33,10 +33,7 @@ impl Plugin for CombatPlugin {
             Update,
             (
                 on_add_unit_to_player.run_if(on_event::<AddUnitToPlayer>()),
-                on_player_turn_to_place_unit
-                    .run_if(on_event::<PlayerTurnToPlaceUnit>())
-                    // TODO: Later on this chain isn't needed anymore since the client will already know which units it owns way ahead, but right now it's very likely to happen in the same frame
-                    .after(on_add_unit_to_player),
+                on_player_turn_to_place_unit.run_if(on_event::<PlayerTurnToPlaceUnit>()),
             )
                 .run_if(in_state(ApplicationState::InGame)),
         );
