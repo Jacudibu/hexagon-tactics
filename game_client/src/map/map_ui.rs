@@ -2,7 +2,7 @@ use crate::map::tile_cursor::MouseCursorOnTile;
 use crate::MouseCursorOverUiState;
 use bevy::app::{App, First, Plugin, Update};
 use bevy::prelude::*;
-use bevy_egui::egui::Pos2;
+use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::game_map::GameMap;
 
@@ -61,5 +61,6 @@ fn tile_cursor_ui(mut egui: EguiContexts, cursor: Res<MouseCursorOnTile>, map: R
         .collapsible(false)
         .resizable(false)
         .fixed_pos(Pos2::new(5.0, 5.0))
+        .anchor(Align2::LEFT_TOP, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| ui.label(text));
 }

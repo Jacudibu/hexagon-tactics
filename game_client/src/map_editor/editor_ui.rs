@@ -53,7 +53,7 @@ fn menu_buttons(
         .title_bar(false)
         .collapsible(false)
         .resizable(false)
-        .anchor(Align2::RIGHT_TOP, egui::Vec2::new(0.0, 0.0))
+        .anchor(Align2::RIGHT_TOP, egui::Vec2::ZERO)
         .fixed_pos(Pos2::new(-5.0, -5.0))
         .show(egui.ctx_mut(), |ui| {
             ui.vertical_centered(|ui| {

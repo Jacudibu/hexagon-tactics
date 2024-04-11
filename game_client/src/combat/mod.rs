@@ -1,8 +1,10 @@
 mod combat_input;
 mod combat_ui;
+mod unit_placement;
 
 use crate::combat::combat_input::CombatInputPlugin;
 use crate::combat::combat_ui::CombatUiPlugin;
+use crate::combat::unit_placement::UnitPlacementPlugin;
 use crate::map::MapState;
 use crate::ApplicationState;
 use bevy::app::App;
@@ -21,6 +23,7 @@ impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(CombatUiPlugin);
         app.add_plugins(CombatInputPlugin);
+        app.add_plugins(UnitPlacementPlugin);
         app.init_state::<CombatState>();
         app.add_systems(
             OnEnter(MapState::Loaded),
@@ -50,7 +53,6 @@ pub enum CombatState {
 
 #[derive(Resource, Debug)]
 pub struct CurrentlySelectedUnit {
-    // TODO: Maybe have a separate struct for CurrentlyPlacedUnit?
     unit_id: UnitId,
 }
 
@@ -79,18 +81,12 @@ pub fn on_add_unit_to_player(
 }
 
 pub fn on_player_turn_to_place_unit(
-    mut commands: Commands,
     mut event: EventReader<PlayerTurnToPlaceUnit>,
-    combat_data: Res<CombatData>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
 ) {
     for event in event.read() {
         if event.player == CONSTANT_LOCAL_PLAYER_ID {
             next_combat_state.set(CombatState::PlaceUnit);
-            let unit_id = combat_data.units_that_can_still_be_placed.first().unwrap();
-            commands.insert_resource(CurrentlySelectedUnit {
-                unit_id: unit_id.clone(),
-            });
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer)
         }

@@ -1,8 +1,9 @@
+use crate::combat::unit_placement::CurrentlyPlacedUnit;
 use crate::combat::{CombatState, CurrentlySelectedUnit};
 use crate::MouseCursorOverUiState;
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;
-use bevy_egui::egui::Pos2;
+use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::game_state::CombatData;
 
@@ -17,14 +18,14 @@ impl Plugin for CombatUiPlugin {
             Update,
             (draw_unit_info_ui)
                 .run_if(in_state(CombatState::PlaceUnit))
-                .run_if(resource_exists::<CurrentlySelectedUnit>),
+                .run_if(resource_exists::<CurrentlyPlacedUnit>),
         );
     }
 }
 
 fn draw_unit_info_ui(
     mut egui: EguiContexts,
-    unit: Option<Res<CurrentlySelectedUnit>>,
+    unit: Option<Res<CurrentlyPlacedUnit>>,
     combat_data: Res<CombatData>,
 ) {
     let Some(unit) = unit else {
@@ -52,6 +53,7 @@ fn draw_unit_info_ui(
     egui::Window::new(&unit.name)
         .collapsible(false)
         .resizable(false)
-        .fixed_pos(Pos2::new(5.0, 5.0))
+        .fixed_pos(Pos2::new(5.0, 0.0))
+        .anchor(Align2::LEFT_CENTER, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| ui.label(text));
 }

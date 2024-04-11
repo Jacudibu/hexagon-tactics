@@ -12,7 +12,7 @@ impl Plugin for CombatInputPlugin {
 }
 
 #[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Debug, Reflect)]
-enum CombatAction {
+pub enum CombatAction {
     SelectTile,
     NextUnit,
     PreviousUnit,
