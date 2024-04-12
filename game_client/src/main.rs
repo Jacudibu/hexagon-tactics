@@ -19,6 +19,7 @@ use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy_kira_audio::AudioPlugin;
 use bevy_screen_diagnostics::*;
+use bevy_sprite3d::Sprite3dPlugin;
 
 fn main() {
     App::new()
@@ -40,6 +41,7 @@ fn main() {
                 }),
             AudioPlugin,
         ))
+        .add_plugins(Sprite3dPlugin)
         .add_plugins(ScreenDiagnosticsPlugin::default())
         .add_plugins(ScreenFrameDiagnosticsPlugin)
         .add_plugins(ScreenEntityDiagnosticsPlugin)

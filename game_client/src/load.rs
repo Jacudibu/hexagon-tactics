@@ -13,7 +13,7 @@ use hexx::{ColumnMeshBuilder, HexLayout, MeshInfo, UVOptions};
 pub struct LoadPlugin;
 impl Plugin for LoadPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (load_materials, load_meshes));
+        app.add_systems(Startup, (load_materials, load_meshes, load_sprites));
     }
 }
 
@@ -72,6 +72,11 @@ pub struct CursorMaterials {
 pub struct HexagonMeshes {
     pub flat: Handle<Mesh>,
     pub columns: HashMap<u8, Handle<Mesh>>,
+}
+
+#[derive(Debug, Resource)]
+pub struct CharacterSprites {
+    pub test: Handle<Image>,
 }
 
 pub fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
@@ -224,4 +229,10 @@ fn generate_generic_side_mat(
         perceptual_roughness: 0.7,
         ..default()
     })
+}
+
+pub fn load_sprites(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let image = asset_server.load("sprites/test_character.png");
+
+    commands.insert_resource(CharacterSprites { test: image })
 }

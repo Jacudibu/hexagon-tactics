@@ -143,15 +143,32 @@ fn place_unit(
 
     server_data
         .combat_state
+        .units_that_can_still_be_placed
+        .retain(|x| x != &data.unit_id);
+
+    server_data
+        .combat_state
         .unit_positions
         .insert(data.hex, data.unit_id);
 
     // TODO: Check if all units have been placed, and if so, proceed to very first unit turn
-    let next = ServerToClientMessageVariant::Broadcast(
-        ServerToClientMessage::PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit {
-            player: CONSTANT_LOCAL_PLAYER_ID,
-        }),
-    );
+    let next = if server_data
+        .combat_state
+        .units_that_can_still_be_placed
+        .is_empty()
+    {
+        ServerToClientMessageVariant::Broadcast(ServerToClientMessage::ErrorWhenProcessingMessage(
+            ErrorWhenProcessingMessage {
+                message: "Not further implemented".into(),
+            },
+        ))
+    } else {
+        ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerTurnToPlaceUnit(
+            PlayerTurnToPlaceUnit {
+                player: CONSTANT_LOCAL_PLAYER_ID,
+            },
+        ))
+    };
 
     Ok(vec![
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlaceUnit(
