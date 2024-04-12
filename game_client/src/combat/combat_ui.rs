@@ -1,6 +1,6 @@
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
 use crate::combat::{CombatState, CurrentlySelectedUnit};
-use crate::MouseCursorOverUiState;
+use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;
 use bevy_egui::egui::{Align2, Pos2};
@@ -16,9 +16,12 @@ impl Plugin for CombatUiPlugin {
 
         app.init_state::<MouseCursorOverUiState>().add_systems(
             Update,
-            (draw_unit_info_ui)
-                .run_if(in_state(CombatState::PlaceUnit))
-                .run_if(resource_exists::<CurrentlyPlacedUnit>),
+            (
+                draw_unit_info_ui
+                    .run_if(in_state(CombatState::PlaceUnit))
+                    .run_if(resource_exists::<CurrentlyPlacedUnit>),
+                draw_state_ui.run_if(in_state(ApplicationState::InGame)),
+            ),
         );
     }
 }
@@ -55,5 +58,22 @@ fn draw_unit_info_ui(
         .resizable(false)
         .fixed_pos(Pos2::new(5.0, 0.0))
         .anchor(Align2::LEFT_CENTER, egui::Vec2::ZERO)
+        .show(egui.ctx_mut(), |ui| ui.label(text));
+}
+
+fn draw_state_ui(mut egui: EguiContexts, combat_state: Res<State<CombatState>>) {
+    let text = match combat_state.get() {
+        CombatState::WaitingForOtherPlayer => "Waiting for other player",
+        CombatState::WaitingForServer => "Waiting for Server",
+        CombatState::PlaceUnit => "Place Unit",
+    };
+
+    egui::Window::new("State Display Window")
+        .collapsible(false)
+        .resizable(false)
+        .title_bar(false)
+        .fixed_pos(Pos2::new(0.0, 0.0))
+        .pivot(Align2::CENTER_TOP)
+        .anchor(Align2::CENTER_TOP, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| ui.label(text));
 }
