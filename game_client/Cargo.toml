@@ -6,7 +6,7 @@ edition.workspace = true
 
 [dependencies]
 game-common = { path = "../game_common" }
-bevy = { version = "0.13.2", default-features = false, features = [
+bevy = { workspace = true, features = [
     "animation",
     "bevy_asset",
     "bevy_gilrs",
@@ -38,9 +38,10 @@ bevy_mod_raycast = "0.17.0"
 bevy_sprite3d = "2.8.0"
 leafwing-input-manager = "0.13.3"
 rand = "0.8.5"
-hexx = { version = "0.16.1", features = ["serde"] }
 
-bytes = "1.6.0"
-futures = "0.3.30"
-tokio = { version = "1.36.0", features = ["full"] }
-wtransport = { version = "0.1.12", features = ["dangerous-configuration"] }
+wtransport = { workspace = true, features = ["dangerous-configuration"] }
+
+hexx.workspace = true
+bytes.workspace = true
+futures.workspace = true
+tokio.workspace = true
