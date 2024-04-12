@@ -139,7 +139,16 @@ fn place_unit(
         ));
     };
 
-    // TODO: Validation
+    if !server_data
+        .combat_state
+        .can_unit_be_placed_on_tile(&data.hex, &server_data.loaded_map)
+    {
+        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
+            ErrorWhenProcessingMessage {
+                message: "Invalid Position!".into(),
+            },
+        ));
+    }
 
     server_data
         .combat_state

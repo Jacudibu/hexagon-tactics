@@ -1,6 +1,6 @@
 use crate::game_map::GameMap;
 use crate::units::{Unit, UnitId};
-use bevy::prelude::Resource;
+use bevy::prelude::{error, Resource};
 use bevy::utils::HashMap;
 use hexx::Hex;
 
@@ -62,6 +62,25 @@ impl CombatData {
         }
 
         Ok(())
+    }
+
+    pub fn can_unit_be_placed_on_tile(&self, hex: &Hex, map: &GameMap) -> bool {
+        if self.unit_positions.contains_key(hex) {
+            return false;
+        }
+
+        let Some(tile) = map.tiles.get(hex) else {
+            error!("Invalid tile coordinates: {:?}", hex);
+            return false;
+        };
+
+        if let Some(fluid) = &tile.fluid {
+            if fluid.height > 0.5 {
+                return false;
+            }
+        }
+
+        true
     }
 }
 
