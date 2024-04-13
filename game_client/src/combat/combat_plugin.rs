@@ -1,5 +1,6 @@
 use crate::combat::combat_input::CombatInputPlugin;
 use crate::combat::combat_ui::CombatUiPlugin;
+use crate::combat::unit_actions::UnitActionPlugin;
 use crate::combat::unit_placement::UnitPlacementPlugin;
 use crate::map::{HighlightedTiles, MapState};
 use crate::ApplicationState;
@@ -7,9 +8,8 @@ use bevy::app::{App, Plugin, Update};
 use bevy::log::info;
 use bevy::prelude::{
     error, in_state, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, NextState,
-    OnEnter, Reflect, Res, ResMut, States,
+    OnEnter, Reflect, ResMut, States,
 };
-use game_common::game_map::GameMap;
 use game_common::game_state::CombatData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
@@ -24,6 +24,7 @@ impl Plugin for CombatPlugin {
         app.add_plugins(CombatUiPlugin);
         app.add_plugins(CombatInputPlugin);
         app.add_plugins(UnitPlacementPlugin);
+        app.add_plugins(UnitActionPlugin);
         app.init_state::<CombatState>();
         app.add_systems(
             OnEnter(MapState::Loaded),
@@ -37,10 +38,6 @@ impl Plugin for CombatPlugin {
                 on_start_unit_turn.run_if(on_event::<StartUnitTurn>()),
             )
                 .run_if(in_state(ApplicationState::InGame)),
-        );
-        app.add_systems(
-            OnEnter(CombatState::ThisPlayerUnitTurn),
-            trigger_movement_range_highlighting,
         );
     }
 }
@@ -112,20 +109,4 @@ pub fn on_start_unit_turn(
 
         combat_data.current_unit_turn = Some(unit.id);
     }
-}
-
-pub fn trigger_movement_range_highlighting(
-    mut commands: Commands,
-    combat_data: Res<CombatData>,
-    map: Res<GameMap>,
-) {
-    let unit = combat_data
-        .units
-        .get(&combat_data.current_unit_turn.expect("TODO"))
-        .expect("TODO");
-    let position = unit.position.expect("TODO");
-
-    let range = map.field_of_movement(position, unit);
-
-    commands.insert_resource(HighlightedTiles { tiles: range })
 }
