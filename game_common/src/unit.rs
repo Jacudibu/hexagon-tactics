@@ -1,4 +1,5 @@
 use crate::player::PlayerId;
+use crate::unit_stats::UnitStats;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -60,12 +61,44 @@ impl Unit {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct UnitStats {
-    pub movement: u8,
-    pub jump: u8,
-    pub strength: u32,
-    // ...and other stats later on
+#[cfg(feature = "test_helpers")]
+pub mod test_helpers {
+    use crate::player::PlayerId;
+    use crate::unit::{TurnResources, Unit, UnitId};
+    use crate::unit_stats::UnitStats;
+    use hexx::Hex;
+
+    impl Unit {
+        /// Create a mock Unit with sensible defaults.
+        /// Use `.with_<attribute>` methods to set specific values for tests.
+        pub fn create_mock(id: UnitId, owner: PlayerId) -> Self {
+            Unit {
+                id,
+                owner,
+                name: format!("Test Unit #{id}"),
+                position: None,
+                hp: 10,
+                mp: 10,
+                exp: 0,
+                base_stats: UnitStats::create_mock(),
+                stats_after_buffs: UnitStats::create_mock(),
+                turn_resources: TurnResources {
+                    remaining_movement: UnitStats::create_mock().movement,
+                },
+            }
+        }
+
+        pub fn with_position(mut self, position: Hex) -> Self {
+            self.position = Some(position);
+            self
+        }
+
+        pub fn with_stats(mut self, stats: UnitStats) -> Self {
+            self.base_stats = stats.clone();
+            self.stats_after_buffs = stats;
+            self
+        }
+    }
 }
 
 // TODO: These don't need to be unit specific. Persist inside CombatData instead, and refresh when a unit turn starts.

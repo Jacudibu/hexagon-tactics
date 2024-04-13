@@ -89,30 +89,35 @@ impl CombatData {
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
     use crate::combat_data::CombatData;
-    use crate::unit::Unit;
+    use crate::unit::{Unit, UnitId};
     use bevy::utils::HashMap;
-    use hexx::Hex;
 
     impl CombatData {
-        pub fn create_mock_with_units(units: Vec<Unit>) -> Self {
-            let mut unit_map = HashMap::new();
-            let mut unit_positions = HashMap::new();
-            let mut turn_order = HashMap::new();
-            let mut last_unit_id = 0;
+        /// Create mock CombatData with sensible defaults.
+        /// Use `.with_<attribute>` methods to set specific values for tests.
+        pub fn create_mock() -> Self {
+            CombatData {
+                units: HashMap::new(),
+                unit_positions: HashMap::new(),
+                turn_order: HashMap::new(),
+                units_that_can_still_be_placed: Vec::new(),
+                current_unit_turn: None,
+            }
+        }
+
+        pub fn with_units(mut self, units: Vec<Unit>) -> Self {
             for unit in units {
-                last_unit_id = unit.id;
-                unit_positions.insert(Hex::ZERO, unit.id);
-                turn_order.insert(0, unit.id);
-                unit_map.insert(unit.id, unit);
+                self.unit_positions.insert(unit.position.unwrap(), unit.id);
+                self.turn_order.insert(0, unit.id);
+                self.units.insert(unit.id, unit);
             }
 
-            CombatData {
-                units: unit_map,
-                unit_positions,
-                turn_order,
-                units_that_can_still_be_placed: Vec::new(),
-                current_unit_turn: Some(last_unit_id),
-            }
+            self
+        }
+
+        pub fn with_unit_turn(mut self, unit_id: UnitId) -> Self {
+            self.current_unit_turn = Some(unit_id);
+            self
         }
     }
 }

@@ -101,10 +101,13 @@ mod tests {
         app.insert_resource(GameMap::new(1));
 
         let unit_id = 1;
-        let mut unit = Unit::create_debug_unit(unit_id, 1, "test".into());
-        unit.position = Some(Hex::ZERO);
+        let unit = Unit::create_mock(unit_id, 1).with_position(Hex::ZERO);
 
-        app.insert_resource(CombatData::create_mock_with_units(vec![unit]));
+        app.insert_resource(
+            CombatData::create_mock()
+                .with_units(vec![unit])
+                .with_unit_turn(unit_id),
+        );
         app.insert_resource(ActiveUnitAction::Move);
         app.update();
 
