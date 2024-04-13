@@ -6,7 +6,7 @@ use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
-use game_common::game_state::CombatData;
+use game_common::combat_data::CombatData;
 use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
 use game_common::units::UnitId;
 

@@ -85,6 +85,37 @@ impl CombatData {
     }
 }
 
+#[cfg(feature = "test_helpers")]
+pub mod test_helpers {
+    use crate::combat_data::CombatData;
+    use crate::units::Unit;
+    use bevy::utils::HashMap;
+    use hexx::Hex;
+
+    impl CombatData {
+        pub fn create_with_units(units: Vec<Unit>) -> Self {
+            let mut unit_map = HashMap::new();
+            let mut unit_positions = HashMap::new();
+            let mut turn_order = HashMap::new();
+            let mut last_unit_id = 0;
+            for unit in units {
+                last_unit_id = unit.id;
+                unit_positions.insert(Hex::ZERO, unit.id);
+                turn_order.insert(0, unit.id);
+                unit_map.insert(unit.id, unit);
+            }
+
+            CombatData {
+                units: unit_map,
+                unit_positions,
+                turn_order,
+                units_that_can_still_be_placed: Vec::new(),
+                current_unit_turn: Some(last_unit_id),
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ValidationError {
     message: String,

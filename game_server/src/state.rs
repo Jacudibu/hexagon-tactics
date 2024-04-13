@@ -1,6 +1,6 @@
 use bytes::Bytes;
+use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
-use game_common::game_state::CombatData;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::NetworkMessage;
 use std::collections::HashMap;

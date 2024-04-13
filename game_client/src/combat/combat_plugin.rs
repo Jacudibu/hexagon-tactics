@@ -2,7 +2,7 @@ use crate::combat::combat_input::CombatInputPlugin;
 use crate::combat::combat_ui::CombatUiPlugin;
 use crate::combat::unit_actions::UnitActionPlugin;
 use crate::combat::unit_placement::UnitPlacementPlugin;
-use crate::map::{HighlightedTiles, MapState};
+use crate::map::MapState;
 use crate::ApplicationState;
 use bevy::app::{App, Plugin, Update};
 use bevy::log::info;
@@ -10,7 +10,7 @@ use bevy::prelude::{
     error, in_state, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, NextState,
     OnEnter, Reflect, ResMut, States,
 };
-use game_common::game_state::CombatData;
+use game_common::combat_data::CombatData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     AddUnitToPlayer, PlayerTurnToPlaceUnit, StartUnitTurn,

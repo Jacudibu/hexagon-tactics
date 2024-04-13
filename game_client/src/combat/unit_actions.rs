@@ -7,8 +7,8 @@ use bevy::prelude::{
     in_state, resource_changed_or_removed, Commands, IntoSystemConfigs, Plugin, Res, Resource,
     Update,
 };
+use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
-use game_common::game_state::CombatData;
 use leafwing_input_manager::action_state::ActionState;
 use std::ops::Deref;
 
@@ -89,9 +89,8 @@ mod tests {
     use crate::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
     use crate::map::HighlightedTiles;
     use bevy::app::App;
-    use bevy::utils::hashbrown::HashMap;
+    use game_common::combat_data::CombatData;
     use game_common::game_map::GameMap;
-    use game_common::game_state::CombatData;
     use game_common::units::Unit;
     use hexx::Hex;
 
@@ -105,21 +104,7 @@ mod tests {
         let mut unit = Unit::create_debug_unit(unit_id, 1, "test".into());
         unit.position = Some(Hex::ZERO);
 
-        let mut units = HashMap::new();
-        units.insert(unit_id, unit);
-        let mut unit_positions = HashMap::new();
-        unit_positions.insert(Hex::ZERO, unit_id);
-        let mut turn_order = HashMap::new();
-        turn_order.insert(0, unit_id);
-
-        let combat_data = CombatData {
-            units,
-            unit_positions,
-            turn_order,
-            units_that_can_still_be_placed: Vec::new(),
-            current_unit_turn: Some(unit_id),
-        };
-        app.insert_resource(combat_data);
+        app.insert_resource(CombatData::create_with_units(vec![unit]));
         app.insert_resource(ActiveUnitAction::Move);
         app.update();
 

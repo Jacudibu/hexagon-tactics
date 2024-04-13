@@ -45,3 +45,6 @@ hexx.workspace = true
 bytes.workspace = true
 futures.workspace = true
 tokio.workspace = true
+
+[dev-dependencies]
+game-common = { path = "../game_common", features = ["test_helpers"] }
