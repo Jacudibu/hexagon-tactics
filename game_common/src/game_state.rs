@@ -75,7 +75,7 @@ impl CombatData {
         };
 
         if let Some(fluid) = &tile.fluid {
-            if fluid.height > 0.5 {
+            if fluid.height > 1.0 {
                 return false;
             }
         }

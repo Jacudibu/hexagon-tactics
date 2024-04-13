@@ -13,6 +13,7 @@ impl Plugin for IncomingMessageProcessorPlugin {
             .add_event::<server_to_client::AddUnitToPlayer>()
             .add_event::<server_to_client::PlayerTurnToPlaceUnit>()
             .add_event::<server_to_client::PlaceUnit>()
+            .add_event::<server_to_client::StartUnitTurn>()
             .add_systems(
                 PreUpdate,
                 receive_updates.run_if(in_state(NetworkState::Connected)),

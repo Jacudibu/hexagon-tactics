@@ -6,14 +6,16 @@ use crate::ApplicationState;
 use bevy::app::{App, Plugin, Update};
 use bevy::log::info;
 use bevy::prelude::{
-    in_state, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, NextState, OnEnter,
-    Reflect, ResMut, Resource, States,
+    error, in_state, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, NextState,
+    OnEnter, Reflect, Res, ResMut, Resource, States,
 };
 use game_common::game_state::CombatData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::server_to_client::{AddUnitToPlayer, PlayerTurnToPlaceUnit};
+use game_common::network_events::server_to_client::{
+    AddUnitToPlayer, PlayerTurnToPlaceUnit, StartUnitTurn,
+};
 use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
-use game_common::units::UnitId;
+use game_common::units::{PlayerId, UnitId};
 
 pub struct CombatPlugin;
 
@@ -32,6 +34,7 @@ impl Plugin for CombatPlugin {
             (
                 on_add_unit_to_player.run_if(on_event::<AddUnitToPlayer>()),
                 on_player_turn_to_place_unit.run_if(on_event::<PlayerTurnToPlaceUnit>()),
+                on_start_unit_turn.run_if(on_event::<StartUnitTurn>()),
             )
                 .run_if(in_state(ApplicationState::InGame)),
         );
@@ -42,8 +45,10 @@ impl Plugin for CombatPlugin {
 pub enum CombatState {
     #[default]
     WaitingForServer,
-    WaitingForOtherPlayer,
+    WaitingForOtherPlayer(PlayerId),
     PlaceUnit,
+    ThisPlayerUnitTurn(UnitId),
+    OtherPlayerUnitTurn(PlayerId, UnitId),
 }
 
 #[derive(Resource, Debug)]
@@ -83,7 +88,26 @@ pub fn on_player_turn_to_place_unit(
         if event.player == CONSTANT_LOCAL_PLAYER_ID {
             next_combat_state.set(CombatState::PlaceUnit);
         } else {
-            next_combat_state.set(CombatState::WaitingForOtherPlayer)
+            next_combat_state.set(CombatState::WaitingForOtherPlayer(event.player))
+        }
+    }
+}
+
+pub fn on_start_unit_turn(
+    mut event: EventReader<StartUnitTurn>,
+    mut next_combat_state: ResMut<NextState<CombatState>>,
+    combat_data: Res<CombatData>,
+) {
+    for event in event.read() {
+        let Some(unit) = combat_data.units.get(&event.unit_id) else {
+            error!("Was unable to find unit with ID {}.", event.unit_id);
+            continue;
+        };
+
+        if unit.owner == CONSTANT_LOCAL_PLAYER_ID {
+            next_combat_state.set(CombatState::ThisPlayerUnitTurn(unit.id));
+        } else {
+            next_combat_state.set(CombatState::OtherPlayerUnitTurn(unit.owner, unit.id))
         }
     }
 }

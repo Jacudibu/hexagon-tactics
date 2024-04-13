@@ -1,5 +1,6 @@
 use crate::combat::combat_plugin::CombatState;
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
+use crate::map::MapState;
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;
@@ -20,7 +21,9 @@ impl Plugin for CombatUiPlugin {
                 draw_unit_info_ui
                     .run_if(in_state(CombatState::PlaceUnit))
                     .run_if(resource_exists::<CurrentlyPlacedUnit>),
-                draw_state_ui.run_if(in_state(ApplicationState::InGame)),
+                draw_state_ui
+                    .run_if(in_state(ApplicationState::InGame))
+                    .run_if(in_state(MapState::Loaded)),
             ),
         );
     }
@@ -61,11 +64,23 @@ fn draw_unit_info_ui(
         .show(egui.ctx_mut(), |ui| ui.label(text));
 }
 
-fn draw_state_ui(mut egui: EguiContexts, combat_state: Res<State<CombatState>>) {
+fn draw_state_ui(
+    mut egui: EguiContexts,
+    combat_state: Res<State<CombatState>>,
+    combat_data: Res<CombatData>,
+) {
     let text = match combat_state.get() {
-        CombatState::WaitingForOtherPlayer => "Waiting for other player",
-        CombatState::WaitingForServer => "Waiting for Server",
-        CombatState::PlaceUnit => "Place Unit",
+        CombatState::WaitingForOtherPlayer(id) => format!("Waiting for player {id}"),
+        CombatState::WaitingForServer => "Waiting for Server".into(),
+        CombatState::PlaceUnit => "Place Unit".into(),
+        CombatState::ThisPlayerUnitTurn(id) => {
+            let unit = combat_data.units.get(id).expect("Unit should exist!");
+            format!("Your turn: {}", unit.name)
+        }
+        CombatState::OtherPlayerUnitTurn(player_id, unit_id) => {
+            let unit = combat_data.units.get(unit_id).expect("Unit should exist!");
+            format!("{player_id}'s turn: {}", unit.name)
+        }
     };
 
     egui::Window::new("State Display Window")
