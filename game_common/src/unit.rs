@@ -94,6 +94,7 @@ pub mod test_helpers {
         }
 
         pub fn with_stats(mut self, stats: UnitStats) -> Self {
+            self.turn_resources.remaining_movement = stats.movement;
             self.base_stats = stats.clone();
             self.stats_after_buffs = stats;
             self

@@ -77,9 +77,8 @@ pub fn show_movement_range_preview(
         .units
         .get(&combat_data.current_unit_turn.expect("TODO"))
         .expect("TODO");
-    let position = unit.position.expect("TODO");
 
-    let range = map.field_of_movement(position, unit);
+    let range = map.field_of_movement(unit);
 
     commands.insert_resource(HighlightedTiles { tiles: range })
 }
