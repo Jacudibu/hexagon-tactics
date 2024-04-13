@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::game_state::CombatData;
+use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
 use game_common::units::UnitId;
 
 pub(in crate::combat) struct CombatUiPlugin;
@@ -91,16 +92,32 @@ fn draw_state_ui(
     combat_data: Res<CombatData>,
 ) {
     let text = match combat_state.get() {
-        CombatState::WaitingForOtherPlayer(id) => format!("Waiting for player {id}"),
+        CombatState::WaitingForOtherPlayer => {
+            format!("Waiting for player {}", CONSTANT_LOCAL_PLAYER_ID)
+        }
         CombatState::WaitingForServer => "Waiting for Server".into(),
         CombatState::PlaceUnit => "Place Unit".into(),
-        CombatState::ThisPlayerUnitTurn(id) => {
-            let unit = combat_data.units.get(id).expect("Unit should exist!");
+        CombatState::ThisPlayerUnitTurn => {
+            let unit = combat_data
+                .units
+                .get(
+                    &combat_data
+                        .current_unit_turn
+                        .expect("current_unit_turn should be set!"),
+                )
+                .expect("Unit should exist!");
             format!("Your turn: {}", unit.name)
         }
-        CombatState::OtherPlayerUnitTurn(player_id, unit_id) => {
-            let unit = combat_data.units.get(unit_id).expect("Unit should exist!");
-            format!("{player_id}'s turn: {}", unit.name)
+        CombatState::OtherPlayerUnitTurn => {
+            let unit = combat_data
+                .units
+                .get(
+                    &combat_data
+                        .current_unit_turn
+                        .expect("current_unit_turn should be set!"),
+                )
+                .expect("Unit should exist!");
+            format!("{}'s turn: {}", CONSTANT_LOCAL_PLAYER_ID, unit.name)
         }
     };
 

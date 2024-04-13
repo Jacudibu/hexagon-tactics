@@ -111,7 +111,7 @@ fn handle_tile_change_event(
     let changed_hexagons: Vec<Hex> = tile_change_event.read().map(|x| x.hex).collect();
     for (cursor, mut transform) in tile_cursor_q.iter_mut() {
         if changed_hexagons.contains(&cursor.hex) {
-            transform.translation = cursor_position_for_tile(&map, &cursor.hex)
+            transform.translation = position_for_tile(&map, &cursor.hex, EXTRA_HEIGHT)
         }
     }
 }
@@ -145,7 +145,7 @@ fn update_tile_cursor(
 
     for selected_tile in this_frame_selection.iter() {
         if !already_existing_cursors.contains(selected_tile) {
-            let translation = cursor_position_for_tile(&map, selected_tile);
+            let translation = position_for_tile(&map, selected_tile, EXTRA_HEIGHT);
 
             commands.spawn((
                 Name::new(format!(
@@ -168,7 +168,7 @@ fn update_tile_cursor(
 }
 
 const EXTRA_HEIGHT: f32 = 0.01;
-fn cursor_position_for_tile(map: &GameMap, hex: &Hex) -> Vec3 {
+pub fn position_for_tile(map: &GameMap, hex: &Hex, extra_height: f32) -> Vec3 {
     let position = HEX_LAYOUT.hex_to_world_pos(hex.clone());
     let height = if let Some(tile) = map.tiles.get(hex) {
         if let Some(fluid) = &tile.fluid {
@@ -183,7 +183,7 @@ fn cursor_position_for_tile(map: &GameMap, hex: &Hex) -> Vec3 {
 
     Vec3 {
         x: position.x,
-        y: height * METERS_PER_TILE_HEIGHT_UNIT + EXTRA_HEIGHT,
+        y: height * METERS_PER_TILE_HEIGHT_UNIT + extra_height,
         z: position.y,
     }
 }

@@ -45,6 +45,7 @@ fn start_game(
         unit_positions: Default::default(),
         turn_order: Default::default(),
         units_that_can_still_be_placed: Default::default(),
+        current_unit_turn: None,
     };
     let server_data = ServerData {
         combat_state,
@@ -166,6 +167,7 @@ fn place_unit(
         .units_that_can_still_be_placed
         .is_empty()
     {
+        server_data.combat_state.current_unit_turn = Some(1);
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
             StartUnitTurn { unit_id: 1 },
         ))

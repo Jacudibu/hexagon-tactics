@@ -1,3 +1,4 @@
+use hexx::Hex;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
@@ -9,6 +10,7 @@ pub struct Unit {
     pub id: UnitId,
     pub owner: PlayerId,
     pub name: String,
+    pub position: Option<Hex>, // TODO: Once we start differentiating between units in combat and "units stored", this should no longer be an option
     pub hp: u32,
     pub mp: u32,
     pub exp: u32,
@@ -37,6 +39,7 @@ impl Unit {
             id,
             owner,
             name,
+            position: None,
             hp: 10,
             mp: 10,
             exp: 0,

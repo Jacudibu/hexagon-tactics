@@ -8,7 +8,7 @@ use game_common::game_map::{GameMap, HEX_LAYOUT};
 use game_common::game_state::CombatData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
-use game_common::units::UnitId;
+use game_common::units::{Unit, UnitId};
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
@@ -97,13 +97,15 @@ fn on_server_placed_unit(
             .retain(|x| x != &event.unit_id);
         combat_data.unit_positions.insert(event.hex, event.unit_id);
 
+        let unit = combat_data.units.get_mut(&event.unit_id).expect("TODO");
+        unit.position = Some(event.hex);
+
         spawn_unit_entity(
             &mut commands,
             &character_sprites,
             &map,
             &mut sprite_params,
-            &mut combat_data,
-            &event.unit_id,
+            &unit,
             event.hex,
         );
 
@@ -116,15 +118,9 @@ fn spawn_unit_entity(
     character_sprites: &CharacterSprites,
     map: &GameMap,
     mut sprite_params: &mut Sprite3dParams,
-    combat_data: &mut ResMut<CombatData>,
-    id: &UnitId,
+    unit: &Unit,
     hex: Hex,
 ) -> bool {
-    let Some(unit) = combat_data.units.get(id) else {
-        error!("Was unable to find unit with id {} in unit list!", id);
-        return true;
-    };
-
     commands.spawn((
         Name::new(unit.name.clone()),
         Sprite3d {

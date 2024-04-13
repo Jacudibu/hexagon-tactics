@@ -1,5 +1,8 @@
+mod field_of_movement_with_edge_detection;
 mod versioned_map_data;
 
+use crate::game_map::field_of_movement_with_edge_detection::field_of_movement_with_edge_detection;
+use crate::units::Unit;
 use bevy::math::Vec2;
 use bevy::prelude::Resource;
 use bevy::utils::hashbrown::HashMap;
@@ -47,6 +50,31 @@ impl GameMap {
 
     pub fn load_from_file(path: &str) -> Result<Self, ()> {
         VersionedMapData::load_from_file(path)
+    }
+
+    pub fn field_of_movement(&self, start: Hex, unit: &Unit) -> Vec<Hex> {
+        field_of_movement_with_edge_detection(
+            start,
+            unit.turn_resources.remaining_movement,
+            |from, to| {
+                let from = &self.tiles[&from];
+                let Some(to) = self.tiles.get(&to) else {
+                    return None;
+                };
+
+                if let Some(fluid) = &to.fluid {
+                    if fluid.height > 1.0 {
+                        return None;
+                    }
+                }
+
+                if from.height.abs_diff(to.height) > unit.stats_after_buffs.jump {
+                    return None;
+                }
+
+                Some(1)
+            },
+        )
     }
 }
 
