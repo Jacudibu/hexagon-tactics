@@ -8,18 +8,18 @@ mod map_editor;
 mod networking;
 
 use crate::camera::CameraPlugin;
-use crate::combat::CombatPlugin;
 use crate::debugging::DebuggingPlugin;
 use crate::load::LoadPlugin;
 use crate::main_menu::MainMenuPlugin;
-use crate::map::GameMapPlugin;
-use crate::map_editor::MapEditorPlugin;
 use crate::networking::NetworkPlugin;
 use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy_kira_audio::AudioPlugin;
 use bevy_screen_diagnostics::*;
 use bevy_sprite3d::Sprite3dPlugin;
+use combat::CombatPlugin;
+use map::GameMapPlugin;
+use map_editor::MapEditorPlugin;
 
 fn main() {
     App::new()

@@ -1,13 +1,12 @@
 use crate::combat::combat_input::CombatAction;
-use crate::combat::CombatState;
+use crate::combat::combat_plugin::CombatState;
 use crate::load::CharacterSprites;
 use crate::map::{MouseCursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::prelude::*;
 use bevy_sprite3d::{Sprite3d, Sprite3dParams};
-use game_common::game_map::{GameMap, TileData, HEX_LAYOUT};
+use game_common::game_map::{GameMap, HEX_LAYOUT};
 use game_common::game_state::CombatData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::server_to_client::PlaceUnit;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::units::UnitId;
 use hexx::Hex;

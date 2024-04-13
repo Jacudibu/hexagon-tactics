@@ -1,5 +1,5 @@
+use crate::combat::combat_plugin::CombatState;
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
-use crate::combat::{CombatState, CurrentlySelectedUnit};
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;

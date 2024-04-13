@@ -8,7 +8,7 @@ use bevy::prelude::{
     EventWriter, IntoSystemConfigs, NextState, OnEnter, Reflect, Res, ResMut, Resource, State,
     States, Update,
 };
-use bevy_egui::egui::{Align2, Button};
+use bevy_egui::egui::Align2;
 use bevy_egui::{egui, EguiContexts};
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;

@@ -10,9 +10,9 @@ use hexx::Hex;
 use game_common::game_map::{GameMap, TileData};
 
 use crate::load::{HexagonMaterials, HexagonMeshes};
+use crate::map::map_plugin::{HexagonTileComponent, MapTileEntities, MapTileEntityBundle};
 use crate::map::spawning::{are_tile_sides_necessary, spawn_fluid_entity, spawn_side_entity};
-use crate::map::{HexagonTileComponent, MapTileEntityBundle};
-use crate::map::{MapTileEntities, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::METERS_PER_TILE_HEIGHT_UNIT;
 
 /// Listens to `TileChangeEvent`s in order to push those changes into the existing tile entities.
 pub struct TileUpdaterPlugin;

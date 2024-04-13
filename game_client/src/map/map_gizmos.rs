@@ -1,4 +1,5 @@
-use crate::map::{MapState, TileCursor, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::map_plugin::MapState;
+use crate::map::{TileCursor, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::math::Vec3;
 use bevy::prelude::{

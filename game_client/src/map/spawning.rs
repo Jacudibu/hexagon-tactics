@@ -1,9 +1,9 @@
 use crate::load::{HexagonMaterials, HexagonMeshes};
-use crate::map::tile_cursor::TileRaycastSet;
-use crate::map::{
+use crate::map::map_plugin::{
     HexagonTileComponent, MapState, MapTileEntities, MapTileEntityBundle,
-    METERS_PER_TILE_HEIGHT_UNIT,
 };
+use crate::map::tile_cursor::TileRaycastSet;
+use crate::map::METERS_PER_TILE_HEIGHT_UNIT;
 use bevy::app::{App, First, Last, Plugin, Startup};
 use bevy::core::Name;
 use bevy::hierarchy::{BuildChildren, DespawnRecursiveExt};
