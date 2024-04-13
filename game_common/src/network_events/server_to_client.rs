@@ -10,6 +10,7 @@ pub enum ServerToClientMessage {
     AddUnitToPlayer(AddUnitToPlayer),
     PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit),
     PlaceUnit(PlaceUnit),
+    StartUnitTurn(StartUnitTurn),
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 }
@@ -44,4 +45,9 @@ pub struct PlayerTurnToPlaceUnit {
 pub struct PlaceUnit {
     pub unit_id: UnitId,
     pub hex: Hex,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct StartUnitTurn {
+    pub unit_id: UnitId,
 }

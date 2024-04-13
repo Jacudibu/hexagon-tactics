@@ -166,10 +166,8 @@ fn place_unit(
         .units_that_can_still_be_placed
         .is_empty()
     {
-        ServerToClientMessageVariant::Broadcast(ServerToClientMessage::ErrorWhenProcessingMessage(
-            ErrorWhenProcessingMessage {
-                message: "Not further implemented".into(),
-            },
+        ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
+            StartUnitTurn { unit_id: 1 },
         ))
     } else {
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerTurnToPlaceUnit(

@@ -28,6 +28,7 @@ fn receive_updates(
     mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayer>,
     mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
     mut place_unit: EventWriter<server_to_client::PlaceUnit>,
+    mut start_unit_turn: EventWriter<server_to_client::StartUnitTurn>,
 ) {
     if let Ok(bytes) = connection.message_receiver.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
@@ -47,6 +48,7 @@ fn receive_updates(
         };
     }
 
+    // Only process one event per frame, that way incoming messages are guaranteed to stay in order.
     if let Some(message) = event_queue.pop_front() {
         match message {
             ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
@@ -66,6 +68,9 @@ fn receive_updates(
             }
             ServerToClientMessage::PlaceUnit(event) => {
                 place_unit.send(event);
+            }
+            ServerToClientMessage::StartUnitTurn(event) => {
+                start_unit_turn.send(event);
             }
         };
     }
