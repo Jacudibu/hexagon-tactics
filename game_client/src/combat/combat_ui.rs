@@ -1,12 +1,13 @@
 use crate::combat::combat_plugin::CombatState;
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
-use crate::map::MapState;
+use crate::map::{MapState, MouseCursorOnTile};
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::game_state::CombatData;
+use game_common::units::UnitId;
 
 pub(in crate::combat) struct CombatUiPlugin;
 impl Plugin for CombatUiPlugin {
@@ -18,10 +19,10 @@ impl Plugin for CombatUiPlugin {
         app.init_state::<MouseCursorOverUiState>().add_systems(
             Update,
             (
-                draw_unit_info_ui
+                draw_placed_unit_info
                     .run_if(in_state(CombatState::PlaceUnit))
                     .run_if(resource_exists::<CurrentlyPlacedUnit>),
-                draw_state_ui
+                (draw_selected_unit_info, draw_state_ui)
                     .run_if(in_state(ApplicationState::InGame))
                     .run_if(in_state(MapState::Loaded)),
             ),
@@ -29,8 +30,8 @@ impl Plugin for CombatUiPlugin {
     }
 }
 
-fn draw_unit_info_ui(
-    mut egui: EguiContexts,
+fn draw_placed_unit_info(
+    egui: EguiContexts,
     unit: Option<Res<CurrentlyPlacedUnit>>,
     combat_data: Res<CombatData>,
 ) {
@@ -39,10 +40,30 @@ fn draw_unit_info_ui(
         return;
     };
 
-    let Some(unit) = combat_data.units.get(&unit.unit_id) else {
+    draw_unit_info(egui, &unit.unit_id, &combat_data, Align2::LEFT_CENTER);
+}
+
+fn draw_selected_unit_info(
+    egui: EguiContexts,
+    cursor: Option<Res<MouseCursorOnTile>>,
+    combat_data: Res<CombatData>,
+) {
+    let Some(cursor) = cursor else {
+        return;
+    };
+
+    let Some(unit_id) = combat_data.unit_positions.get(&cursor.hex) else {
+        return;
+    };
+
+    draw_unit_info(egui, unit_id, &combat_data, Align2::LEFT_BOTTOM);
+}
+
+fn draw_unit_info(mut egui: EguiContexts, unit: &UnitId, combat_data: &CombatData, anchor: Align2) {
+    let Some(unit) = combat_data.units.get(unit) else {
         error!(
             "Unable to find currently selected unit in unit list! Id: {}",
-            unit.unit_id
+            unit
         );
         return;
     };
@@ -60,7 +81,7 @@ fn draw_unit_info_ui(
         .collapsible(false)
         .resizable(false)
         .fixed_pos(Pos2::new(5.0, 0.0))
-        .anchor(Align2::LEFT_CENTER, egui::Vec2::ZERO)
+        .anchor(anchor, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| ui.label(text));
 }
 

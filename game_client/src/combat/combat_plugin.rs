@@ -51,11 +51,6 @@ pub enum CombatState {
     OtherPlayerUnitTurn(PlayerId, UnitId),
 }
 
-#[derive(Resource, Debug)]
-pub struct CurrentlySelectedUnit {
-    unit_id: UnitId,
-}
-
 pub fn on_map_loaded(
     mut commands: Commands,
     mut client_to_server_messages: EventWriter<ClientToServerMessage>,
