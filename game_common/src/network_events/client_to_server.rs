@@ -1,4 +1,4 @@
-use crate::units::UnitId;
+use crate::unit::UnitId;
 use bevy::prelude::Event;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};

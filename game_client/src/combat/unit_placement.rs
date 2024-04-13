@@ -8,7 +8,7 @@ use game_common::combat_data::CombatData;
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
-use game_common::units::{Unit, UnitId};
+use game_common::unit::{Unit, UnitId};
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 

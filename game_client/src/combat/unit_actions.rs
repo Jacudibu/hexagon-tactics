@@ -91,11 +91,11 @@ mod tests {
     use bevy::app::App;
     use game_common::combat_data::CombatData;
     use game_common::game_map::GameMap;
-    use game_common::units::Unit;
+    use game_common::unit::Unit;
     use hexx::Hex;
 
     #[test]
-    fn testing_tests_in_bevy() {
+    fn should_create_and_remove_highlights() {
         let mut app = App::new();
         app.add_plugins(UnitActionPlugin);
         app.insert_resource(GameMap::new(1));
@@ -104,7 +104,7 @@ mod tests {
         let mut unit = Unit::create_debug_unit(unit_id, 1, "test".into());
         unit.position = Some(Hex::ZERO);
 
-        app.insert_resource(CombatData::create_with_units(vec![unit]));
+        app.insert_resource(CombatData::create_mock_with_units(vec![unit]));
         app.insert_resource(ActiveUnitAction::Move);
         app.update();
 

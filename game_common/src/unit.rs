@@ -1,8 +1,8 @@
+use crate::player::PlayerId;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-pub type PlayerId = u8;
 pub type UnitId = u8;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -60,18 +60,6 @@ impl Unit {
     }
 }
 
-#[derive(Debug)]
-pub struct Player {
-    pub id: PlayerId,
-    pub name: String,
-}
-
-impl Display for Player {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} [{}]", self.name, self.id)
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UnitStats {
     pub movement: u8,
@@ -80,6 +68,7 @@ pub struct UnitStats {
     // ...and other stats later on
 }
 
+// TODO: These don't need to be unit specific. Persist inside CombatData instead, and refresh when a unit turn starts.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TurnResources {
     pub remaining_movement: u8,

@@ -5,7 +5,7 @@ use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::*;
 use game_common::network_events::server_to_client::*;
 use game_common::network_events::{client_to_server, server_to_client, CONSTANT_LOCAL_PLAYER_ID};
-use game_common::units::Unit;
+use game_common::unit::Unit;
 use game_common::TEST_MAP_NAME;
 use tracing::error;
 

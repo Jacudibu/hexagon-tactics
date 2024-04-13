@@ -1,5 +1,6 @@
 use crate::game_map::GameMap;
-use crate::units::{Unit, UnitId};
+use crate::unit::{Unit, UnitId};
+use crate::validation_error::ValidationError;
 use bevy::prelude::{error, Resource};
 use bevy::utils::HashMap;
 use hexx::Hex;
@@ -88,12 +89,12 @@ impl CombatData {
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
     use crate::combat_data::CombatData;
-    use crate::units::Unit;
+    use crate::unit::Unit;
     use bevy::utils::HashMap;
     use hexx::Hex;
 
     impl CombatData {
-        pub fn create_with_units(units: Vec<Unit>) -> Self {
+        pub fn create_mock_with_units(units: Vec<Unit>) -> Self {
             let mut unit_map = HashMap::new();
             let mut unit_positions = HashMap::new();
             let mut turn_order = HashMap::new();
@@ -112,19 +113,6 @@ pub mod test_helpers {
                 units_that_can_still_be_placed: Vec::new(),
                 current_unit_turn: Some(last_unit_id),
             }
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct ValidationError {
-    message: String,
-}
-
-impl ValidationError {
-    pub fn new(message: &str) -> Self {
-        ValidationError {
-            message: message.into(),
         }
     }
 }

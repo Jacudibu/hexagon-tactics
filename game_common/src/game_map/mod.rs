@@ -2,7 +2,7 @@ mod field_of_movement_with_edge_detection;
 mod versioned_map_data;
 
 use crate::game_map::field_of_movement_with_edge_detection::field_of_movement_with_edge_detection;
-use crate::units::Unit;
+use crate::unit::Unit;
 use bevy::math::Vec2;
 use bevy::prelude::Resource;
 use bevy::utils::hashbrown::HashMap;
