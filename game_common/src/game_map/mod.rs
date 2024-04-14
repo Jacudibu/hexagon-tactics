@@ -1,6 +1,7 @@
 mod field_of_movement_with_edge_detection;
 mod versioned_map_data;
 
+use crate::combat_data::CombatData;
 use crate::game_map::field_of_movement_with_edge_detection::field_of_movement_with_edge_detection;
 use crate::unit::Unit;
 use bevy::math::Vec2;
@@ -52,33 +53,44 @@ impl GameMap {
         VersionedMapData::load_from_file(path)
     }
 
-    pub fn field_of_movement(&self, unit: &Unit) -> Vec<Hex> {
-        field_of_movement_with_edge_detection(
+    pub fn field_of_movement(&self, unit: &Unit, combat_data: &CombatData) -> Vec<Hex> {
+        let mut result = field_of_movement_with_edge_detection(
             unit.position.unwrap(),
             unit.turn_resources.remaining_movement,
             |from, to| {
                 let from = &self.tiles[&from];
-                let Some(to) = self.tiles.get(&to) else {
+                let Some(to_tile) = self.tiles.get(&to) else {
                     return None;
                 };
 
-                if to.height == 0 {
+                if let Some(unit_on_tile) = combat_data.unit_positions.get(&to) {
+                    let unit_on_tile = &combat_data.units[unit_on_tile];
+                    if unit_on_tile.owner != unit.owner {
+                        return None;
+                    }
+                }
+
+                if to_tile.height == 0 {
                     return None;
                 }
 
-                if let Some(fluid) = &to.fluid {
+                if let Some(fluid) = &to_tile.fluid {
                     if fluid.height > 1.0 {
                         return None;
                     }
                 }
 
-                if from.height.abs_diff(to.height) > unit.stats_after_buffs.jump {
+                if from.height.abs_diff(to_tile.height) > unit.stats_after_buffs.jump {
                     return None;
                 }
 
                 Some(1)
             },
-        )
+        );
+
+        // Since we can walk through our own units, remove tiles which are already occupied
+        result.retain(|x| combat_data.unit_positions.get(x).is_none());
+        result
     }
 }
 
@@ -136,6 +148,7 @@ mod tests {
         assert_not_contains_as_result,
     };
 
+    use crate::combat_data::CombatData;
     use std::fs;
     use tempfile::TempDir;
 
@@ -178,6 +191,9 @@ mod tests {
     fn field_of_movement() {
         let mut map = GameMap::new(3);
         let unit_pos = Hex::ZERO;
+        let friendly_unit_pos = Hex::new(0, -1);
+        let hostile_unit_pos = Hex::new(1, -1);
+
         let slightly_raised_hex = Hex::new(1, 0);
         let too_high_hex = Hex::new(-1, 0);
         let zero_height_tile = Hex::new(0, 1);
@@ -186,21 +202,27 @@ mod tests {
         map.tiles.get_mut(&slightly_raised_hex).unwrap().height = 2;
         map.tiles.get_mut(&too_high_hex).unwrap().height = 3;
 
-        let unit = Unit::create_mock(1, 1)
-            .with_position(unit_pos)
-            .with_stats(UnitStats::create_mock().with_movement(1).with_jump(1));
+        let combat_data = CombatData::create_mock().with_units(vec![
+            Unit::create_mock(1, 1)
+                .with_position(unit_pos)
+                .with_stats(UnitStats::create_mock().with_movement(1).with_jump(1)),
+            Unit::create_mock(2, 1).with_position(friendly_unit_pos),
+            Unit::create_mock(3, 2).with_position(hostile_unit_pos),
+        ]);
 
-        let result = map.field_of_movement(&unit);
+        let result = map.field_of_movement(&combat_data.units[&1], &combat_data);
 
         assert_not_contains!(
             result,
             &unit_pos,
-            "Result should never the tile of the current unit"
+            "Result should never contain the tile of the current unit"
         );
 
-        assert_eq!(6 - 2, result.len());
+        assert_eq!(6 - 4, result.len());
         assert_contains!(result, &slightly_raised_hex);
         assert_not_contains!(result, &too_high_hex);
         assert_not_contains!(result, &zero_height_tile);
+        assert_not_contains!(result, &friendly_unit_pos);
+        assert_not_contains!(result, &hostile_unit_pos);
     }
 }
