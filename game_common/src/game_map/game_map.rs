@@ -93,6 +93,8 @@ mod tests {
 
     use crate::combat_data::CombatData;
     use crate::game_map::game_map::GameMap;
+    use crate::unit::Unit;
+    use hexx::Hex;
     use std::fs;
     use tempfile::TempDir;
 
