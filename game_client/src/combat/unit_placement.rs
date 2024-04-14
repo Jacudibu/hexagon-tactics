@@ -98,10 +98,11 @@ fn on_server_placed_unit(
             .retain(|x| x != &event.unit_id);
         combat_data.unit_positions.insert(event.hex, event.unit_id);
 
+        // TODO: Units really should *NOT* exist in combat_data before they get placed.
         let unit = combat_data.units.get_mut(&event.unit_id).expect("TODO");
         unit.position = Some(event.hex);
 
-        spawn_unit_entity(
+        let entity = spawn_unit_entity(
             &mut commands,
             &character_sprites,
             &map,
@@ -114,6 +115,9 @@ fn on_server_placed_unit(
     }
 }
 
+#[derive(Component)]
+pub struct UnitMarker;
+
 fn spawn_unit_entity(
     commands: &mut Commands,
     character_sprites: &CharacterSprites,
@@ -121,22 +125,24 @@ fn spawn_unit_entity(
     mut sprite_params: &mut Sprite3dParams,
     unit: &Unit,
     hex: Hex,
-) -> bool {
-    commands.spawn((
-        Name::new(unit.name.clone()),
-        Sprite3d {
-            image: character_sprites.test.clone(),
-            pixels_per_metre: 16.0,
-            alpha_mode: AlphaMode::Mask(0.1),
-            unlit: false,
-            double_sided: true, // required for shadows
-            pivot: Some(Vec2::new(0.5, 0.0)),
-            transform: Transform::from_translation(unit_position_on_hexagon(hex, &map)),
-            ..default()
-        }
-        .bundle(&mut sprite_params),
-    ));
-    false
+) -> Entity {
+    commands
+        .spawn((
+            Name::new(unit.name.clone()),
+            UnitMarker {},
+            Sprite3d {
+                image: character_sprites.test.clone(),
+                pixels_per_metre: 16.0,
+                alpha_mode: AlphaMode::Mask(0.1),
+                unlit: false,
+                double_sided: true, // required for shadows
+                pivot: Some(Vec2::new(0.5, 0.0)),
+                transform: Transform::from_translation(unit_position_on_hexagon(hex, &map)),
+                ..default()
+            }
+            .bundle(&mut sprite_params),
+        ))
+        .id()
 }
 
 fn unit_position_on_hexagon(hex: Hex, map: &GameMap) -> Vec3 {

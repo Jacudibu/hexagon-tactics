@@ -24,6 +24,7 @@ pub fn process_message(
         ClientToServerMessage::StartGame => start_game(shared_state),
         ClientToServerMessage::FinishedLoading => finish_loading(shared_state),
         ClientToServerMessage::PlaceUnit(data) => place_unit(shared_state, data),
+        ClientToServerMessage::MoveUnit(data) => move_unit(shared_state, data),
     }
 }
 
@@ -156,6 +157,13 @@ fn place_unit(
         .units_that_can_still_be_placed
         .retain(|x| x != &data.unit_id);
 
+    // TODO: Extract Updating unit positions into a single function call
+    server_data
+        .combat_state
+        .units
+        .get_mut(&data.unit_id)
+        .expect("TODO")
+        .position = Some(data.hex.clone());
     server_data
         .combat_state
         .unit_positions
@@ -167,7 +175,7 @@ fn place_unit(
         .units_that_can_still_be_placed
         .is_empty()
     {
-        server_data.combat_state.current_unit_turn = Some(1);
+        server_data.combat_state.current_unit_turn = Some(data.unit_id);
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
             StartUnitTurn { unit_id: 1 },
         ))
@@ -188,4 +196,42 @@ fn place_unit(
         )),
         next,
     ])
+}
+
+fn move_unit(
+    shared_state: &mut SharedState,
+    data: client_to_server::MoveUnit,
+) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
+    // TODO: Consider moving state validation out. We don't need the whole shared state in these command processors.
+    let InGame(server_data) = &mut shared_state.server_state else {
+        error!("Something just went horribly wrong");
+        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
+            ErrorWhenProcessingMessage {
+                message: "Something just went horribly wrong, yay!".into(),
+            },
+        ));
+    };
+
+    // TODO: Validate
+    // TODO: Test
+
+    let unit = server_data
+        .combat_state
+        .units
+        .get_mut(&server_data.combat_state.current_unit_turn.expect("TODO"))
+        .expect("TODO");
+
+    server_data
+        .combat_state
+        .unit_positions
+        .remove(&unit.position.expect("TODO"));
+    unit.position = Some(data.path.last().expect("TODO").clone());
+    server_data
+        .combat_state
+        .unit_positions
+        .insert(unit.position.expect("TODO"), unit.id);
+
+    Ok(vec![ServerToClientMessageVariant::Broadcast(
+        ServerToClientMessage::MoveUnit(server_to_client::MoveUnit { path: data.path }),
+    )])
 }

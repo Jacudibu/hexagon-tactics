@@ -9,10 +9,16 @@ pub enum ClientToServerMessage {
     FinishedLoading,
 
     PlaceUnit(PlaceUnit),
+    MoveUnit(MoveUnit),
 }
 
-#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct PlaceUnit {
     pub unit_id: UnitId,
     pub hex: Hex,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct MoveUnit {
+    pub path: Vec<Hex>,
 }

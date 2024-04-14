@@ -11,7 +11,7 @@ pub struct CombatData {
     pub unit_positions: HashMap<Hex, UnitId>,
     pub turn_order: HashMap<u32, UnitId>,
     pub units_that_can_still_be_placed: Vec<UnitId>,
-    pub current_unit_turn: Option<UnitId>,
+    pub current_unit_turn: Option<UnitId>, // TODO: That's just the first inside turn_order
 }
 
 impl CombatData {

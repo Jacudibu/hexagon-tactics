@@ -4,7 +4,7 @@ use crate::game_map::tile_data::TileData;
 use crate::game_map::tile_surface::TileSurface;
 use crate::game_map::versioned_map_data::VersionedMapData;
 use crate::unit::Unit;
-use bevy::prelude::Resource;
+use bevy::prelude::{error, Resource};
 use bevy::utils::hashbrown::HashMap;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
@@ -53,12 +53,12 @@ impl GameMap {
         result
     }
 
-    pub fn calculate_path(
-        &self,
-        unit: &Unit,
-        combat_data: &CombatData,
-        coordinate: Hex,
-    ) -> Option<Vec<Hex>> {
+    pub fn calculate_path(&self, combat_data: &CombatData, coordinate: Hex) -> Option<Vec<Hex>> {
+        let Some(unit_id) = &combat_data.current_unit_turn else {
+            error!("current_unit_turn was none!");
+            return None;
+        };
+        let unit = combat_data.units.get(unit_id).unwrap();
         hexx::algorithms::a_star(unit.position.unwrap(), coordinate, |from, to| {
             self.calculate_path_costs(unit, &combat_data, &from, &to)
         })

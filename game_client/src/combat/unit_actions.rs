@@ -1,14 +1,18 @@
 use crate::combat::combat_input::CombatAction;
 use crate::combat::combat_plugin::CombatState;
-use crate::map::HighlightedTiles;
+use crate::combat::unit_placement::UnitMarker;
+use crate::map::{HighlightedTiles, MouseCursorOnTile};
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::{
-    in_state, resource_changed_or_removed, Commands, IntoSystemConfigs, Plugin, Res, Resource,
-    Update,
+    error, in_state, info, on_event, resource_changed_or_removed, resource_exists, Commands,
+    EventReader, EventWriter, IntoSystemConfigs, NextState, Plugin, Query, Res, ResMut, Resource,
+    Transform, Update, With,
 };
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
+use game_common::network_events::client_to_server::ClientToServerMessage;
+use game_common::network_events::{client_to_server, server_to_client};
 use leafwing_input_manager::action_state::ActionState;
 use std::ops::Deref;
 
@@ -23,6 +27,12 @@ impl Plugin for UnitActionPlugin {
                     .run_if(in_state(CombatState::ThisPlayerUnitTurn)),
                 on_active_unit_action_changed
                     .run_if(resource_changed_or_removed::<ActiveUnitAction>()),
+                execute_action_on_click
+                    .run_if(in_state(ApplicationState::InGame))
+                    .run_if(in_state(CombatState::ThisPlayerUnitTurn))
+                    .run_if(resource_exists::<ActiveUnitAction>)
+                    .run_if(resource_exists::<HighlightedTiles>),
+                on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
             ),
         );
     }
@@ -81,6 +91,61 @@ pub fn show_movement_range_preview(
     let range = map.field_of_movement(unit, combat_data);
 
     commands.insert_resource(HighlightedTiles { tiles: range })
+}
+
+pub fn execute_action_on_click(
+    combat_data: Res<CombatData>,
+    map: Res<GameMap>,
+    action_state: Res<ActionState<CombatAction>>,
+    active_unit_action: Res<ActiveUnitAction>,
+    highlighted_tiles: Res<HighlightedTiles>,
+    mouse_cursor_on_tile: Option<Res<MouseCursorOnTile>>,
+    mut event_writer: EventWriter<ClientToServerMessage>,
+    mut next_combat_state: ResMut<NextState<CombatState>>,
+) {
+    if !action_state.just_pressed(&CombatAction::SelectTile) {
+        return;
+    }
+
+    let Some(mouse_cursor_on_tile) = mouse_cursor_on_tile else {
+        return;
+    };
+
+    let selected_tile = &mouse_cursor_on_tile.hex;
+    if !highlighted_tiles.tiles.contains(selected_tile) {
+        return;
+    }
+
+    match active_unit_action.deref() {
+        // TODO: Path should already exist somewhere for highlighting/preview
+        ActiveUnitAction::Move => {
+            let Some(path) = map.calculate_path(&combat_data, selected_tile.clone()) else {
+                error!(
+                    "Unable to calculate unit path for unit_id {:?} to {:?}",
+                    combat_data.current_unit_turn, selected_tile
+                );
+                return;
+            };
+            event_writer.send(ClientToServerMessage::MoveUnit(
+                client_to_server::MoveUnit { path },
+            ));
+            next_combat_state.set(CombatState::WaitingForServer);
+        }
+    }
+}
+
+pub fn on_move_unit(
+    mut events: EventReader<server_to_client::MoveUnit>,
+    mut combat_data: ResMut<CombatData>,
+    mut unit_entities: Query<&Transform, With<UnitMarker>>,
+) {
+    for event in events.read() {
+        info!("Received {:?}", event);
+
+        // TODO: Update Data
+        // TODO: Animate
+        // TODO: Update combat state
+    }
 }
 
 #[cfg(test)]

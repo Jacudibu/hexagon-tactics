@@ -14,6 +14,7 @@ impl Plugin for IncomingMessageProcessorPlugin {
             .add_event::<server_to_client::PlayerTurnToPlaceUnit>()
             .add_event::<server_to_client::PlaceUnit>()
             .add_event::<server_to_client::StartUnitTurn>()
+            .add_event::<server_to_client::MoveUnit>()
             .add_systems(
                 PreUpdate,
                 receive_updates.run_if(in_state(NetworkState::Connected)),
@@ -30,6 +31,7 @@ fn receive_updates(
     mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
     mut place_unit: EventWriter<server_to_client::PlaceUnit>,
     mut start_unit_turn: EventWriter<server_to_client::StartUnitTurn>,
+    mut move_unit: EventWriter<server_to_client::MoveUnit>,
 ) {
     if let Ok(bytes) = connection.message_receiver.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
@@ -72,6 +74,9 @@ fn receive_updates(
             }
             ServerToClientMessage::StartUnitTurn(event) => {
                 start_unit_turn.send(event);
+            }
+            ServerToClientMessage::MoveUnit(event) => {
+                move_unit.send(event);
             }
         };
     }
