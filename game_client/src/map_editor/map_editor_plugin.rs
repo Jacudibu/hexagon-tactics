@@ -1,13 +1,12 @@
-use crate::map::{DespawnMapCommand, MapState, SpawnMapCommand, TileChangeEvent, TileCursor};
-use crate::map_editor::editor_ui::MapEditorUiPlugin;
-use crate::{ApplicationState, MouseCursorOverUiState};
+use std::fmt::Formatter;
+use std::ops::DerefMut;
+
 use bevy::app::{App, Plugin, Update};
 use bevy::log::{error, warn};
 use bevy::prelude::{
     in_state, Commands, EventWriter, IntoSystemConfigs, KeyCode, Local, MouseButton, OnEnter,
     OnExit, Query, Reflect, Res, ResMut, Resource,
 };
-use game_common::game_map::{Fluid, FluidKind, GameMap, TileData, TileSurface, MAX_HEIGHT};
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::DualAxis;
@@ -15,8 +14,12 @@ use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::prelude::InputKind;
 use leafwing_input_manager::Actionlike;
-use std::fmt::Formatter;
-use std::ops::DerefMut;
+
+use game_common::game_map::{Fluid, FluidKind, GameMap, TileData, TileSurface, MAX_HEIGHT};
+
+use crate::map::{DespawnMapCommand, MapState, SpawnMapCommand, TileChangeEvent, TileCursor};
+use crate::map_editor::editor_ui::MapEditorUiPlugin;
+use crate::{ApplicationState, MouseCursorOverUiState};
 
 pub struct MapEditorPlugin;
 

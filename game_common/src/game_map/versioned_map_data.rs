@@ -1,4 +1,4 @@
-use crate::game_map::GameMap;
+use crate::game_map::game_map::GameMap;
 use bevy::log::error;
 use ron::de::from_reader;
 use ron::to_string;
