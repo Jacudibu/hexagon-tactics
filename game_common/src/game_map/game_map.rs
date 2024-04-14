@@ -44,41 +44,58 @@ impl GameMap {
     pub fn field_of_movement(&self, unit: &Unit, combat_data: &CombatData) -> Vec<Hex> {
         let mut result = field_of_movement_with_edge_detection(
             unit.position.unwrap(),
-            unit.turn_resources.remaining_movement,
-            |from, to| {
-                let from = &self.tiles[&from];
-                let Some(to_tile) = self.tiles.get(&to) else {
-                    return None;
-                };
-
-                if let Some(unit_on_tile) = combat_data.unit_positions.get(&to) {
-                    let unit_on_tile = &combat_data.units[unit_on_tile];
-                    if unit_on_tile.owner != unit.owner {
-                        return None;
-                    }
-                }
-
-                if to_tile.height == 0 {
-                    return None;
-                }
-
-                if let Some(fluid) = &to_tile.fluid {
-                    if fluid.height > 1.0 {
-                        return None;
-                    }
-                }
-
-                if from.height.abs_diff(to_tile.height) > unit.stats_after_buffs.jump {
-                    return None;
-                }
-
-                Some(1)
-            },
+            unit.turn_resources.remaining_movement.into(),
+            |from, to| self.calculate_path_costs(unit, &combat_data, &from, &to),
         );
 
         // Since we can walk through our own units, remove tiles which are already occupied
         result.retain(|x| combat_data.unit_positions.get(x).is_none());
         result
+    }
+
+    pub fn calculate_path(
+        &self,
+        unit: &Unit,
+        combat_data: &CombatData,
+        coordinate: Hex,
+    ) -> Option<Vec<Hex>> {
+        hexx::algorithms::a_star(unit.position.unwrap(), coordinate, |from, to| {
+            self.calculate_path_costs(unit, &combat_data, &from, &to)
+        })
+    }
+
+    fn calculate_path_costs(
+        &self,
+        unit: &Unit,
+        combat_data: &CombatData,
+        from: &Hex,
+        to: &Hex,
+    ) -> Option<u32> {
+        let from_tile = &self.tiles[from];
+        let to_tile = self.tiles.get(to)?;
+
+        if let Some(unit_on_tile) = combat_data.unit_positions.get(to) {
+            let unit_on_tile = &combat_data.units[unit_on_tile];
+            if unit_on_tile.owner != unit.owner {
+                return None;
+            }
+        }
+
+        if to_tile.height == 0 {
+            return None;
+        }
+
+        if let Some(fluid) = &to_tile.fluid {
+            if fluid.height > 1.0 {
+                return None;
+            }
+        }
+
+        if from_tile.height.abs_diff(to_tile.height) > unit.stats_after_buffs.jump {
+            return None;
+        }
+
+        Some(1)
     }
 }
 

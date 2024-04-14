@@ -4,7 +4,7 @@ use std::collections::BinaryHeap;
 
 struct Node {
     coord: Hex,
-    cost: u8,
+    cost: u32,
 }
 
 impl PartialEq for Node {
@@ -37,8 +37,8 @@ impl Ord for Node {
 /// themselves would be traversable when coming from a different direction).
 pub fn field_of_movement_with_edge_detection(
     start: Hex,
-    budget: u8,
-    cost: impl Fn(Hex, Hex) -> Option<u8>,
+    budget: u32,
+    cost: impl Fn(Hex, Hex) -> Option<u32>,
 ) -> Vec<Hex> {
     let start_node = Node {
         coord: start,
