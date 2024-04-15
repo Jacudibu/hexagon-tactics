@@ -149,7 +149,7 @@ fn spawn_unit_entity(
         .id()
 }
 
-fn unit_position_on_hexagon(hex: Hex, map: &GameMap) -> Vec3 {
+pub fn unit_position_on_hexagon(hex: Hex, map: &GameMap) -> Vec3 {
     let height = match map.tiles.get(&hex) {
         None => {
             error!(

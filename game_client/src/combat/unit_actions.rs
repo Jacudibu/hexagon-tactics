@@ -1,5 +1,7 @@
 use crate::combat::combat_input::CombatAction;
 use crate::combat::combat_plugin::CombatState;
+use crate::combat::local_combat_data::LocalCombatData;
+use crate::combat::unit_placement;
 use crate::combat::unit_placement::UnitMarker;
 use crate::map::{HighlightedTiles, MouseCursorOnTile};
 use crate::ApplicationState;
@@ -13,6 +15,7 @@ use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
+use game_common::DESYNC_TODO_MESSAGE;
 use leafwing_input_manager::action_state::ActionState;
 use std::ops::Deref;
 
@@ -137,14 +140,32 @@ pub fn execute_action_on_click(
 pub fn on_move_unit(
     mut events: EventReader<server_to_client::MoveUnit>,
     mut combat_data: ResMut<CombatData>,
-    mut unit_entities: Query<&Transform, With<UnitMarker>>,
+    local_combat_data: Res<LocalCombatData>,
+    map: Res<GameMap>,
+    mut unit_entities: Query<&mut Transform, With<UnitMarker>>,
 ) {
     for event in events.read() {
-        info!("Received {:?}", event);
+        let unit_id = combat_data.current_unit_turn.expect(DESYNC_TODO_MESSAGE);
+        let unit = combat_data
+            .units
+            .get_mut(&unit_id)
+            .expect(DESYNC_TODO_MESSAGE);
 
-        // TODO: Update Data
-        // TODO: Animate
-        // TODO: Update combat state
+        unit.position = Some(
+            event
+                .path
+                .last()
+                .expect("Path sent from server should never be empty!")
+                .clone(),
+        );
+
+        let entity = local_combat_data.unit_entities[&unit_id];
+        if let Ok(mut transform) = unit_entities.get_mut(entity) {
+            transform.translation =
+                unit_placement::unit_position_on_hexagon(unit.position.unwrap(), &map)
+        }
+
+        // TODO: reduce unit movement
     }
 }
 
