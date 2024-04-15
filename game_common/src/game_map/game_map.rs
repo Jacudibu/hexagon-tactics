@@ -165,13 +165,15 @@ mod tests {
         map.tiles.get_mut(&slightly_raised_hex).unwrap().height = 2;
         map.tiles.get_mut(&too_high_hex).unwrap().height = 3;
 
-        let combat_data = CombatData::create_mock().with_units(vec![
+        let mut combat_data = CombatData::create_mock().with_units(vec![
             Unit::create_mock(1, 1)
                 .with_position(unit_pos)
                 .with_stats(UnitStats::create_mock().with_movement(1).with_jump(1)),
             Unit::create_mock(2, 1).with_position(friendly_unit_pos),
             Unit::create_mock(3, 2).with_position(hostile_unit_pos),
         ]);
+
+        combat_data.start_unit_turn(1);
 
         let result = map.field_of_movement(&combat_data.units[&1], &combat_data);
 
