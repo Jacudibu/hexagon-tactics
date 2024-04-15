@@ -83,3 +83,31 @@ pub mod test_helpers {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::combat_data::CombatData;
+    use crate::unit::Unit;
+    use crate::unit_stats::UnitStats;
+
+    #[test]
+    fn test_start_unit_turn() {
+        let mut combat_state = CombatData::create_mock().with_units(vec![
+            Unit::create_mock(1, 1).with_stats(UnitStats::create_mock().with_movement(5)),
+            Unit::create_mock(2, 1).with_stats(UnitStats::create_mock().with_movement(10)),
+            Unit::create_mock(3, 1).with_stats(UnitStats::create_mock().with_movement(15)),
+        ]);
+
+        combat_state.start_unit_turn(1);
+        assert_eq!(Some(1), combat_state.current_unit_turn);
+        assert_eq!(5, combat_state.turn_resources.remaining_movement);
+
+        combat_state.start_unit_turn(2);
+        assert_eq!(Some(2), combat_state.current_unit_turn);
+        assert_eq!(10, combat_state.turn_resources.remaining_movement);
+
+        combat_state.start_unit_turn(3);
+        assert_eq!(Some(3), combat_state.current_unit_turn);
+        assert_eq!(15, combat_state.turn_resources.remaining_movement);
+    }
+}
