@@ -2,6 +2,7 @@ pub mod combat_data;
 pub mod game_map;
 pub mod network_events;
 mod player;
+pub mod turn_resources;
 pub mod unit;
 mod unit_stats;
 mod validation_error;

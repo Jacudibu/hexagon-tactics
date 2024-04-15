@@ -17,7 +17,6 @@ pub struct Unit {
     pub exp: u32,
     pub base_stats: UnitStats,
     pub stats_after_buffs: UnitStats,
-    pub turn_resources: TurnResources,
 }
 
 impl PartialEq<Self> for Unit {
@@ -54,9 +53,6 @@ impl Unit {
                 jump: 3,
                 strength: 10,
             },
-            turn_resources: TurnResources {
-                remaining_movement: movement,
-            },
         }
     }
 }
@@ -64,7 +60,7 @@ impl Unit {
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
     use crate::player::PlayerId;
-    use crate::unit::{TurnResources, Unit, UnitId};
+    use crate::unit::{Unit, UnitId};
     use crate::unit_stats::UnitStats;
     use hexx::Hex;
 
@@ -82,9 +78,6 @@ pub mod test_helpers {
                 exp: 0,
                 base_stats: UnitStats::create_mock(),
                 stats_after_buffs: UnitStats::create_mock(),
-                turn_resources: TurnResources {
-                    remaining_movement: UnitStats::create_mock().movement,
-                },
             }
         }
 
@@ -94,16 +87,9 @@ pub mod test_helpers {
         }
 
         pub fn with_stats(mut self, stats: UnitStats) -> Self {
-            self.turn_resources.remaining_movement = stats.movement;
             self.base_stats = stats.clone();
             self.stats_after_buffs = stats;
             self
         }
     }
-}
-
-// TODO: These don't need to be unit specific. Persist inside CombatData instead, and refresh when a unit turn starts.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct TurnResources {
-    pub remaining_movement: u8,
 }

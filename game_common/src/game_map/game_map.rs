@@ -44,7 +44,7 @@ impl GameMap {
     pub fn field_of_movement(&self, unit: &Unit, combat_data: &CombatData) -> Vec<Hex> {
         let mut result = field_of_movement_with_edge_detection(
             unit.position,
-            unit.turn_resources.remaining_movement.into(),
+            combat_data.turn_resources.remaining_movement.into(),
             |from, to| self.calculate_path_costs(unit, &combat_data, &from, &to),
         );
 

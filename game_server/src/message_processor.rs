@@ -47,6 +47,7 @@ fn start_game(
         turn_order: Default::default(),
         unit_storage: Default::default(),
         current_unit_turn: None,
+        turn_resources: Default::default(),
     };
     let server_data = ServerData {
         combat_data: combat_state,
@@ -157,7 +158,7 @@ fn place_unit(
 
     // TODO: Check if all units have been placed, and if so, proceed to very first unit turn
     let next = if server_data.combat_data.unit_storage.is_empty() {
-        server_data.combat_data.current_unit_turn = Some(data.unit_id);
+        server_data.combat_data.start_unit_turn(data.unit_id);
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
             StartUnitTurn { unit_id: 1 },
         ))
@@ -199,6 +200,7 @@ fn move_unit(
     };
 
     if data.path.is_empty() {
+        // TODO: Throw Validation Error
         return Err(create_error_response("Path was empty!"));
     }
 

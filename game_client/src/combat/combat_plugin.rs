@@ -64,6 +64,7 @@ pub fn on_map_loaded(
         turn_order: Default::default(),
         unit_storage: vec![],
         current_unit_turn: None,
+        turn_resources: Default::default(),
     });
     commands.insert_resource(LocalCombatData {
         unit_entities: Default::default(),
@@ -110,6 +111,6 @@ pub fn on_start_unit_turn(
             next_combat_state.set(CombatState::OtherPlayerUnitTurn)
         }
 
-        combat_data.current_unit_turn = Some(unit.id);
+        combat_data.start_unit_turn(event.unit_id);
     }
 }

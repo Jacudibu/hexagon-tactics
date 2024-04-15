@@ -170,6 +170,7 @@ pub fn on_move_unit(
 
         combat_data.unit_positions.remove(old_pos);
         combat_data.unit_positions.insert(new_pos.clone(), unit_id);
+        combat_data.turn_resources.remaining_movement -= event.path.len() as u8 - 1;
 
         let unit = combat_data
             .units
@@ -184,8 +185,6 @@ pub fn on_move_unit(
         if let Ok(mut transform) = unit_entities.get_mut(entity) {
             transform.translation = unit_placement::unit_position_on_hexagon(unit.position, &map)
         }
-
-        unit.turn_resources.remaining_movement -= event.path.len() as u8 - 1;
 
         if unit.owner == CONSTANT_LOCAL_PLAYER_ID {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
