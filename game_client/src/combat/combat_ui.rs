@@ -4,7 +4,7 @@ use crate::map::{MapState, MouseCursorOnTile};
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;
-use bevy_egui::egui::{Align2, Pos2};
+use bevy_egui::egui::{Align2, Pos2, Ui};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::combat_data::CombatData;
 use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
@@ -97,36 +97,6 @@ fn draw_state_ui(
     combat_state: Res<State<CombatState>>,
     combat_data: Res<CombatData>,
 ) {
-    let text = match combat_state.get() {
-        CombatState::WaitingForOtherPlayer => {
-            format!("Waiting for player {}", CONSTANT_LOCAL_PLAYER_ID)
-        }
-        CombatState::WaitingForServer => "Waiting for Server".into(),
-        CombatState::PlaceUnit => "Place Unit".into(),
-        CombatState::ThisPlayerUnitTurn => {
-            let unit = combat_data
-                .units
-                .get(
-                    &combat_data
-                        .current_unit_turn
-                        .expect("current_unit_turn should be set!"),
-                )
-                .expect("Unit should exist!");
-            format!("Your turn: {}", unit.name)
-        }
-        CombatState::OtherPlayerUnitTurn => {
-            let unit = combat_data
-                .units
-                .get(
-                    &combat_data
-                        .current_unit_turn
-                        .expect("current_unit_turn should be set!"),
-                )
-                .expect("Unit should exist!");
-            format!("{}'s turn: {}", CONSTANT_LOCAL_PLAYER_ID, unit.name)
-        }
-    };
-
     egui::Window::new("State Display Window")
         .collapsible(false)
         .resizable(false)
@@ -134,5 +104,52 @@ fn draw_state_ui(
         .fixed_pos(Pos2::new(0.0, 0.0))
         .pivot(Align2::CENTER_TOP)
         .anchor(Align2::CENTER_TOP, egui::Vec2::ZERO)
-        .show(egui.ctx_mut(), |ui| ui.label(text));
+        .show(egui.ctx_mut(), |ui| match combat_state.get() {
+            CombatState::WaitingForServer => build_waiting_for_server_state_ui(ui),
+            CombatState::WaitingForOtherPlayer => build_waiting_for_player_ui(ui),
+            CombatState::PlaceUnit => build_place_unit_state_ui(ui),
+            CombatState::ThisPlayerUnitTurn => build_this_player_unit_turn_ui(ui, &combat_data),
+            CombatState::OtherPlayerUnitTurn => build_other_player_unit_turn_ui(ui, &combat_data),
+        });
+}
+
+fn build_waiting_for_server_state_ui(ui: &mut Ui) {
+    ui.label("Waiting for Server");
+}
+
+fn build_place_unit_state_ui(ui: &mut Ui) {
+    ui.label("Place Unit");
+}
+
+fn build_waiting_for_player_ui(ui: &mut Ui) {
+    ui.label(format!("Waiting for player {}", CONSTANT_LOCAL_PLAYER_ID));
+}
+
+fn build_this_player_unit_turn_ui(ui: &mut Ui, combat_data: &CombatData) {
+    let unit = combat_data
+        .units
+        .get(
+            &combat_data
+                .current_unit_turn
+                .expect("current_unit_turn should be set!"),
+        )
+        .expect("Unit should exist!");
+
+    ui.label(format!("Your turn: {}", unit.name));
+}
+
+fn build_other_player_unit_turn_ui(ui: &mut Ui, combat_data: &CombatData) {
+    let unit = combat_data
+        .units
+        .get(
+            &combat_data
+                .current_unit_turn
+                .expect("current_unit_turn should be set!"),
+        )
+        .expect("Unit should exist!");
+
+    ui.label(format!(
+        "{}'s turn: {}",
+        CONSTANT_LOCAL_PLAYER_ID, unit.name
+    ));
 }
