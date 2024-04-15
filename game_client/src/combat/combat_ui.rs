@@ -1,4 +1,6 @@
 use crate::combat::combat_plugin::CombatState;
+use crate::combat::unit_actions;
+use crate::combat::unit_actions::ActiveUnitAction;
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
 use crate::map::{MapState, MouseCursorOnTile};
 use crate::{ApplicationState, MouseCursorOverUiState};
@@ -93,9 +95,11 @@ fn draw_unit_info(mut egui: EguiContexts, unit: &Unit, anchor: Align2) {
 }
 
 fn draw_state_ui(
+    commands: Commands,
     mut egui: EguiContexts,
     combat_state: Res<State<CombatState>>,
     combat_data: Res<CombatData>,
+    active_unit_action: Option<Res<ActiveUnitAction>>,
 ) {
     egui::Window::new("State Display Window")
         .collapsible(false)
@@ -108,7 +112,9 @@ fn draw_state_ui(
             CombatState::WaitingForServer => build_waiting_for_server_state_ui(ui),
             CombatState::WaitingForOtherPlayer => build_waiting_for_player_ui(ui),
             CombatState::PlaceUnit => build_place_unit_state_ui(ui),
-            CombatState::ThisPlayerUnitTurn => build_this_player_unit_turn_ui(ui, &combat_data),
+            CombatState::ThisPlayerUnitTurn => {
+                build_this_player_unit_turn_ui(commands, ui, &combat_data, active_unit_action);
+            }
             CombatState::OtherPlayerUnitTurn => build_other_player_unit_turn_ui(ui, &combat_data),
         });
 }
@@ -125,7 +131,12 @@ fn build_waiting_for_player_ui(ui: &mut Ui) {
     ui.label(format!("Waiting for player {}", CONSTANT_LOCAL_PLAYER_ID));
 }
 
-fn build_this_player_unit_turn_ui(ui: &mut Ui, combat_data: &CombatData) {
+fn build_this_player_unit_turn_ui(
+    commands: Commands,
+    ui: &mut Ui,
+    combat_data: &CombatData,
+    active_unit_action: Option<Res<ActiveUnitAction>>,
+) {
     let unit = combat_data
         .units
         .get(
@@ -136,6 +147,15 @@ fn build_this_player_unit_turn_ui(ui: &mut Ui, combat_data: &CombatData) {
         .expect("Unit should exist!");
 
     ui.label(format!("Your turn: {}", unit.name));
+    ui.horizontal(|ui| {
+        if ui.button("Move").clicked() {
+            unit_actions::set_or_toggle_action(
+                commands,
+                active_unit_action,
+                ActiveUnitAction::Move,
+            );
+        }
+    });
 }
 
 fn build_other_player_unit_turn_ui(ui: &mut Ui, combat_data: &CombatData) {
