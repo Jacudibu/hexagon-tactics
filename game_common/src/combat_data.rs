@@ -103,7 +103,7 @@ pub mod test_helpers {
 
         pub fn with_units(mut self, units: Vec<Unit>) -> Self {
             for unit in units {
-                self.unit_positions.insert(unit.position.unwrap(), unit.id);
+                self.unit_positions.insert(unit.position, unit.id);
                 self.turn_order.insert(0, unit.id);
                 self.units.insert(unit.id, unit);
             }

@@ -99,7 +99,7 @@ fn on_server_placed_unit(
         };
 
         let mut unit = combat_data.unit_storage.remove(index);
-        unit.position = Some(event.hex);
+        unit.position = event.hex;
 
         let entity = spawn_unit_entity(
             &mut commands,

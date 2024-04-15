@@ -7,9 +7,9 @@ use crate::map::{HighlightedTiles, MouseCursorOnTile};
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::{
-    error, in_state, info, on_event, resource_changed_or_removed, resource_exists, Commands,
-    EventReader, EventWriter, IntoSystemConfigs, NextState, Plugin, Query, Res, ResMut, Resource,
-    Transform, Update, With,
+    error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands, EventReader,
+    EventWriter, IntoSystemConfigs, NextState, Plugin, Query, Res, ResMut, Resource, Transform,
+    Update, With,
 };
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
@@ -154,18 +154,15 @@ pub fn on_move_unit(
             .get_mut(&unit_id)
             .expect(DESYNC_TODO_MESSAGE);
 
-        unit.position = Some(
-            event
-                .path
-                .last()
-                .expect("Path sent from server should never be empty!")
-                .clone(),
-        );
+        unit.position = event
+            .path
+            .last()
+            .expect("Path sent from server should never be empty!")
+            .clone();
 
         let entity = local_combat_data.unit_entities[&unit_id];
         if let Ok(mut transform) = unit_entities.get_mut(entity) {
-            transform.translation =
-                unit_placement::unit_position_on_hexagon(unit.position.unwrap(), &map)
+            transform.translation = unit_placement::unit_position_on_hexagon(unit.position, &map)
         }
 
         unit.turn_resources.remaining_movement -= event.path.len() as u8 - 1;

@@ -148,7 +148,7 @@ fn place_unit(
     };
 
     let mut unit = server_data.combat_data.unit_storage.remove(index);
-    unit.position = Some(data.hex.clone());
+    unit.position = data.hex;
     server_data
         .combat_data
         .unit_positions
@@ -180,6 +180,12 @@ fn place_unit(
     ])
 }
 
+fn create_error_response(message: &str) -> ServerToClientMessage {
+    ServerToClientMessage::ErrorWhenProcessingMessage(ErrorWhenProcessingMessage {
+        message: message.into(),
+    })
+}
+
 fn move_unit(
     shared_state: &mut SharedState,
     data: client_to_server::MoveUnit,
@@ -187,12 +193,14 @@ fn move_unit(
     // TODO: Consider moving state validation out. We don't need the whole shared state in these command processors.
     let InGame(server_data) = &mut shared_state.server_state else {
         error!("Something just went horribly wrong");
-        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
-            ErrorWhenProcessingMessage {
-                message: "Something just went horribly wrong, yay!".into(),
-            },
+        return Err(create_error_response(
+            "Something just went horribly wrong, yay!",
         ));
     };
+
+    if data.path.is_empty() {
+        return Err(create_error_response("Path was empty!"));
+    }
 
     // TODO: Validate
     // TODO: Test
@@ -206,12 +214,12 @@ fn move_unit(
     server_data
         .combat_data
         .unit_positions
-        .remove(&unit.position.expect("TODO"));
-    unit.position = Some(data.path.last().expect("TODO").clone());
+        .remove(&unit.position);
+    unit.position = data.path.last().unwrap().clone();
     server_data
         .combat_data
         .unit_positions
-        .insert(unit.position.expect("TODO"), unit.id);
+        .insert(unit.position, unit.id);
 
     Ok(vec![ServerToClientMessageVariant::Broadcast(
         ServerToClientMessage::MoveUnit(server_to_client::MoveUnit { path: data.path }),

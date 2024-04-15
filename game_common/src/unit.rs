@@ -11,7 +11,7 @@ pub struct Unit {
     pub id: UnitId,
     pub owner: PlayerId,
     pub name: String,
-    pub position: Option<Hex>, // TODO: Once we start differentiating between units in combat and "units stored", this should no longer be an option
+    pub position: Hex,
     pub hp: u32,
     pub mp: u32,
     pub exp: u32,
@@ -40,7 +40,7 @@ impl Unit {
             id,
             owner,
             name,
-            position: None,
+            position: Hex::ZERO,
             hp: 10,
             mp: 10,
             exp: 0,
@@ -76,7 +76,7 @@ pub mod test_helpers {
                 id,
                 owner,
                 name: format!("Test Unit #{id}"),
-                position: None,
+                position: Hex::ZERO,
                 hp: 10,
                 mp: 10,
                 exp: 0,
@@ -89,7 +89,7 @@ pub mod test_helpers {
         }
 
         pub fn with_position(mut self, position: Hex) -> Self {
-            self.position = Some(position);
+            self.position = position;
             self
         }
 
