@@ -1,5 +1,6 @@
 use crate::combat::combat_input::CombatAction;
 use crate::combat::combat_plugin::CombatState;
+use crate::combat::local_combat_data::LocalCombatData;
 use crate::load::CharacterSprites;
 use crate::map::{MouseCursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::prelude::*;
@@ -9,7 +10,7 @@ use game_common::game_map::GameMap;
 use game_common::game_map::HEX_LAYOUT;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
-use game_common::unit::{Unit, UnitId};
+use game_common::unit::Unit;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
@@ -81,6 +82,7 @@ fn on_server_placed_unit(
     mut sprite_params: Sprite3dParams,
     mut events: EventReader<server_to_client::PlaceUnit>,
     mut combat_data: ResMut<CombatData>,
+    mut local_combat_data: ResMut<LocalCombatData>,
     mut next_state: ResMut<NextState<CombatState>>,
 ) {
     for event in events.read() {
@@ -108,7 +110,7 @@ fn on_server_placed_unit(
             event.hex,
         );
 
-        // TODO: Persist unit entity somewhere
+        local_combat_data.unit_entities.insert(unit.id, entity);
 
         combat_data.unit_positions.insert(event.hex, event.unit_id);
         combat_data.units.insert(unit.id, unit);

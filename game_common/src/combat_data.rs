@@ -5,13 +5,14 @@ use bevy::prelude::{error, Resource};
 use bevy::utils::HashMap;
 use hexx::Hex;
 
+/// Combat Data shared between client and server. Things in here should always be kept in sync.
 #[derive(Resource, PartialEq, Debug)]
 pub struct CombatData {
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,
-    pub turn_order: HashMap<u32, UnitId>, // TODO: Turn this into a Vec<(Speed/u32, UnitId)>
+    pub turn_order: HashMap<u32, UnitId>, // TODO: Turn this into a Vec<(Speed/u32, UnitId)>, maybe calculate & store locally
     pub unit_storage: Vec<Unit>,
-    pub current_unit_turn: Option<UnitId>, // TODO: That's just the first inside turn_order
+    pub current_unit_turn: Option<UnitId>, // TODO: That's just the first inside turn_order, and if the server tells us to start the turn for a different unit, something is terribly wrong.
 }
 
 impl CombatData {

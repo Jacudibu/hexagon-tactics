@@ -1,5 +1,6 @@
 use crate::combat::combat_input::CombatInputPlugin;
 use crate::combat::combat_ui::CombatUiPlugin;
+use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_actions::UnitActionPlugin;
 use crate::combat::unit_placement::UnitPlacementPlugin;
 use crate::map::MapState;
@@ -63,7 +64,10 @@ pub fn on_map_loaded(
         turn_order: Default::default(),
         unit_storage: vec![],
         current_unit_turn: None,
-    })
+    });
+    commands.insert_resource(LocalCombatData {
+        unit_entities: Default::default(),
+    });
 }
 
 pub fn on_add_unit_to_player_storage(
