@@ -148,19 +148,28 @@ pub fn on_move_unit(
     mut next_combat_state: ResMut<NextState<CombatState>>,
 ) {
     for event in events.read() {
+        debug_assert!(
+            event.path.len() >= 2,
+            "Should contain at least start and end!"
+        );
+
+        let old_pos = &event.path[0];
+        let new_pos = &event.path[event.path.len() - 1];
         let unit_id = combat_data.current_unit_turn.expect(DESYNC_TODO_MESSAGE);
+
+        combat_data.unit_positions.remove(old_pos);
+        combat_data.unit_positions.insert(new_pos.clone(), unit_id);
+
         let unit = combat_data
             .units
             .get_mut(&unit_id)
             .expect(DESYNC_TODO_MESSAGE);
 
-        unit.position = event
-            .path
-            .last()
-            .expect("Path sent from server should never be empty!")
-            .clone();
+        unit.position = new_pos.clone();
 
         let entity = local_combat_data.unit_entities[&unit_id];
+
+        // TODO: Animate Movement
         if let Ok(mut transform) = unit_entities.get_mut(entity) {
             transform.translation = unit_placement::unit_position_on_hexagon(unit.position, &map)
         }
