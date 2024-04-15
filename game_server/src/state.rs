@@ -16,7 +16,7 @@ pub enum ServerState {
 
 pub struct ServerData {
     pub loaded_map: GameMap,
-    pub combat_state: CombatData,
+    pub combat_data: CombatData,
 }
 
 #[derive(Default)]

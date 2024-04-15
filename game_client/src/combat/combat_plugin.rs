@@ -13,7 +13,7 @@ use bevy::prelude::{
 use game_common::combat_data::CombatData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
-    AddUnitToPlayer, PlayerTurnToPlaceUnit, StartUnitTurn,
+    AddUnitToPlayerStorage, PlayerTurnToPlaceUnit, StartUnitTurn,
 };
 use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
 
@@ -33,7 +33,7 @@ impl Plugin for CombatPlugin {
         app.add_systems(
             Update,
             (
-                on_add_unit_to_player.run_if(on_event::<AddUnitToPlayer>()),
+                on_add_unit_to_player_storage.run_if(on_event::<AddUnitToPlayerStorage>()),
                 on_player_turn_to_place_unit.run_if(on_event::<PlayerTurnToPlaceUnit>()),
                 on_start_unit_turn.run_if(on_event::<StartUnitTurn>()),
             )
@@ -61,18 +61,17 @@ pub fn on_map_loaded(
         units: Default::default(),
         unit_positions: Default::default(),
         turn_order: Default::default(),
-        units_that_can_still_be_placed: vec![],
+        unit_storage: vec![],
         current_unit_turn: None,
     })
 }
 
-pub fn on_add_unit_to_player(
-    mut add_unit_to_player_event: EventReader<AddUnitToPlayer>,
+pub fn on_add_unit_to_player_storage(
+    mut add_unit_to_player_event: EventReader<AddUnitToPlayerStorage>,
     mut combat_data: ResMut<CombatData>,
 ) {
     for x in add_unit_to_player_event.read() {
-        combat_data.units_that_can_still_be_placed.push(x.unit.id);
-        combat_data.units.insert(x.unit.id, x.unit.clone());
+        combat_data.unit_storage.push(x.unit.clone());
         info!("Received unit: {:?}", x)
     }
 }

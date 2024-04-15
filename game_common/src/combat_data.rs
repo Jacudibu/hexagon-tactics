@@ -9,8 +9,8 @@ use hexx::Hex;
 pub struct CombatData {
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,
-    pub turn_order: HashMap<u32, UnitId>,
-    pub units_that_can_still_be_placed: Vec<UnitId>,
+    pub turn_order: HashMap<u32, UnitId>, // TODO: Turn this into a Vec<(Speed/u32, UnitId)>
+    pub unit_storage: Vec<Unit>,
     pub current_unit_turn: Option<UnitId>, // TODO: That's just the first inside turn_order
 }
 
@@ -100,7 +100,7 @@ pub mod test_helpers {
                 units: HashMap::new(),
                 unit_positions: HashMap::new(),
                 turn_order: HashMap::new(),
-                units_that_can_still_be_placed: Vec::new(),
+                unit_storage: Vec::new(),
                 current_unit_turn: None,
             }
         }

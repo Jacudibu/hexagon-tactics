@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub enum ServerToClientMessage {
     LoadMap(StartGameAndLoadMap),
     PlayerIsReady(PlayerIsReady),
-    AddUnitToPlayer(AddUnitToPlayer),
+    AddUnitToPlayer(AddUnitToPlayerStorage),
     PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit),
     PlaceUnit(PlaceUnit),
     StartUnitTurn(StartUnitTurn),
@@ -34,7 +34,7 @@ pub struct ErrorWhenProcessingMessage {
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
-pub struct AddUnitToPlayer {
+pub struct AddUnitToPlayerStorage {
     pub unit: Unit,
 }
 

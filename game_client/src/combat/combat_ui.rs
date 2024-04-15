@@ -8,7 +8,7 @@ use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::combat_data::CombatData;
 use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
-use game_common::unit::UnitId;
+use game_common::unit::{Unit, UnitId};
 
 pub(in crate::combat) struct CombatUiPlugin;
 impl Plugin for CombatUiPlugin {
@@ -20,7 +20,7 @@ impl Plugin for CombatUiPlugin {
         app.init_state::<MouseCursorOverUiState>().add_systems(
             Update,
             (
-                draw_placed_unit_info
+                draw_currently_placed_unit_info
                     .run_if(in_state(CombatState::PlaceUnit))
                     .run_if(resource_exists::<CurrentlyPlacedUnit>),
                 (draw_selected_unit_info, draw_state_ui)
@@ -31,17 +31,23 @@ impl Plugin for CombatUiPlugin {
     }
 }
 
-fn draw_placed_unit_info(
+fn draw_currently_placed_unit_info(
     egui: EguiContexts,
-    unit: Option<Res<CurrentlyPlacedUnit>>,
+    currently_placed_unit: Res<CurrentlyPlacedUnit>,
     combat_data: Res<CombatData>,
 ) {
-    let Some(unit) = unit else {
-        error!("draw_unit_info_ui was called when currently_selected_unit was None!");
+    let Some(unit) = combat_data
+        .unit_storage
+        .get(currently_placed_unit.array_index)
+    else {
+        error!(
+            "currently_placed_unit array_index was out of range: {}",
+            currently_placed_unit.array_index
+        );
         return;
     };
 
-    draw_unit_info(egui, &unit.unit_id, &combat_data, Align2::LEFT_CENTER);
+    draw_unit_info(egui, unit, Align2::LEFT_CENTER);
 }
 
 fn draw_selected_unit_info(
@@ -57,18 +63,18 @@ fn draw_selected_unit_info(
         return;
     };
 
-    draw_unit_info(egui, unit_id, &combat_data, Align2::LEFT_BOTTOM);
-}
-
-fn draw_unit_info(mut egui: EguiContexts, unit: &UnitId, combat_data: &CombatData, anchor: Align2) {
-    let Some(unit) = combat_data.units.get(unit) else {
+    let Some(unit) = combat_data.units.get(unit_id) else {
         error!(
             "Unable to find currently selected unit in unit list! Id: {}",
-            unit
+            unit_id
         );
         return;
     };
 
+    draw_unit_info(egui, unit, Align2::LEFT_BOTTOM);
+}
+
+fn draw_unit_info(mut egui: EguiContexts, unit: &Unit, anchor: Align2) {
     let mut lines = Vec::new();
     lines.push(format!("HP: {}", unit.hp));
     lines.push(format!(

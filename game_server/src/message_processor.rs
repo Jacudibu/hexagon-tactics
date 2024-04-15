@@ -45,11 +45,11 @@ fn start_game(
         units: Default::default(),
         unit_positions: Default::default(),
         turn_order: Default::default(),
-        units_that_can_still_be_placed: Default::default(),
+        unit_storage: Default::default(),
         current_unit_turn: None,
     };
     let server_data = ServerData {
-        combat_state,
+        combat_data: combat_state,
         loaded_map: map,
     };
 
@@ -73,34 +73,12 @@ fn finish_loading(
 
     match shared_state.server_state {
         ServerState::WaitingForConnection => {
-            error!("Wrong server state to receive FinishLoading events!")
+            error!("Wrong server state to receive FinishLoading events!");
         }
         InGame(ref mut server_data) => {
-            server_data
-                .combat_state
-                .units_that_can_still_be_placed
-                .push(unit_a.id);
-            server_data
-                .combat_state
-                .units_that_can_still_be_placed
-                .push(unit_b.id);
-            server_data
-                .combat_state
-                .units_that_can_still_be_placed
-                .push(unit_c.id);
-
-            server_data
-                .combat_state
-                .units
-                .insert(unit_a.id, unit_a.clone());
-            server_data
-                .combat_state
-                .units
-                .insert(unit_b.id, unit_b.clone());
-            server_data
-                .combat_state
-                .units
-                .insert(unit_c.id, unit_c.clone());
+            server_data.combat_data.unit_storage.push(unit_a.clone());
+            server_data.combat_data.unit_storage.push(unit_b.clone());
+            server_data.combat_data.unit_storage.push(unit_c.clone());
         }
     }
 
@@ -111,13 +89,13 @@ fn finish_loading(
             PlayerIsReady { player_id },
         )),
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::AddUnitToPlayer(
-            AddUnitToPlayer { unit: unit_a },
+            AddUnitToPlayerStorage { unit: unit_a },
         )),
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::AddUnitToPlayer(
-            AddUnitToPlayer { unit: unit_b },
+            AddUnitToPlayerStorage { unit: unit_b },
         )),
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::AddUnitToPlayer(
-            AddUnitToPlayer { unit: unit_c },
+            AddUnitToPlayerStorage { unit: unit_c },
         )),
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerTurnToPlaceUnit(
             PlayerTurnToPlaceUnit {
@@ -142,7 +120,7 @@ fn place_unit(
     };
 
     if !server_data
-        .combat_state
+        .combat_data
         .can_unit_be_placed_on_tile(&data.hex, &server_data.loaded_map)
     {
         return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
@@ -152,30 +130,34 @@ fn place_unit(
         ));
     }
 
-    server_data
-        .combat_state
-        .units_that_can_still_be_placed
-        .retain(|x| x != &data.unit_id);
+    let Some(index) = server_data
+        .combat_data
+        .unit_storage
+        .iter()
+        .position(|x| x.id == data.unit_id)
+    else {
+        error!(
+            "Was unable to find unit with id {} in unit storage!",
+            data.unit_id
+        );
+        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
+            ErrorWhenProcessingMessage {
+                message: "Invalid Unit ID!".into(),
+            },
+        ));
+    };
 
-    // TODO: Extract Updating unit positions into a single function call
+    let mut unit = server_data.combat_data.unit_storage.remove(index);
+    unit.position = Some(data.hex.clone());
     server_data
-        .combat_state
-        .units
-        .get_mut(&data.unit_id)
-        .expect("TODO")
-        .position = Some(data.hex.clone());
-    server_data
-        .combat_state
+        .combat_data
         .unit_positions
         .insert(data.hex, data.unit_id);
+    server_data.combat_data.units.insert(unit.id, unit);
 
     // TODO: Check if all units have been placed, and if so, proceed to very first unit turn
-    let next = if server_data
-        .combat_state
-        .units_that_can_still_be_placed
-        .is_empty()
-    {
-        server_data.combat_state.current_unit_turn = Some(data.unit_id);
+    let next = if server_data.combat_data.unit_storage.is_empty() {
+        server_data.combat_data.current_unit_turn = Some(data.unit_id);
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
             StartUnitTurn { unit_id: 1 },
         ))
@@ -216,18 +198,18 @@ fn move_unit(
     // TODO: Test
 
     let unit = server_data
-        .combat_state
+        .combat_data
         .units
-        .get_mut(&server_data.combat_state.current_unit_turn.expect("TODO"))
+        .get_mut(&server_data.combat_data.current_unit_turn.expect("TODO"))
         .expect("TODO");
 
     server_data
-        .combat_state
+        .combat_data
         .unit_positions
         .remove(&unit.position.expect("TODO"));
     unit.position = Some(data.path.last().expect("TODO").clone());
     server_data
-        .combat_state
+        .combat_data
         .unit_positions
         .insert(unit.position.expect("TODO"), unit.id);
 

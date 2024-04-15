@@ -30,16 +30,11 @@ impl Plugin for UnitPlacementPlugin {
 
 #[derive(Resource, Debug)]
 pub struct CurrentlyPlacedUnit {
-    pub unit_id: UnitId, // Consider just storing the array_index
-    array_index: usize,
+    pub array_index: usize,
 }
 
-fn setup_state(mut commands: Commands, combat_data: Res<CombatData>) {
-    let unit_id = combat_data.units_that_can_still_be_placed.first().unwrap();
-    commands.insert_resource(CurrentlyPlacedUnit {
-        unit_id: unit_id.clone(),
-        array_index: 0,
-    });
+fn setup_state(mut commands: Commands) {
+    commands.insert_resource(CurrentlyPlacedUnit { array_index: 0 });
 }
 
 fn leave_state(mut commands: Commands) {
@@ -53,29 +48,25 @@ fn input_listener(
     cursor: Option<Res<MouseCursorOnTile>>,
     mut client_to_server_events: EventWriter<ClientToServerMessage>,
 ) {
-    let units = &combat_data.units_that_can_still_be_placed;
+    let units = &combat_data.unit_storage;
     if action_state.just_pressed(&CombatAction::NextUnit) {
         if currently_placed_unit.array_index + 1 >= units.len() {
             currently_placed_unit.array_index = 0;
         } else {
             currently_placed_unit.array_index += 1;
         }
-
-        currently_placed_unit.unit_id = units[currently_placed_unit.array_index].clone();
     } else if action_state.just_pressed(&CombatAction::PreviousUnit) {
         if currently_placed_unit.array_index == 0 {
             currently_placed_unit.array_index = units.len() - 1;
         } else {
             currently_placed_unit.array_index -= 1;
         }
-
-        currently_placed_unit.unit_id = units[currently_placed_unit.array_index].clone();
     } else if action_state.just_pressed(&CombatAction::SelectTile) {
         if let Some(cursor) = cursor {
-            // TODO: Validation
+            // TODO: Validation so we can't spam the server
             client_to_server_events.send(ClientToServerMessage::PlaceUnit(
                 client_to_server::PlaceUnit {
-                    unit_id: currently_placed_unit.unit_id,
+                    unit_id: units[currently_placed_unit.array_index].id,
                     hex: cursor.hex,
                 },
             ));
@@ -93,13 +84,19 @@ fn on_server_placed_unit(
     mut next_state: ResMut<NextState<CombatState>>,
 ) {
     for event in events.read() {
-        combat_data
-            .units_that_can_still_be_placed
-            .retain(|x| x != &event.unit_id);
-        combat_data.unit_positions.insert(event.hex, event.unit_id);
+        let Some(index) = combat_data
+            .unit_storage
+            .iter()
+            .position(|x| x.id == event.unit_id)
+        else {
+            error!(
+                "Was unable to find unit with id {} in unit storage!",
+                event.unit_id
+            );
+            continue;
+        };
 
-        // TODO: Units really should *NOT* exist in combat_data before they get placed.
-        let unit = combat_data.units.get_mut(&event.unit_id).expect("TODO");
+        let mut unit = combat_data.unit_storage.remove(index);
         unit.position = Some(event.hex);
 
         let entity = spawn_unit_entity(
@@ -110,6 +107,11 @@ fn on_server_placed_unit(
             &unit,
             event.hex,
         );
+
+        // TODO: Persist unit entity somewhere
+
+        combat_data.unit_positions.insert(event.hex, event.unit_id);
+        combat_data.units.insert(unit.id, unit);
 
         next_state.set(CombatState::WaitingForServer)
     }
