@@ -14,7 +14,7 @@ use bevy::prelude::{
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::{client_to_server, server_to_client};
+use game_common::network_events::{client_to_server, server_to_client, CONSTANT_LOCAL_PLAYER_ID};
 use game_common::DESYNC_TODO_MESSAGE;
 use leafwing_input_manager::action_state::ActionState;
 use std::ops::Deref;
@@ -97,6 +97,7 @@ pub fn show_movement_range_preview(
 }
 
 pub fn execute_action_on_click(
+    mut commands: Commands,
     combat_data: Res<CombatData>,
     map: Res<GameMap>,
     action_state: Res<ActionState<CombatAction>>,
@@ -133,6 +134,7 @@ pub fn execute_action_on_click(
                 client_to_server::MoveUnit { path },
             ));
             next_combat_state.set(CombatState::WaitingForServer);
+            commands.remove_resource::<ActiveUnitAction>(); // TODO: Maybe we should extract that into a state transition event
         }
     }
 }
@@ -143,6 +145,7 @@ pub fn on_move_unit(
     local_combat_data: Res<LocalCombatData>,
     map: Res<GameMap>,
     mut unit_entities: Query<&mut Transform, With<UnitMarker>>,
+    mut next_combat_state: ResMut<NextState<CombatState>>,
 ) {
     for event in events.read() {
         let unit_id = combat_data.current_unit_turn.expect(DESYNC_TODO_MESSAGE);
@@ -165,7 +168,13 @@ pub fn on_move_unit(
                 unit_placement::unit_position_on_hexagon(unit.position.unwrap(), &map)
         }
 
-        // TODO: reduce unit movement
+        unit.turn_resources.remaining_movement -= event.path.len() as u8 - 1;
+
+        if unit.owner == CONSTANT_LOCAL_PLAYER_ID {
+            next_combat_state.set(CombatState::ThisPlayerUnitTurn);
+        } else {
+            next_combat_state.set(CombatState::WaitingForOtherPlayer);
+        }
     }
 }
 

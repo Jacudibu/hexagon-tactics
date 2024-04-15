@@ -50,7 +50,7 @@ pub enum CombatState {
     WaitingForOtherPlayer,
     PlaceUnit,
     ThisPlayerUnitTurn,
-    OtherPlayerUnitTurn,
+    OtherPlayerUnitTurn, // TODO: Specify when this should be used rather than WaitingForOtherPlayer
 }
 
 pub fn on_map_loaded(
