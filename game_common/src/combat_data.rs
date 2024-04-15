@@ -49,12 +49,7 @@ impl CombatData {
                         }
                     }
 
-                    let difference = if tile_data.height > last_height {
-                        tile_data.height - last_height
-                    } else {
-                        last_height - tile_data.height
-                    };
-
+                    let difference = tile_data.height.abs_diff(last_height);
                     if difference > unit.stats_after_buffs.jump {
                         return Err(ValidationError::new("Unit can't jump high enough!"));
                     }
