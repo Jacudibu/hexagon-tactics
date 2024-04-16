@@ -9,10 +9,12 @@ pub enum CombatTurn {
 }
 
 impl CombatTurn {
+    #[must_use]
     pub fn place_unit(player_id: PlayerId) -> CombatTurn {
         CombatTurn::PlaceUnit(PlaceUnit { player_id })
     }
 
+    #[must_use]
     pub fn start_unit_turn(unit: &Unit) -> CombatTurn {
         CombatTurn::UnitTurn(UnitTurn::start(unit))
     }
@@ -50,6 +52,7 @@ pub struct UnitTurn {
 }
 
 impl UnitTurn {
+    #[must_use]
     fn start(unit: &Unit) -> UnitTurn {
         UnitTurn {
             unit_id: unit.id,

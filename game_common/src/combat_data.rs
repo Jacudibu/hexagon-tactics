@@ -20,6 +20,7 @@ impl CombatData {
         self.current_turn = CombatTurn::start_unit_turn(unit);
     }
 
+    #[must_use]
     pub fn can_unit_be_placed_on_tile(&self, hex: &Hex, map: &GameMap) -> bool {
         if self.unit_positions.contains_key(hex) {
             return false;
@@ -42,6 +43,7 @@ impl CombatData {
     /// The bigger this value is, the more valuable a high speed stat would be
     const COUNTER_NEEDED_FOR_TURN: u32 = 100;
 
+    #[must_use]
     pub fn get_next_unit(&mut self) -> UnitId {
         let mut ready_units = Vec::new();
         let mut highest_counter = Self::COUNTER_NEEDED_FOR_TURN;
@@ -92,6 +94,7 @@ struct TurnOrderElement {
 }
 
 impl TurnOrderElement {
+    #[must_use]
     fn from(unit: &Unit) -> TurnOrderElement {
         TurnOrderElement {
             tiebreaker: unit.turn_tiebreaker,

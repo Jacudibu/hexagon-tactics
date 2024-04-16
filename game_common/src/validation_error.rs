@@ -4,6 +4,7 @@ pub struct ValidationError {
 }
 
 impl ValidationError {
+    #[must_use]
     pub fn new(message: &str) -> Self {
         ValidationError {
             message: message.into(),
