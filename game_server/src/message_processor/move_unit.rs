@@ -18,7 +18,7 @@ pub fn move_unit(
     let unit = match_data
         .combat_data
         .units
-        .get_mut(&match_data.combat_data.current_unit_turn.expect("TODO"))
+        .get_mut(&match_data.combat_data.current_turn.as_unit_turn().unit_id)
         .expect("TODO");
 
     match_data.combat_data.unit_positions.remove(&unit.position);

@@ -99,7 +99,7 @@ pub fn show_movement_range_preview(
 ) {
     let unit = combat_data
         .units
-        .get(&combat_data.current_unit_turn.expect("TODO"))
+        .get(&combat_data.current_turn.as_unit_turn().unit_id)
         .expect("TODO");
 
     let range = map.field_of_movement(unit, combat_data);
@@ -136,8 +136,9 @@ pub fn execute_action_on_click(
         ActiveUnitAction::Move => {
             let Some(path) = map.calculate_path(&combat_data, selected_tile.clone()) else {
                 error!(
-                    "Unable to calculate unit path for unit_id {:?} to {:?}",
-                    combat_data.current_unit_turn, selected_tile
+                    "Unable to calculate unit path for {:?} to {:?}",
+                    combat_data.current_turn.as_unit_turn(),
+                    selected_tile
                 );
                 return;
             };
@@ -166,11 +167,14 @@ pub fn on_move_unit(
 
         let old_pos = &event.path[0];
         let new_pos = &event.path[event.path.len() - 1];
-        let unit_id = combat_data.current_unit_turn.expect(DESYNC_TODO_MESSAGE);
+        let unit_id = combat_data.current_turn.as_unit_turn().unit_id;
 
         combat_data.unit_positions.remove(old_pos);
         combat_data.unit_positions.insert(new_pos.clone(), unit_id);
-        combat_data.turn_resources.remaining_movement -= event.path.len() as u8 - 1;
+        combat_data
+            .current_turn
+            .as_unit_turn_mut()
+            .remaining_movement -= event.path.len() as u8 - 1;
 
         let unit = combat_data
             .units

@@ -1,5 +1,5 @@
+use crate::combat_turn::CombatTurn;
 use crate::game_map::GameMap;
-use crate::turn_resources::TurnResources;
 use crate::unit::{Unit, UnitId};
 use bevy::prelude::{error, Resource};
 use bevy::utils::HashMap;
@@ -11,16 +11,13 @@ pub struct CombatData {
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,
     pub unit_storage: Vec<Unit>,
-    pub current_unit_turn: Option<UnitId>,
-    pub turn_resources: TurnResources,
+    pub current_turn: CombatTurn,
 }
 
 impl CombatData {
     pub fn start_unit_turn(&mut self, unit_id: UnitId) {
-        self.current_unit_turn = Some(unit_id);
-
         let unit = &self.units[&unit_id];
-        self.turn_resources.remaining_movement = unit.stats_after_buffs.movement;
+        self.current_turn = CombatTurn::start_unit_turn(unit);
     }
 
     pub fn can_unit_be_placed_on_tile(&self, hex: &Hex, map: &GameMap) -> bool {
@@ -106,7 +103,7 @@ impl TurnOrderElement {
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
     use crate::combat_data::CombatData;
-    use crate::turn_resources::TurnResources;
+    use crate::combat_turn::CombatTurn;
     use crate::unit::{Unit, UnitId};
     use bevy::utils::HashMap;
 
@@ -118,10 +115,7 @@ pub mod test_helpers {
                 units: HashMap::new(),
                 unit_positions: HashMap::new(),
                 unit_storage: Vec::new(),
-                current_unit_turn: None,
-                turn_resources: TurnResources {
-                    remaining_movement: 0,
-                },
+                current_turn: CombatTurn::Undefined,
             }
         }
 
@@ -135,7 +129,7 @@ pub mod test_helpers {
         }
 
         pub fn with_unit_turn(mut self, unit_id: UnitId) -> Self {
-            self.current_unit_turn = Some(unit_id);
+            self.current_turn = CombatTurn::start_unit_turn(&self.units[&unit_id]);
             self
         }
     }
@@ -144,6 +138,7 @@ pub mod test_helpers {
 #[cfg(test)]
 mod tests {
     use crate::combat_data::CombatData;
+    use crate::combat_turn::{CombatTurn, UnitTurn};
     use crate::unit::Unit;
     use crate::unit_stats::UnitStats;
 
@@ -156,15 +151,30 @@ mod tests {
         ]);
 
         combat_state.start_unit_turn(1);
-        assert_eq!(Some(1), combat_state.current_unit_turn);
-        assert_eq!(5, combat_state.turn_resources.remaining_movement);
+        assert_eq!(
+            CombatTurn::UnitTurn(UnitTurn {
+                unit_id: 1,
+                remaining_movement: 5
+            }),
+            combat_state.current_turn
+        );
 
         combat_state.start_unit_turn(2);
-        assert_eq!(Some(2), combat_state.current_unit_turn);
-        assert_eq!(10, combat_state.turn_resources.remaining_movement);
+        assert_eq!(
+            CombatTurn::UnitTurn(UnitTurn {
+                unit_id: 2,
+                remaining_movement: 10
+            }),
+            combat_state.current_turn
+        );
 
         combat_state.start_unit_turn(3);
-        assert_eq!(Some(3), combat_state.current_unit_turn);
-        assert_eq!(15, combat_state.turn_resources.remaining_movement);
+        assert_eq!(
+            CombatTurn::UnitTurn(UnitTurn {
+                unit_id: 3,
+                remaining_movement: 15
+            }),
+            combat_state.current_turn
+        );
     }
 }

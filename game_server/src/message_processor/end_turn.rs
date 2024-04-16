@@ -1,8 +1,6 @@
-use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
-use crate::state::ServerState::InGame;
-use crate::state::{MatchData, SharedState};
+use crate::message_processor::ServerToClientMessageVariant;
+use crate::state::MatchData;
 use game_common::network_events::server_to_client::{ServerToClientMessage, StartUnitTurn};
-use tracing::error;
 
 pub fn end_turn(
     match_data: &mut MatchData,

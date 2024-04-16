@@ -2,6 +2,7 @@ use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::ServerState::InGame;
 use crate::state::{MatchData, SharedState};
 use game_common::combat_data::CombatData;
+use game_common::combat_turn::CombatTurn;
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, ServerToClientMessage, StartGameAndLoadMap,
@@ -25,8 +26,7 @@ pub fn start_game(
         units: Default::default(),
         unit_positions: Default::default(),
         unit_storage: Default::default(),
-        current_unit_turn: None,
-        turn_resources: Default::default(),
+        current_turn: CombatTurn::Undefined,
     };
     let server_data = MatchData {
         combat_data: combat_state,

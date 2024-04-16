@@ -153,11 +153,7 @@ fn build_this_player_unit_turn_ui(
 ) {
     let unit = combat_data
         .units
-        .get(
-            &combat_data
-                .current_unit_turn
-                .expect("current_unit_turn should be set!"),
-        )
+        .get(&combat_data.current_turn.as_unit_turn().unit_id)
         .expect("Unit should exist!");
 
     ui.label(format!("Your turn: {}", unit.name));
@@ -178,11 +174,7 @@ fn build_this_player_unit_turn_ui(
 fn build_other_player_unit_turn_ui(ui: &mut Ui, combat_data: &CombatData) {
     let unit = combat_data
         .units
-        .get(
-            &combat_data
-                .current_unit_turn
-                .expect("current_unit_turn should be set!"),
-        )
+        .get(&combat_data.current_turn.as_unit_turn().unit_id)
         .expect("Unit should exist!");
 
     ui.label(format!(

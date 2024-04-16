@@ -1,6 +1,5 @@
 use crate::message_processor::ServerToClientMessageVariant;
-use crate::state::ServerState::InGame;
-use crate::state::{MatchData, SharedState};
+use crate::state::MatchData;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
 };

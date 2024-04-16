@@ -4,7 +4,7 @@ use crate::game_map::tile_data::TileData;
 use crate::game_map::tile_surface::TileSurface;
 use crate::game_map::versioned_map_data::VersionedMapData;
 use crate::unit::Unit;
-use bevy::prelude::{error, Resource};
+use bevy::prelude::Resource;
 use bevy::utils::hashbrown::HashMap;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
@@ -42,9 +42,10 @@ impl GameMap {
     }
 
     pub fn field_of_movement(&self, unit: &Unit, combat_data: &CombatData) -> Vec<Hex> {
+        let unit_turn = combat_data.current_turn.as_unit_turn();
         let mut result = field_of_movement_with_edge_detection(
             unit.position,
-            combat_data.turn_resources.remaining_movement.into(),
+            unit_turn.remaining_movement.into(),
             |from, to| self.calculate_path_costs(unit, &combat_data, &from, &to),
         );
 
@@ -54,11 +55,8 @@ impl GameMap {
     }
 
     pub fn calculate_path(&self, combat_data: &CombatData, coordinate: Hex) -> Option<Vec<Hex>> {
-        let Some(unit_id) = &combat_data.current_unit_turn else {
-            error!("current_unit_turn was none!");
-            return None;
-        };
-        let unit = combat_data.units.get(unit_id).unwrap();
+        let unit_turn = combat_data.current_turn.as_unit_turn();
+        let unit = combat_data.units.get(&unit_turn.unit_id).unwrap();
         hexx::algorithms::a_star(unit.position, coordinate, |from, to| {
             self.calculate_path_costs(unit, &combat_data, &from, &to)
         })

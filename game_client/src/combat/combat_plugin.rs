@@ -13,6 +13,7 @@ use bevy::prelude::{
     OnEnter, Reflect, ResMut, States,
 };
 use game_common::combat_data::CombatData;
+use game_common::combat_turn::CombatTurn;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     AddUnitToPlayerStorage, PlayerTurnToPlaceUnit, StartUnitTurn,
@@ -64,8 +65,7 @@ pub fn on_map_loaded(
         units: Default::default(),
         unit_positions: Default::default(),
         unit_storage: vec![],
-        current_unit_turn: None,
-        turn_resources: Default::default(),
+        current_turn: CombatTurn::Undefined,
     });
     commands.insert_resource(LocalCombatData {
         unit_entities: Default::default(),
