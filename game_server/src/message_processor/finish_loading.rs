@@ -1,6 +1,5 @@
 use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::MatchData;
-use game_common::combat_turn;
 use game_common::combat_turn::CombatTurn;
 use game_common::network_events::server_to_client::{
     AddUnitToPlayerStorage, PlayerIsReady, PlayerTurnToPlaceUnit, ServerToClientMessage,

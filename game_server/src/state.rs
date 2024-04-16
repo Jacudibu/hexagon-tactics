@@ -1,8 +1,10 @@
+use crate::connection_handler::ClientId;
 use bytes::Bytes;
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::NetworkMessage;
+use game_common::player::PlayerId;
 use std::collections::HashMap;
 use tokio::sync::mpsc;
 use tracing::error;
@@ -84,8 +86,16 @@ impl SharedState {
     }
 }
 
-pub type ClientId = u32;
-pub struct ConnectedClient {
-    pub receiver: mpsc::UnboundedReceiver<Bytes>,
-    pub id: ClientId,
+/// One Client can seat multiple players. While Connections might get replaced due to disconnects,
+/// ConnectedPlayer will persist throughout the game, and their assigned client_id might change.
+pub struct NetworkPlayer {
+    client_id: ClientId,
+    player_id: PlayerId,
+    sender: mpsc::UnboundedSender<Bytes>,
+    connection_state: ConnectionState,
+}
+
+enum ConnectionState {
+    Connected,
+    Disconnected,
 }
