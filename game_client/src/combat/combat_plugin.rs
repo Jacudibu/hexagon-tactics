@@ -85,12 +85,15 @@ pub fn on_add_unit_to_player_storage(
 pub fn on_player_turn_to_place_unit(
     mut event: EventReader<PlayerTurnToPlaceUnit>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
+    mut combat_data: ResMut<CombatData>,
 ) {
     for event in event.read() {
         if event.player == CONSTANT_LOCAL_PLAYER_ID {
             next_combat_state.set(CombatState::PlaceUnit);
+            combat_data.current_turn = CombatTurn::place_unit(event.player);
         } else {
-            next_combat_state.set(CombatState::WaitingForOtherPlayer)
+            next_combat_state.set(CombatState::WaitingForOtherPlayer);
+            combat_data.current_turn = CombatTurn::place_unit(event.player);
         }
     }
 }

@@ -9,6 +9,10 @@ pub enum CombatTurn {
 }
 
 impl CombatTurn {
+    pub fn place_unit(player_id: PlayerId) -> CombatTurn {
+        CombatTurn::PlaceUnit(PlaceUnit { player_id })
+    }
+
     pub fn start_unit_turn(unit: &Unit) -> CombatTurn {
         CombatTurn::UnitTurn(UnitTurn::start(unit))
     }

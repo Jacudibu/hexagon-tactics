@@ -1,5 +1,7 @@
 use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::MatchData;
+use game_common::combat_turn;
+use game_common::combat_turn::CombatTurn;
 use game_common::network_events::server_to_client::{
     AddUnitToPlayerStorage, PlayerIsReady, PlayerTurnToPlaceUnit, ServerToClientMessage,
 };
@@ -21,6 +23,8 @@ pub fn finish_loading(
 
     // TODO: Check if all players are ready
     // TODO: Determine who starts
+    match_data.combat_data.current_turn = CombatTurn::place_unit(player_id);
+
     Ok(vec![
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerIsReady(
             PlayerIsReady { player_id },
