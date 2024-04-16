@@ -1,6 +1,6 @@
 use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::ServerState::InGame;
-use crate::state::SharedState;
+use crate::state::{MatchData, SharedState};
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
 };
@@ -8,22 +8,12 @@ use game_common::network_events::{client_to_server, server_to_client, CONSTANT_L
 use tracing::error;
 
 pub fn place_unit(
-    shared_state: &mut SharedState,
+    match_data: &mut MatchData,
     data: client_to_server::PlaceUnit,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
-    // TODO: Consider moving state validation out. We don't need the whole shared state in these command processors.
-    let InGame(server_data) = &mut shared_state.server_state else {
-        error!("Something just went horribly wrong");
-        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
-            ErrorWhenProcessingMessage {
-                message: "Something just went horribly wrong, yay!".into(),
-            },
-        ));
-    };
-
-    if !server_data
+    if !match_data
         .combat_data
-        .can_unit_be_placed_on_tile(&data.hex, &server_data.loaded_map)
+        .can_unit_be_placed_on_tile(&data.hex, &match_data.loaded_map)
     {
         return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
             ErrorWhenProcessingMessage {
@@ -32,7 +22,7 @@ pub fn place_unit(
         ));
     }
 
-    let Some(index) = server_data
+    let Some(index) = match_data
         .combat_data
         .unit_storage
         .iter()
@@ -49,18 +39,18 @@ pub fn place_unit(
         ));
     };
 
-    let mut unit = server_data.combat_data.unit_storage.remove(index);
+    let mut unit = match_data.combat_data.unit_storage.remove(index);
     unit.position = data.hex;
-    server_data
+    match_data
         .combat_data
         .unit_positions
         .insert(data.hex, data.unit_id);
-    server_data.combat_data.units.insert(unit.id, unit);
+    match_data.combat_data.units.insert(unit.id, unit);
 
     // TODO: Check if all units have been placed, and if so, proceed to very first unit turn
-    let next = if server_data.combat_data.unit_storage.is_empty() {
-        let unit_id = server_data.combat_data.get_next_unit();
-        server_data.combat_data.start_unit_turn(unit_id);
+    let next = if match_data.combat_data.unit_storage.is_empty() {
+        let unit_id = match_data.combat_data.get_next_unit();
+        match_data.combat_data.start_unit_turn(unit_id);
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
             StartUnitTurn { unit_id },
         ))

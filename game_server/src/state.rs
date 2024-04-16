@@ -11,10 +11,10 @@ use tracing::error;
 pub enum ServerState {
     #[default]
     WaitingForConnection,
-    InGame(ServerData),
+    InGame(MatchData),
 }
 
-pub struct ServerData {
+pub struct MatchData {
     pub loaded_map: GameMap,
     pub combat_data: CombatData,
 }

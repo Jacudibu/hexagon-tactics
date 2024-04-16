@@ -1,15 +1,13 @@
 use crate::message_processor::ServerToClientMessageVariant;
-use crate::state::ServerState::InGame;
-use crate::state::{ServerState, SharedState};
+use crate::state::MatchData;
 use game_common::network_events::server_to_client::{
     AddUnitToPlayerStorage, PlayerIsReady, PlayerTurnToPlaceUnit, ServerToClientMessage,
 };
 use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
 use game_common::unit::Unit;
-use tracing::error;
 
 pub fn finish_loading(
-    shared_state: &mut SharedState,
+    match_data: &mut MatchData,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     let player_id = CONSTANT_LOCAL_PLAYER_ID;
 
@@ -17,16 +15,9 @@ pub fn finish_loading(
     let unit_b = Unit::create_debug_unit(2, player_id, "Unit B".into());
     let unit_c = Unit::create_debug_unit(3, player_id, "Unit C".into());
 
-    match shared_state.server_state {
-        ServerState::WaitingForConnection => {
-            error!("Wrong server state to receive FinishLoading events!");
-        }
-        InGame(ref mut server_data) => {
-            server_data.combat_data.unit_storage.push(unit_a.clone());
-            server_data.combat_data.unit_storage.push(unit_b.clone());
-            server_data.combat_data.unit_storage.push(unit_c.clone());
-        }
-    }
+    match_data.combat_data.unit_storage.push(unit_a.clone());
+    match_data.combat_data.unit_storage.push(unit_b.clone());
+    match_data.combat_data.unit_storage.push(unit_c.clone());
 
     // TODO: Check if all players are ready
     // TODO: Determine who starts

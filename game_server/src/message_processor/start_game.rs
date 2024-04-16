@@ -1,6 +1,6 @@
 use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::ServerState::InGame;
-use crate::state::{ServerData, SharedState};
+use crate::state::{MatchData, SharedState};
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
@@ -29,7 +29,7 @@ pub fn start_game(
         current_unit_turn: None,
         turn_resources: Default::default(),
     };
-    let server_data = ServerData {
+    let server_data = MatchData {
         combat_data: combat_state,
         loaded_map: map,
     };
