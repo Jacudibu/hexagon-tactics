@@ -1,4 +1,5 @@
 use crate::combat::combat_plugin::CombatState;
+use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::unit_actions;
 use crate::combat::unit_actions::ActiveUnitAction;
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
@@ -105,6 +106,7 @@ fn draw_state_ui(
     combat_state: Res<State<CombatState>>,
     combat_data: Res<CombatData>,
     active_unit_action: Option<Res<ActiveUnitAction>>,
+    end_turn_event: EventWriter<EndTurnCommand>,
 ) {
     egui::Window::new("State Display Window")
         .collapsible(false)
@@ -118,7 +120,13 @@ fn draw_state_ui(
             CombatState::WaitingForOtherPlayer => build_waiting_for_player_ui(ui),
             CombatState::PlaceUnit => build_place_unit_state_ui(ui),
             CombatState::ThisPlayerUnitTurn => {
-                build_this_player_unit_turn_ui(commands, ui, &combat_data, active_unit_action);
+                build_this_player_unit_turn_ui(
+                    commands,
+                    ui,
+                    &combat_data,
+                    active_unit_action,
+                    end_turn_event,
+                );
             }
             CombatState::OtherPlayerUnitTurn => build_other_player_unit_turn_ui(ui, &combat_data),
         });
@@ -141,6 +149,7 @@ fn build_this_player_unit_turn_ui(
     ui: &mut Ui,
     combat_data: &CombatData,
     active_unit_action: Option<Res<ActiveUnitAction>>,
+    mut end_turn_event: EventWriter<EndTurnCommand>,
 ) {
     let unit = combat_data
         .units
@@ -159,6 +168,9 @@ fn build_this_player_unit_turn_ui(
                 active_unit_action,
                 ActiveUnitAction::Move,
             );
+        }
+        if ui.button("End Turn").clicked() {
+            end_turn_event.send(EndTurnCommand {});
         }
     });
 }

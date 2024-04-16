@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub enum ClientToServerMessage {
     StartGame,
     FinishedLoading,
+    EndTurn,
 
     PlaceUnit(PlaceUnit),
     MoveUnit(MoveUnit),

@@ -1,5 +1,6 @@
 use crate::combat::combat_input::CombatInputPlugin;
 use crate::combat::combat_ui::CombatUiPlugin;
+use crate::combat::end_turn::EndTurnPlugin;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_actions::UnitActionPlugin;
 use crate::combat::unit_placement::UnitPlacementPlugin;
@@ -26,6 +27,7 @@ impl Plugin for CombatPlugin {
         app.add_plugins(CombatInputPlugin);
         app.add_plugins(UnitPlacementPlugin);
         app.add_plugins(UnitActionPlugin);
+        app.add_plugins(EndTurnPlugin);
         app.init_state::<CombatState>();
         app.add_systems(
             OnEnter(MapState::Loaded),
