@@ -10,9 +10,8 @@ use hexx::Hex;
 pub struct CombatData {
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,
-    pub turn_order: HashMap<u32, UnitId>, // TODO: Turn this into a Vec<(Speed/u32, UnitId)>, maybe calculate & store locally
     pub unit_storage: Vec<Unit>,
-    pub current_unit_turn: Option<UnitId>, // TODO: That's just the first inside turn_order, and if the server tells us to start the turn for a different unit, something is terribly wrong.
+    pub current_unit_turn: Option<UnitId>,
     pub turn_resources: TurnResources,
 }
 
@@ -118,7 +117,6 @@ pub mod test_helpers {
             CombatData {
                 units: HashMap::new(),
                 unit_positions: HashMap::new(),
-                turn_order: HashMap::new(),
                 unit_storage: Vec::new(),
                 current_unit_turn: None,
                 turn_resources: TurnResources {
@@ -130,7 +128,6 @@ pub mod test_helpers {
         pub fn with_units(mut self, units: Vec<Unit>) -> Self {
             for unit in units {
                 self.unit_positions.insert(unit.position, unit.id);
-                self.turn_order.insert(0, unit.id);
                 self.units.insert(unit.id, unit);
             }
 

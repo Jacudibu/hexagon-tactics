@@ -63,7 +63,6 @@ pub fn on_map_loaded(
     commands.insert_resource(CombatData {
         units: Default::default(),
         unit_positions: Default::default(),
-        turn_order: Default::default(),
         unit_storage: vec![],
         current_unit_turn: None,
         turn_resources: Default::default(),

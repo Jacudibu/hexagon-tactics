@@ -24,7 +24,6 @@ pub fn start_game(
     let combat_state = CombatData {
         units: Default::default(),
         unit_positions: Default::default(),
-        turn_order: Default::default(),
         unit_storage: Default::default(),
         current_unit_turn: None,
         turn_resources: Default::default(),
