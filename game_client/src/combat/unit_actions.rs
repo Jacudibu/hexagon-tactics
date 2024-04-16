@@ -198,6 +198,7 @@ pub fn on_move_unit(
 mod tests {
     use crate::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
     use crate::map::HighlightedTiles;
+    use crate::networking::NetworkPlugin;
     use bevy::app::App;
     use game_common::combat_data::CombatData;
     use game_common::game_map::GameMap;
@@ -208,6 +209,7 @@ mod tests {
     fn should_create_and_remove_highlights() {
         let mut app = App::new();
         app.add_plugins(UnitActionPlugin);
+        app.add_plugins(NetworkPlugin);
         app.insert_resource(GameMap::new(1));
 
         let unit_id = 1;

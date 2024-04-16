@@ -158,9 +158,10 @@ fn place_unit(
 
     // TODO: Check if all units have been placed, and if so, proceed to very first unit turn
     let next = if server_data.combat_data.unit_storage.is_empty() {
-        server_data.combat_data.start_unit_turn(data.unit_id);
+        let unit_id = server_data.combat_data.get_next_unit();
+        server_data.combat_data.start_unit_turn(unit_id);
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
-            StartUnitTurn { unit_id: 1 },
+            StartUnitTurn { unit_id },
         ))
     } else {
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerTurnToPlaceUnit(

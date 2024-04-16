@@ -42,6 +42,52 @@ impl CombatData {
 
         true
     }
+
+    /// The bigger this value is, the more valuable a high speed stat would be
+    const COUNTER_NEEDED_FOR_TURN: u32 = 100;
+
+    pub fn get_next_unit(&mut self) -> UnitId {
+        let mut ready_units = Vec::new();
+        let mut highest_counter = Self::COUNTER_NEEDED_FOR_TURN;
+        for x in self.units.values() {
+            if x.turn_counter >= highest_counter {
+                if x.turn_counter > highest_counter {
+                    ready_units.clear();
+                    highest_counter = x.turn_counter;
+                }
+                ready_units.push((x.id, x.turn_tiebreaker));
+            }
+        }
+
+        while ready_units.is_empty() {
+            for x in self.units.values_mut() {
+                x.turn_counter += x.stats_after_buffs.speed;
+                if x.turn_counter >= highest_counter {
+                    if x.turn_counter > highest_counter {
+                        ready_units.clear();
+                        highest_counter = x.turn_counter;
+                    }
+                    ready_units.push((x.id, x.turn_tiebreaker));
+                }
+            }
+        }
+
+        let unit = if ready_units.len() > 1 {
+            ready_units.sort_unstable_by_key(|(_, tiebreaker)| tiebreaker.clone());
+            self.units
+                .get_mut(&ready_units[1].0)
+                .unwrap()
+                .turn_tiebreaker = ready_units[0].1;
+            let unit = self.units.get_mut(&ready_units[0].0).unwrap();
+            unit.turn_tiebreaker = ready_units[1].1;
+            unit
+        } else {
+            self.units.get_mut(&ready_units[0].0).unwrap()
+        };
+
+        unit.turn_counter -= Self::COUNTER_NEEDED_FOR_TURN;
+        unit.id
+    }
 }
 
 #[cfg(feature = "test_helpers")]

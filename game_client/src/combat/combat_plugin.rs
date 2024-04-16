@@ -100,6 +100,13 @@ pub fn on_start_unit_turn(
     mut combat_data: ResMut<CombatData>,
 ) {
     for event in event.read() {
+        let locally_computed_next = combat_data.get_next_unit();
+        if locally_computed_next != event.unit_id {
+            error!("Turn order seems to be out of sync? Server said to start turn for unit {}, but locally, it would be {}'s turn.",
+                event.unit_id, locally_computed_next
+            );
+        }
+
         let Some(unit) = combat_data.units.get(&event.unit_id) else {
             error!("Was unable to find unit with ID {}.", event.unit_id);
             continue;

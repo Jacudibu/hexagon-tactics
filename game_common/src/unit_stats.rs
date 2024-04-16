@@ -5,6 +5,7 @@ pub struct UnitStats {
     pub movement: u8,
     pub jump: u8,
     pub strength: u32,
+    pub speed: u32,
     // ...and other stats later on
 }
 
@@ -20,6 +21,7 @@ pub mod test_helpers {
                 movement: 3,
                 jump: 4,
                 strength: 2,
+                speed: 50,
             }
         }
 

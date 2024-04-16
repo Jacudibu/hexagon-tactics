@@ -4,7 +4,7 @@ use hexx::Hex;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-pub type UnitId = u8;
+pub type UnitId = u32;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Unit {
@@ -17,6 +17,8 @@ pub struct Unit {
     pub exp: u32,
     pub base_stats: UnitStats,
     pub stats_after_buffs: UnitStats,
+    pub turn_counter: u32,
+    pub turn_tiebreaker: u32,
 }
 
 impl PartialEq<Self> for Unit {
@@ -35,7 +37,7 @@ impl Unit {
     pub fn create_debug_unit(id: UnitId, owner: PlayerId, name: String) -> Self {
         let movement = 4;
 
-        Unit {
+        let mut result = Unit {
             id,
             owner,
             name,
@@ -47,13 +49,23 @@ impl Unit {
                 movement,
                 jump: 3,
                 strength: 10,
+                speed: 50,
             },
             stats_after_buffs: UnitStats {
                 movement,
                 jump: 3,
                 strength: 10,
+                speed: 50,
             },
-        }
+            turn_counter: 0,
+            turn_tiebreaker: 0,
+        };
+        result.init_tiebreaker();
+        result
+    }
+
+    fn init_tiebreaker(&mut self) {
+        self.turn_tiebreaker = self.base_stats.speed * 1000 + self.id;
     }
 }
 
@@ -68,7 +80,7 @@ pub mod test_helpers {
         /// Create a mock Unit with sensible defaults.
         /// Use `.with_<attribute>` methods to set specific values for tests.
         pub fn create_mock(id: UnitId, owner: PlayerId) -> Self {
-            Unit {
+            let mut result = Unit {
                 id,
                 owner,
                 name: format!("Test Unit #{id}"),
@@ -78,7 +90,12 @@ pub mod test_helpers {
                 exp: 0,
                 base_stats: UnitStats::create_mock(),
                 stats_after_buffs: UnitStats::create_mock(),
-            }
+                turn_counter: 0,
+                turn_tiebreaker: 0,
+            };
+
+            result.init_tiebreaker();
+            result
         }
 
         pub fn with_position(mut self, position: Hex) -> Self {
@@ -89,6 +106,7 @@ pub mod test_helpers {
         pub fn with_stats(mut self, stats: UnitStats) -> Self {
             self.base_stats = stats.clone();
             self.stats_after_buffs = stats;
+            self.init_tiebreaker();
             self
         }
     }
