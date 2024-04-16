@@ -83,6 +83,11 @@ fn draw_unit_info(mut egui: EguiContexts, unit: &Unit, anchor: Align2) {
         "Move: {} | Jump: {}",
         unit.stats_after_buffs.movement, unit.stats_after_buffs.jump
     ));
+    lines.push(format!("Speed: {}", unit.stats_after_buffs.speed));
+    lines.push(format!(
+        "TurnCounter: {} [{}]",
+        unit.turn_counter, unit.turn_tiebreaker
+    ));
 
     let text = lines.join("\n");
 
