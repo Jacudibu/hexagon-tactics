@@ -55,7 +55,7 @@ impl CombatData {
                     ready_units.clear();
                     highest_counter = x.turn_counter;
                 }
-                ready_units.push((x.id, x.turn_tiebreaker));
+                ready_units.push(TurnOrderElement::from(x));
             }
         }
 
@@ -67,26 +67,40 @@ impl CombatData {
                         ready_units.clear();
                         highest_counter = x.turn_counter;
                     }
-                    ready_units.push((x.id, x.turn_tiebreaker));
+                    ready_units.push(TurnOrderElement::from(x));
                 }
             }
         }
 
         let unit = if ready_units.len() > 1 {
-            ready_units.sort_unstable_by_key(|(_, tiebreaker)| tiebreaker.clone());
+            ready_units.sort_by(|a, b| b.tiebreaker.cmp(&a.tiebreaker));
             self.units
-                .get_mut(&ready_units[1].0)
+                .get_mut(&ready_units[1].unit_id)
                 .unwrap()
-                .turn_tiebreaker = ready_units[0].1;
-            let unit = self.units.get_mut(&ready_units[0].0).unwrap();
-            unit.turn_tiebreaker = ready_units[1].1;
+                .turn_tiebreaker = ready_units[0].tiebreaker;
+            let unit = self.units.get_mut(&ready_units[0].unit_id).unwrap();
+            unit.turn_tiebreaker = ready_units[1].tiebreaker;
             unit
         } else {
-            self.units.get_mut(&ready_units[0].0).unwrap()
+            self.units.get_mut(&ready_units[0].unit_id).unwrap()
         };
 
         unit.turn_counter -= Self::COUNTER_NEEDED_FOR_TURN;
         unit.id
+    }
+}
+
+struct TurnOrderElement {
+    unit_id: UnitId,
+    tiebreaker: u32,
+}
+
+impl TurnOrderElement {
+    fn from(unit: &Unit) -> TurnOrderElement {
+        TurnOrderElement {
+            tiebreaker: unit.turn_tiebreaker,
+            unit_id: unit.id,
+        }
     }
 }
 
