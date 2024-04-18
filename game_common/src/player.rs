@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-pub type PlayerId = u8;
+pub type PlayerId = usize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Player {
     pub id: PlayerId,
     pub name: String,

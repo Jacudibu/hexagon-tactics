@@ -2,9 +2,11 @@ use crate::connection_handler::ConnectionId;
 use bytes::Bytes;
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
-use game_common::network_events::server_to_client::ServerToClientMessage;
+use game_common::network_events::server_to_client::{
+    ErrorWhenProcessingMessage, OtherPlayerConnected, ServerToClientMessage, YouConnected,
+};
 use game_common::network_events::NetworkMessage;
-use game_common::player::PlayerId;
+use game_common::player::{Player, PlayerId};
 use std::collections::HashMap;
 use tokio::sync::mpsc;
 use tracing::error;
@@ -24,6 +26,7 @@ pub struct MatchData {
 #[derive(Default)]
 pub struct SharedState {
     pub connections: HashMap<ConnectionId, mpsc::UnboundedSender<Bytes>>,
+    pub players: HashMap<PlayerId, Player>,
     pub player_to_connection_map: HashMap<PlayerId, ConnectionId>,
     pub server_state: ServerState,
 }
@@ -84,6 +87,31 @@ impl SharedState {
                 );
             }
         }
+    }
+
+    pub fn add_player_and_notify(&mut self, connection_id: ConnectionId) -> PlayerId {
+        let player_id = self.players.len() + 1;
+        let player = Player {
+            id: player_id,
+            name: format!("Player {player_id}"),
+        };
+
+        self.players.insert(player_id, player);
+        self.player_to_connection_map
+            .insert(player_id, connection_id);
+
+        self.send_to(
+            &connection_id,
+            ServerToClientMessage::YouConnected(YouConnected {
+                player_id,
+                other_players: self.players.values().cloned().collect(),
+            }),
+        );
+        self.send_to_everyone_except_one(
+            &connection_id,
+            ServerToClientMessage::OtherPlayerConnected(OtherPlayerConnected { player_id }),
+        );
+        player_id
     }
 }
 

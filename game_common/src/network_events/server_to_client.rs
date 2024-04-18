@@ -1,4 +1,4 @@
-use crate::player::PlayerId;
+use crate::player::{Player, PlayerId};
 use crate::unit::{Unit, UnitId};
 use bevy::prelude::Event;
 use hexx::Hex;
@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum ServerToClientMessage {
+    YouConnected(YouConnected),
+    OtherPlayerConnected(OtherPlayerConnected),
+
     LoadMap(StartGameAndLoadMap),
     PlayerIsReady(PlayerIsReady),
     AddUnitToPlayer(AddUnitToPlayerStorage),
@@ -21,6 +24,17 @@ pub enum ServerToClientMessage {
 pub struct StartGameAndLoadMap {
     // TODO: Either send some kind of map identifier or just the entire GameMap struct
     pub path: String,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct YouConnected {
+    pub player_id: PlayerId,
+    pub other_players: Vec<Player>,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct OtherPlayerConnected {
+    pub player_id: PlayerId,
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]

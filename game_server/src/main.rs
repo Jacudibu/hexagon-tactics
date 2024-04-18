@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let state = Arc::new(Mutex::new(SharedState::default()));
 
-    for id in 1.. {
+    for _ in 1.. {
         let incoming_session = server.accept().await;
         let state = Arc::clone(&state);
 

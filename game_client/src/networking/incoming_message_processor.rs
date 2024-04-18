@@ -15,6 +15,8 @@ impl Plugin for IncomingMessageProcessorPlugin {
             .add_event::<server_to_client::PlaceUnit>()
             .add_event::<server_to_client::StartUnitTurn>()
             .add_event::<server_to_client::MoveUnit>()
+            .add_event::<server_to_client::YouConnected>()
+            .add_event::<server_to_client::OtherPlayerConnected>()
             .add_systems(
                 PreUpdate,
                 receive_updates.run_if(in_state(NetworkState::Connected)),
@@ -32,6 +34,8 @@ fn receive_updates(
     mut place_unit: EventWriter<server_to_client::PlaceUnit>,
     mut start_unit_turn: EventWriter<server_to_client::StartUnitTurn>,
     mut move_unit: EventWriter<server_to_client::MoveUnit>,
+    mut you_connected: EventWriter<server_to_client::YouConnected>,
+    mut other_player_connected: EventWriter<server_to_client::OtherPlayerConnected>,
 ) {
     if let Ok(bytes) = connection.message_receiver.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
@@ -57,6 +61,14 @@ fn receive_updates(
             ServerToClientMessage::ErrorWhenProcessingMessage(e) => {
                 error!("Server responded with an error: {:?}", e);
             }
+
+            ServerToClientMessage::YouConnected(event) => {
+                you_connected.send(event);
+            }
+            ServerToClientMessage::OtherPlayerConnected(event) => {
+                other_player_connected.send(event);
+            }
+
             ServerToClientMessage::LoadMap(event) => {
                 load_map_event_from_server.send(event);
             }

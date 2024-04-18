@@ -42,11 +42,9 @@ async fn handle_connection_impl(
 
     let mut client = {
         let (client_sender, client_receiver) = mpsc::unbounded_channel();
-        state
-            .lock()
-            .await
-            .connections
-            .insert(connection_id, client_sender);
+        let mut state = state.lock().await;
+        state.connections.insert(connection_id, client_sender);
+        state.add_player_and_notify(connection_id);
         ConnectedClient {
             id: connection_id,
             receiver: client_receiver,
