@@ -7,7 +7,7 @@ use bevy::prelude::{
 use bevy::utils::HashMap;
 use bytes::Bytes;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::server_to_client::YouConnected;
+use game_common::network_events::server_to_client::{OtherPlayerConnected, YouConnected};
 use game_common::network_events::NetworkMessage;
 use game_common::player::{Player, PlayerId};
 use tokio::sync::mpsc;
@@ -31,6 +31,9 @@ impl Plugin for NetworkPlugin {
                     on_you_connected
                         .run_if(in_state(NetworkState::Authenticating))
                         .run_if(on_event::<YouConnected>()),
+                    on_other_player_connected
+                        .run_if(in_state(NetworkState::Connected))
+                        .run_if(on_event::<OtherPlayerConnected>()),
                 ),
             )
             .add_systems(
@@ -73,7 +76,7 @@ fn check_for_connection_updates(
             ServerConnectionUpdate::ConnectionCreated(connection) => {
                 commands.insert_resource(connection);
                 next_network_state.set(NetworkState::Authenticating);
-                info!("Connection Resource has been created.")
+                info!("Connection Resource has been created. Waiting for authentication.")
             }
             ServerConnectionUpdate::ConnectionDropped => {
                 commands.remove_resource::<ServerConnection>();
@@ -120,7 +123,7 @@ fn on_you_connected(
 ) {
     for x in events.read() {
         let mut all_players = HashMap::new();
-        for x in x.other_players.iter() {
+        for x in x.connected_players.iter() {
             all_players.insert(x.id, x.clone());
         }
 
@@ -131,5 +134,18 @@ fn on_you_connected(
 
         next_network_state.set(NetworkState::Connected);
         info!("Authentication Successful, Networking setup complete.")
+    }
+}
+
+fn on_other_player_connected(
+    mut connected_players: ResMut<ConnectedPlayers>,
+    mut events: EventReader<OtherPlayerConnected>,
+) {
+    for x in events.read() {
+        connected_players
+            .players
+            .insert(x.player.id, x.player.clone());
+
+        info!("Other player connected: {:?}", x.player);
     }
 }

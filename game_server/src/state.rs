@@ -96,7 +96,7 @@ impl SharedState {
             name: format!("Player {player_id}"),
         };
 
-        self.players.insert(player_id, player);
+        self.players.insert(player_id, player.clone());
         self.player_to_connection_map
             .insert(player_id, connection_id);
 
@@ -104,12 +104,12 @@ impl SharedState {
             &connection_id,
             ServerToClientMessage::YouConnected(YouConnected {
                 player_id,
-                other_players: self.players.values().cloned().collect(),
+                connected_players: self.players.values().cloned().collect(),
             }),
         );
         self.send_to_everyone_except_one(
             &connection_id,
-            ServerToClientMessage::OtherPlayerConnected(OtherPlayerConnected { player_id }),
+            ServerToClientMessage::OtherPlayerConnected(OtherPlayerConnected { player }),
         );
         player_id
     }

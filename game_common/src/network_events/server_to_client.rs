@@ -29,12 +29,12 @@ pub struct StartGameAndLoadMap {
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct YouConnected {
     pub player_id: PlayerId,
-    pub other_players: Vec<Player>,
+    pub connected_players: Vec<Player>,
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct OtherPlayerConnected {
-    pub player_id: PlayerId,
+    pub player: Player,
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
