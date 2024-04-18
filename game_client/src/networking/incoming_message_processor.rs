@@ -1,7 +1,7 @@
 use crate::networking::network_plugin::{NetworkState, ServerConnection};
 use bevy::app::{App, Plugin, PreUpdate};
 use bevy::log::{debug, error};
-use bevy::prelude::{in_state, EventWriter, IntoSystemConfigs, Local, ResMut};
+use bevy::prelude::{in_state, Condition, EventWriter, IntoSystemConfigs, Local, ResMut};
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::{server_to_client, NetworkMessage};
 
@@ -19,7 +19,10 @@ impl Plugin for IncomingMessageProcessorPlugin {
             .add_event::<server_to_client::OtherPlayerConnected>()
             .add_systems(
                 PreUpdate,
-                receive_updates.run_if(in_state(NetworkState::Connected)),
+                receive_updates.run_if(
+                    in_state(NetworkState::Connected)
+                        .or_else(in_state(NetworkState::Authenticating)),
+                ),
             );
     }
 }

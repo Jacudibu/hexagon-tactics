@@ -1,12 +1,15 @@
 use crate::networking::incoming_message_processor::IncomingMessageProcessorPlugin;
 use crate::networking::network::Network;
 use bevy::prelude::{
-    error, in_state, info, on_event, App, Commands, EventReader, IntoSystemConfigs, NextState,
-    Plugin, PostUpdate, PreUpdate, ResMut, Resource, States,
+    error, in_state, info, on_event, App, Commands, Condition, EventReader, IntoSystemConfigs,
+    NextState, Plugin, PostUpdate, PreUpdate, ResMut, Resource, States,
 };
+use bevy::utils::HashMap;
 use bytes::Bytes;
 use game_common::network_events::client_to_server::ClientToServerMessage;
+use game_common::network_events::server_to_client::YouConnected;
 use game_common::network_events::NetworkMessage;
+use game_common::player::{Player, PlayerId};
 use tokio::sync::mpsc;
 
 pub struct NetworkPlugin;
@@ -19,15 +22,23 @@ impl Plugin for NetworkPlugin {
             .add_systems(
                 PreUpdate,
                 (
-                    check_for_connection_updates.run_if(in_state(NetworkState::Connecting)),
-                    check_for_connection_updates.run_if(in_state(NetworkState::Connected)),
+                    check_for_connection_updates.run_if(
+                        in_state(NetworkState::Connecting).or_else(
+                            in_state(NetworkState::Authenticating)
+                                .or_else(in_state(NetworkState::Connected)),
+                        ),
+                    ),
+                    on_you_connected
+                        .run_if(in_state(NetworkState::Authenticating))
+                        .run_if(on_event::<YouConnected>()),
                 ),
             )
             .add_systems(
                 PostUpdate,
-                (event_processor.run_if(on_event::<ClientToServerMessage>()),)
-                    .chain()
-                    .run_if(in_state(NetworkState::Connected)),
+                (event_processor.run_if(on_event::<ClientToServerMessage>())).run_if(
+                    in_state(NetworkState::Connected)
+                        .or_else(in_state(NetworkState::Authenticating)),
+                ),
             );
     }
 }
@@ -48,6 +59,7 @@ pub enum NetworkState {
     #[default]
     Disconnected,
     Connecting,
+    Authenticating,
     Connected,
 }
 
@@ -60,7 +72,7 @@ fn check_for_connection_updates(
         match update {
             ServerConnectionUpdate::ConnectionCreated(connection) => {
                 commands.insert_resource(connection);
-                next_network_state.set(NetworkState::Connected);
+                next_network_state.set(NetworkState::Authenticating);
                 info!("Connection Resource has been created.")
             }
             ServerConnectionUpdate::ConnectionDropped => {
@@ -88,5 +100,36 @@ fn event_processor(
                 )
             }
         }
+    }
+}
+
+#[derive(Resource)]
+pub struct LocalPlayerId {
+    id: PlayerId,
+}
+
+#[derive(Resource)]
+pub struct ConnectedPlayers {
+    players: HashMap<PlayerId, Player>,
+}
+
+fn on_you_connected(
+    mut commands: Commands,
+    mut events: EventReader<YouConnected>,
+    mut next_network_state: ResMut<NextState<NetworkState>>,
+) {
+    for x in events.read() {
+        let mut all_players = HashMap::new();
+        for x in x.other_players.iter() {
+            all_players.insert(x.id, x.clone());
+        }
+
+        commands.insert_resource(LocalPlayerId { id: x.player_id });
+        commands.insert_resource(ConnectedPlayers {
+            players: all_players,
+        });
+
+        next_network_state.set(NetworkState::Connected);
+        info!("Authentication Successful, Networking setup complete.")
     }
 }

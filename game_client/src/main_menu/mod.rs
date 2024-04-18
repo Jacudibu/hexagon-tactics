@@ -33,6 +33,7 @@ impl Plugin for MainMenuPlugin {
                     )
                         .run_if(in_state(NetworkState::Disconnected)),
                     (connection_menu).run_if(in_state(NetworkState::Connecting)),
+                    (connection_menu).run_if(in_state(NetworkState::Authenticating)),
                     (
                         play_menu,
                         load_map_listener
@@ -99,7 +100,7 @@ fn connection_menu(
         .anchor(Align2::CENTER_CENTER, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| {
             ui.vertical_centered(|ui| {
-                ui.add_enabled_ui(network_state.get() != &NetworkState::Connecting, |ui| {
+                ui.add_enabled_ui(network_state.get() == &NetworkState::Disconnected, |ui| {
                     if ui.button("Host").clicked() {
                         host_command.send(HostLocalServerCommand {});
                     }
