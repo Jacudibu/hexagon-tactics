@@ -1,4 +1,4 @@
-use crate::connection_handler::ClientId;
+use crate::connection_handler::ConnectionId;
 use bytes::Bytes;
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
@@ -23,7 +23,8 @@ pub struct MatchData {
 
 #[derive(Default)]
 pub struct SharedState {
-    pub connections: HashMap<ClientId, mpsc::UnboundedSender<Bytes>>,
+    pub connections: HashMap<ConnectionId, mpsc::UnboundedSender<Bytes>>,
+    pub player_to_connection_map: HashMap<PlayerId, ConnectionId>,
     pub server_state: ServerState,
 }
 
@@ -44,7 +45,7 @@ impl SharedState {
         }
     }
 
-    pub fn send_to(&mut self, sender: &ClientId, message: ServerToClientMessage) {
+    pub fn send_to(&mut self, sender: &ConnectionId, message: ServerToClientMessage) {
         match message.serialize() {
             Ok(bytes) => match self.connections.get(sender) {
                 None => {
@@ -65,7 +66,7 @@ impl SharedState {
 
     pub fn send_to_everyone_except_one(
         &mut self,
-        id_to_ignore: &ClientId,
+        id_to_ignore: &ConnectionId,
         message: ServerToClientMessage,
     ) {
         match message.serialize() {
@@ -89,7 +90,7 @@ impl SharedState {
 /// One Client can seat multiple players. While Connections might get replaced due to disconnects,
 /// ConnectedPlayer will persist throughout the game, and their assigned client_id might change.
 pub struct NetworkPlayer {
-    client_id: ClientId,
+    client_id: ConnectionId,
     player_id: PlayerId,
     sender: mpsc::UnboundedSender<Bytes>,
     connection_state: ConnectionState,

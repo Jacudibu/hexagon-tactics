@@ -33,10 +33,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let incoming_session = server.accept().await;
         let state = Arc::clone(&state);
 
-        tokio::spawn(
-            connection_handler::handle_connection(incoming_session, state, id)
-                .instrument(info_span!("Connection", id)),
-        );
+        tokio::spawn(connection_handler::handle_connection(
+            incoming_session,
+            state,
+        ));
     }
 
     Ok(())

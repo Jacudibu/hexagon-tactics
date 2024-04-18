@@ -11,25 +11,21 @@ use tokio::sync::{mpsc, Mutex};
 use tracing::{debug, error, info, warn};
 use wtransport::endpoint::IncomingSession;
 
-pub type ClientId = u32;
-struct Connection {
+pub type ConnectionId = usize;
+
+struct ConnectedClient {
+    pub id: ConnectionId,
     pub receiver: mpsc::UnboundedReceiver<Bytes>,
-    pub id: ClientId,
 }
 
-pub async fn handle_connection(
-    incoming_session: IncomingSession,
-    state: Arc<Mutex<SharedState>>,
-    id: ClientId,
-) {
-    let result = handle_connection_impl(incoming_session, state, id).await;
+pub async fn handle_connection(incoming_session: IncomingSession, state: Arc<Mutex<SharedState>>) {
+    let result = handle_connection_impl(incoming_session, state).await;
     error!("{:?}", result);
 }
 
 async fn handle_connection_impl(
     incoming_session: IncomingSession,
     state: Arc<Mutex<SharedState>>,
-    id: ClientId,
 ) -> Result<(), Box<dyn Error>> {
     let mut buffer = BytesMut::with_capacity(1024);
 
@@ -42,12 +38,17 @@ async fn handle_connection_impl(
     );
 
     let connection = session_request.accept().await?;
+    let connection_id = connection.stable_id();
 
     let mut client = {
         let (client_sender, client_receiver) = mpsc::unbounded_channel();
-        state.lock().await.connections.insert(id, client_sender);
-        Connection {
-            id,
+        state
+            .lock()
+            .await
+            .connections
+            .insert(connection_id, client_sender);
+        ConnectedClient {
+            id: connection_id,
             receiver: client_receiver,
         }
     };
@@ -55,6 +56,7 @@ async fn handle_connection_impl(
     let (mut send_stream, mut receive_stream) = connection.accept_bi().await?;
 
     loop {
+        // TODO: Figure out if this is cancellation-safe
         tokio::select! {
             Some(msg) = client.receiver.recv() => {
                 send_stream.write_all(&msg).await?;
@@ -86,7 +88,7 @@ async fn handle_connection_impl(
 
 async fn process_message_from_client(
     state: Arc<Mutex<SharedState>>,
-    client_id: ClientId,
+    connection_id: ConnectionId,
     bytes: Bytes,
 ) {
     match ClientToServerMessage::deserialize(&bytes.to_vec()) {
@@ -95,7 +97,7 @@ async fn process_message_from_client(
             debug!(
                 "Received {} bytes from {}: {:?}",
                 bytes.len(),
-                client_id,
+                connection_id,
                 messages
             );
             for message in messages {
@@ -105,12 +107,12 @@ async fn process_message_from_client(
                             debug!("Sending {:?}", message);
                             match message {
                                 ServerToClientMessageVariant::SendToSender(message) => {
-                                    state.send_to(&client_id, message);
+                                    state.send_to(&connection_id, message);
                                 }
                                 ServerToClientMessageVariant::SendToEveryoneExceptSender(
                                     message,
                                 ) => {
-                                    state.send_to_everyone_except_one(&client_id, message);
+                                    state.send_to_everyone_except_one(&connection_id, message);
                                 }
                                 ServerToClientMessageVariant::Broadcast(message) => {
                                     state.broadcast(message);
@@ -119,7 +121,7 @@ async fn process_message_from_client(
                         }
                     }
                     Err(error_message) => {
-                        state.send_to(&client_id, error_message);
+                        state.send_to(&connection_id, error_message);
                     }
                 }
             }
