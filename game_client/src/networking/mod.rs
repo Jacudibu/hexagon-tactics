@@ -3,4 +3,4 @@ mod network;
 mod network_plugin;
 
 pub use network::Network; // TODO: Should probably not be public and instead communicate via events
-pub use network_plugin::{NetworkPlugin, NetworkState};
+pub use network_plugin::{ConnectedPlayers, LocalPlayerId, NetworkPlugin, NetworkState};

@@ -5,12 +5,13 @@ use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_actions::UnitActionPlugin;
 use crate::combat::unit_placement::UnitPlacementPlugin;
 use crate::map::MapState;
+use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::{App, Plugin, Update};
 use bevy::log::info;
 use bevy::prelude::{
     error, in_state, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, NextState,
-    OnEnter, Reflect, ResMut, States,
+    OnEnter, Reflect, Res, ResMut, States,
 };
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
@@ -18,7 +19,6 @@ use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     AddUnitToPlayerStorage, PlayerTurnToPlaceUnit, StartUnitTurn,
 };
-use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
 
 pub struct CombatPlugin;
 
@@ -86,9 +86,10 @@ pub fn on_player_turn_to_place_unit(
     mut event: EventReader<PlayerTurnToPlaceUnit>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     mut combat_data: ResMut<CombatData>,
+    local_player_id: Res<LocalPlayerId>,
 ) {
     for event in event.read() {
-        if event.player == CONSTANT_LOCAL_PLAYER_ID {
+        if event.player == local_player_id.id {
             next_combat_state.set(CombatState::PlaceUnit);
             combat_data.current_turn = CombatTurn::place_unit(event.player);
         } else {
@@ -102,6 +103,7 @@ pub fn on_start_unit_turn(
     mut event: EventReader<StartUnitTurn>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     mut combat_data: ResMut<CombatData>,
+    local_player_id: Res<LocalPlayerId>,
 ) {
     for event in event.read() {
         let locally_computed_next = combat_data.get_next_unit();
@@ -116,7 +118,7 @@ pub fn on_start_unit_turn(
             continue;
         };
 
-        if unit.owner == CONSTANT_LOCAL_PLAYER_ID {
+        if unit.owner == local_player_id.id {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::OtherPlayerUnitTurn)

@@ -4,6 +4,7 @@ use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_placement;
 use crate::combat::unit_placement::UnitMarker;
 use crate::map::{HighlightedTiles, MouseCursorOnTile};
+use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::{
@@ -14,9 +15,10 @@ use bevy::prelude::{
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::{client_to_server, server_to_client, CONSTANT_LOCAL_PLAYER_ID};
+use game_common::network_events::{client_to_server, server_to_client};
 use game_common::DESYNC_TODO_MESSAGE;
 use leafwing_input_manager::action_state::ActionState;
+use std::cmp::PartialEq;
 use std::ops::Deref;
 
 pub struct UnitActionPlugin;
@@ -158,6 +160,7 @@ pub fn on_move_unit(
     map: Res<GameMap>,
     mut unit_entities: Query<&mut Transform, With<UnitMarker>>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
+    local_player_id: Res<LocalPlayerId>,
 ) {
     for event in events.read() {
         debug_assert!(
@@ -190,7 +193,7 @@ pub fn on_move_unit(
             transform.translation = unit_placement::unit_position_on_hexagon(unit.position, &map)
         }
 
-        if unit.owner == CONSTANT_LOCAL_PLAYER_ID {
+        if unit.owner == local_player_id.id {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer);

@@ -108,12 +108,12 @@ fn event_processor(
 
 #[derive(Resource)]
 pub struct LocalPlayerId {
-    id: PlayerId,
+    pub id: PlayerId,
 }
 
 #[derive(Resource)]
 pub struct ConnectedPlayers {
-    players: HashMap<PlayerId, Player>,
+    pub players: HashMap<PlayerId, Player>,
 }
 
 fn on_you_connected(

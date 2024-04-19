@@ -10,7 +10,7 @@ use bevy::prelude::*;
 use bevy_egui::egui::{Align2, Pos2, Ui};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::combat_data::CombatData;
-use game_common::network_events::CONSTANT_LOCAL_PLAYER_ID;
+use game_common::combat_turn::CombatTurn;
 use game_common::unit::Unit;
 
 pub(in crate::combat) struct CombatUiPlugin;
@@ -117,7 +117,7 @@ fn draw_state_ui(
         .anchor(Align2::CENTER_TOP, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| match combat_state.get() {
             CombatState::WaitingForServer => build_waiting_for_server_state_ui(ui),
-            CombatState::WaitingForOtherPlayer => build_waiting_for_player_ui(ui),
+            CombatState::WaitingForOtherPlayer => build_waiting_for_player_ui(ui, &combat_data),
             CombatState::PlaceUnit => build_place_unit_state_ui(ui),
             CombatState::ThisPlayerUnitTurn => {
                 build_this_player_unit_turn_ui(
@@ -140,8 +140,19 @@ fn build_place_unit_state_ui(ui: &mut Ui) {
     ui.label("Place Unit");
 }
 
-fn build_waiting_for_player_ui(ui: &mut Ui) {
-    ui.label(format!("Waiting for player {}", CONSTANT_LOCAL_PLAYER_ID));
+fn build_waiting_for_player_ui(ui: &mut Ui, combat_data: &CombatData) {
+    let text = match &combat_data.current_turn {
+        CombatTurn::Undefined => "[Undefined] Waiting for player".into(),
+        CombatTurn::PlaceUnit(data) => {
+            format!("[PlaceUnit] Waiting for Player: {}", data.player_id)
+        }
+        CombatTurn::UnitTurn(data) => format!(
+            "[UnitTurn] Waiting for Player: TODO (unit id {})",
+            data.unit_id
+        ),
+    };
+
+    ui.label(text);
 }
 
 fn build_this_player_unit_turn_ui(
@@ -177,8 +188,5 @@ fn build_other_player_unit_turn_ui(ui: &mut Ui, combat_data: &CombatData) {
         .get(&combat_data.current_turn.as_unit_turn().unit_id)
         .expect("Unit should exist!");
 
-    ui.label(format!(
-        "{}'s turn: {}",
-        CONSTANT_LOCAL_PLAYER_ID, unit.name
-    ));
+    ui.label(format!("{}'s turn: {}", unit.owner, unit.name));
 }
