@@ -53,7 +53,6 @@ pub enum CombatState {
     WaitingForOtherPlayer,
     PlaceUnit,
     ThisPlayerUnitTurn,
-    OtherPlayerUnitTurn, // TODO: Specify when this should be used rather than WaitingForOtherPlayer
 }
 
 pub fn on_map_loaded(
@@ -121,7 +120,7 @@ pub fn on_start_unit_turn(
         if unit.owner == local_player_id.id {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
-            next_combat_state.set(CombatState::OtherPlayerUnitTurn)
+            next_combat_state.set(CombatState::WaitingForOtherPlayer)
         }
 
         combat_data.start_unit_turn(event.unit_id);

@@ -1,7 +1,6 @@
 pub mod client_to_server;
 pub mod server_to_client;
 
-use crate::player::PlayerId;
 use bevy::prelude::error;
 use bincode::config::Configuration;
 use bincode::error::EncodeError;

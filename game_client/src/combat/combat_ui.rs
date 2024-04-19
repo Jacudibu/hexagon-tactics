@@ -128,7 +128,6 @@ fn draw_state_ui(
                     end_turn_event,
                 );
             }
-            CombatState::OtherPlayerUnitTurn => build_other_player_unit_turn_ui(ui, &combat_data),
         });
 }
 
@@ -180,13 +179,4 @@ fn build_this_player_unit_turn_ui(
             end_turn_event.send(EndTurnCommand {});
         }
     });
-}
-
-fn build_other_player_unit_turn_ui(ui: &mut Ui, combat_data: &CombatData) {
-    let unit = combat_data
-        .units
-        .get(&combat_data.current_turn.as_unit_turn().unit_id)
-        .expect("Unit should exist!");
-
-    ui.label(format!("{}'s turn: {}", unit.owner, unit.name));
 }
