@@ -11,7 +11,7 @@ pub enum ServerToClientMessage {
 
     LoadMap(StartGameAndLoadMap),
     PlayerIsReady(UpdateReadyStateForPlayer),
-    AddUnitToPlayer(AddUnitToPlayerStorage),
+    AddUnitToPlayerStorage(AddUnitToPlayerStorage),
     PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit),
     PlaceUnit(PlaceUnit),
     StartUnitTurn(StartUnitTurn),

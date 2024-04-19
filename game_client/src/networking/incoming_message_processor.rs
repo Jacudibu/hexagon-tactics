@@ -78,7 +78,7 @@ fn receive_updates(
             ServerToClientMessage::PlayerIsReady(event) => {
                 player_is_ready.send(event);
             }
-            ServerToClientMessage::AddUnitToPlayer(event) => {
+            ServerToClientMessage::AddUnitToPlayerStorage(event) => {
                 add_unit_to_player.send(event);
             }
             ServerToClientMessage::PlayerTurnToPlaceUnit(event) => {
