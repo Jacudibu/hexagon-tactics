@@ -34,13 +34,13 @@ impl Display for Unit {
 }
 
 impl Unit {
-    pub fn create_debug_unit(id: UnitId, owner: PlayerId, name: String) -> Self {
+    pub fn create_debug_unit(id: UnitId, owner: PlayerId) -> Self {
         let movement = 4;
 
         let mut result = Unit {
             id,
             owner,
-            name,
+            name: format!("Unit {id}"),
             position: Hex::ZERO,
             hp: 10,
             mp: 10,

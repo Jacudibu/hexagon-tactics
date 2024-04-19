@@ -28,6 +28,7 @@ pub struct SharedState {
     pub connections: HashMap<ConnectionId, mpsc::UnboundedSender<Bytes>>,
     pub players: HashMap<PlayerId, Player>,
     pub player_to_connection_map: HashMap<PlayerId, ConnectionId>,
+    pub connection_to_player_map: HashMap<ConnectionId, PlayerId>, // TODO: We would want to allow multiple players from the same connection for local multiplayer
     pub server_state: ServerState,
 }
 
@@ -99,6 +100,8 @@ impl SharedState {
         self.players.insert(player_id, player.clone());
         self.player_to_connection_map
             .insert(player_id, connection_id);
+        self.connection_to_player_map
+            .insert(connection_id, player_id);
 
         self.send_to(
             &connection_id,

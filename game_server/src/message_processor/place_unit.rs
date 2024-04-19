@@ -3,13 +3,20 @@ use crate::state::MatchData;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
 };
-use game_common::network_events::{client_to_server, server_to_client, CONSTANT_LOCAL_PLAYER_ID};
+use game_common::network_events::{client_to_server, server_to_client};
+use game_common::player::{Player, PlayerId};
+use std::collections::HashMap;
 use tracing::error;
 
 pub fn place_unit(
+    sender: PlayerId,
+    players: &mut HashMap<PlayerId, Player>,
     match_data: &mut MatchData,
     data: client_to_server::PlaceUnit,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
+    // TODO: Validate turn order
+    // TODO: Validate unit ownership
+
     if !match_data
         .combat_data
         .can_unit_be_placed_on_tile(&data.hex, &match_data.loaded_map)
@@ -46,7 +53,6 @@ pub fn place_unit(
         .insert(data.hex, data.unit_id);
     match_data.combat_data.units.insert(unit.id, unit);
 
-    // TODO: Check if all units have been placed, and if so, proceed to very first unit turn
     let next = if match_data.combat_data.unit_storage.is_empty() {
         let unit_id = match_data.combat_data.get_next_unit();
         match_data.combat_data.start_unit_turn(unit_id);
@@ -54,9 +60,11 @@ pub fn place_unit(
             StartUnitTurn { unit_id },
         ))
     } else {
+        // TODO: Better Turn Order
+        let next_player_id = match_data.combat_data.unit_storage[0].owner;
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerTurnToPlaceUnit(
             PlayerTurnToPlaceUnit {
-                player: CONSTANT_LOCAL_PLAYER_ID,
+                player: next_player_id,
             },
         ))
     };

@@ -11,7 +11,6 @@ use serde::Serialize;
 use std::time::Duration;
 
 pub const NETWORK_IDLE_TIMEOUT: Duration = Duration::new(5, 0);
-pub const CONSTANT_LOCAL_PLAYER_ID: PlayerId = 1;
 
 pub trait NetworkMessage: DeserializeOwned + Serialize {
     fn serialize(&self) -> Result<Bytes, EncodeError>;

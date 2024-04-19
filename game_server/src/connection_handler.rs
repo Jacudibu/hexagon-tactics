@@ -98,8 +98,9 @@ async fn process_message_from_client(
                 connection_id,
                 messages
             );
+            let sender = state.connection_to_player_map[&connection_id];
             for message in messages {
-                match message_processor::process_message(&mut state, message) {
+                match message_processor::process_message(&mut state, sender, message) {
                     Ok(outgoing_messages) => {
                         for message in outgoing_messages {
                             debug!("Sending {:?}", message);
