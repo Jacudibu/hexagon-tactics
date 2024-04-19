@@ -14,7 +14,7 @@ pub fn place_unit(
     match_data: &mut MatchData,
     data: client_to_server::PlaceUnit,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
-    validation::validate_turn_order(sender, match_data)?;
+    validation::validate_turn_order(sender, &match_data.combat_data)?;
     // TODO: Validate unit ownership
 
     if !match_data
