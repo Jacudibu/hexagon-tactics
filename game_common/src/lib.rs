@@ -6,7 +6,6 @@ pub mod player;
 pub mod turn_resources;
 pub mod unit;
 mod unit_stats;
-mod validation_error;
 
 pub const TEST_MAP_NAME: &str = "test_map.map";
 

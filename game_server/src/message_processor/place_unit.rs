@@ -1,4 +1,4 @@
-use crate::message_processor::ServerToClientMessageVariant;
+use crate::message_processor::{validation, ServerToClientMessageVariant};
 use crate::state::MatchData;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
@@ -14,7 +14,7 @@ pub fn place_unit(
     match_data: &mut MatchData,
     data: client_to_server::PlaceUnit,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
-    // TODO: Validate turn order
+    validation::validate_turn_order(sender, match_data)?;
     // TODO: Validate unit ownership
 
     if !match_data

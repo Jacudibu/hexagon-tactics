@@ -10,6 +10,7 @@ mod finish_loading;
 mod move_unit;
 mod place_unit;
 mod start_game;
+mod validation;
 
 #[derive(Debug)]
 pub enum ServerToClientMessageVariant {
