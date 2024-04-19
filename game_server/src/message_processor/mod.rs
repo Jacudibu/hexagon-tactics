@@ -32,23 +32,20 @@ pub fn process_message(
                 message
             ))),
         },
-        ServerState::InGame(ref mut match_data) => {
-            let players = &mut shared_state.players;
-            match message {
-                ClientToServerMessage::FinishedLoading => {
-                    finish_loading::finish_loading(sender, players, match_data)
-                }
-                ClientToServerMessage::EndTurn => end_turn::end_turn(match_data),
-                ClientToServerMessage::PlaceUnit(data) => {
-                    place_unit::place_unit(sender, players, match_data, data)
-                }
-                ClientToServerMessage::MoveUnit(data) => move_unit::move_unit(match_data, data),
-                _ => Err(create_error_response(format!(
-                    "Unexpected message for server state InGame: {:?}",
-                    message
-                ))),
+        ServerState::InGame(ref mut match_data) => match message {
+            ClientToServerMessage::FinishedLoading => {
+                finish_loading::finish_loading(sender, players, match_data)
             }
-        }
+            ClientToServerMessage::EndTurn => end_turn::end_turn(sender, match_data),
+            ClientToServerMessage::PlaceUnit(data) => {
+                place_unit::place_unit(sender, players, match_data, data)
+            }
+            ClientToServerMessage::MoveUnit(data) => move_unit::move_unit(sender, match_data, data),
+            _ => Err(create_error_response(format!(
+                "Unexpected message for server state InGame: {:?}",
+                message
+            ))),
+        },
     }
 }
 

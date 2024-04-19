@@ -10,12 +10,12 @@ use tracing::error;
 
 pub fn place_unit(
     sender: PlayerId,
-    players: &mut HashMap<PlayerId, Player>,
+    players: &HashMap<PlayerId, Player>,
     match_data: &mut MatchData,
     data: client_to_server::PlaceUnit,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
-    // TODO: Validate unit ownership
+    validation::validate_player_owns_unit_with_id(sender, data.unit_id, &match_data.combat_data)?;
 
     if !match_data
         .combat_data

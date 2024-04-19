@@ -95,7 +95,7 @@ impl SharedState {
         let player = Player {
             id: player_id,
             name: format!("Player {player_id}"),
-            ready_state: ReadyState::NotReady,
+            ready_state: ReadyState::ReadyInLobby,
         };
 
         self.players.insert(player_id, player.clone());

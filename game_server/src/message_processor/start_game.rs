@@ -1,4 +1,4 @@
-use crate::message_processor::ServerToClientMessageVariant;
+use crate::message_processor::{validation, ServerToClientMessageVariant};
 use crate::state::ServerState::InGame;
 use crate::state::{MatchData, SharedState};
 use game_common::combat_data::CombatData;
@@ -7,12 +7,13 @@ use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, ServerToClientMessage, StartGameAndLoadMap,
 };
+use game_common::player::ReadyState;
 use game_common::TEST_MAP_NAME;
 
 pub fn start_game(
     shared_state: &mut SharedState,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
-    // TODO: Validate player readiness
+    validation::validate_player_readiness(&shared_state.players, &ReadyState::ReadyInLobby)?;
 
     let map = match GameMap::load_from_file(TEST_MAP_NAME) {
         Ok(map) => map,
