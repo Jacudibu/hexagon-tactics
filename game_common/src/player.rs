@@ -7,6 +7,15 @@ pub type PlayerId = usize;
 pub struct Player {
     pub id: PlayerId,
     pub name: String,
+    pub ready_state: ReadyState,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]
+pub enum ReadyState {
+    #[default]
+    NotReady,
+    ReadyInLobby,
+    LoadedInGame,
 }
 
 impl Display for Player {

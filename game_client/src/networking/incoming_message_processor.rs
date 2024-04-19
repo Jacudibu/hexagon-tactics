@@ -9,7 +9,7 @@ pub struct IncomingMessageProcessorPlugin;
 impl Plugin for IncomingMessageProcessorPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<server_to_client::StartGameAndLoadMap>()
-            .add_event::<server_to_client::PlayerIsReady>()
+            .add_event::<server_to_client::UpdateReadyStateForPlayer>()
             .add_event::<server_to_client::AddUnitToPlayerStorage>()
             .add_event::<server_to_client::PlayerTurnToPlaceUnit>()
             .add_event::<server_to_client::PlaceUnit>()
@@ -31,7 +31,7 @@ fn receive_updates(
     mut connection: ResMut<ServerConnection>,
     mut event_queue: Local<IncomingNetworkEventQueue>,
     mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
-    mut player_is_ready: EventWriter<server_to_client::PlayerIsReady>,
+    mut player_is_ready: EventWriter<server_to_client::UpdateReadyStateForPlayer>,
     mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayerStorage>,
     mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
     mut place_unit: EventWriter<server_to_client::PlaceUnit>,

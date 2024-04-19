@@ -3,10 +3,10 @@ use bytes::Bytes;
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
-    ErrorWhenProcessingMessage, OtherPlayerConnected, ServerToClientMessage, YouConnected,
+    OtherPlayerConnected, ServerToClientMessage, YouConnected,
 };
 use game_common::network_events::NetworkMessage;
-use game_common::player::{Player, PlayerId};
+use game_common::player::{Player, PlayerId, ReadyState};
 use std::collections::HashMap;
 use tokio::sync::mpsc;
 use tracing::error;
@@ -95,6 +95,7 @@ impl SharedState {
         let player = Player {
             id: player_id,
             name: format!("Player {player_id}"),
+            ready_state: ReadyState::NotReady,
         };
 
         self.players.insert(player_id, player.clone());

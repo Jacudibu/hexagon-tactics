@@ -1,4 +1,4 @@
-use crate::player::{Player, PlayerId};
+use crate::player::{Player, PlayerId, ReadyState};
 use crate::unit::{Unit, UnitId};
 use bevy::prelude::Event;
 use hexx::Hex;
@@ -10,7 +10,7 @@ pub enum ServerToClientMessage {
     OtherPlayerConnected(OtherPlayerConnected),
 
     LoadMap(StartGameAndLoadMap),
-    PlayerIsReady(PlayerIsReady),
+    PlayerIsReady(UpdateReadyStateForPlayer),
     AddUnitToPlayer(AddUnitToPlayerStorage),
     PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit),
     PlaceUnit(PlaceUnit),
@@ -38,8 +38,9 @@ pub struct OtherPlayerConnected {
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
-pub struct PlayerIsReady {
+pub struct UpdateReadyStateForPlayer {
     pub player_id: PlayerId,
+    pub ready_state: ReadyState,
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]

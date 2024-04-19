@@ -7,9 +7,12 @@ use bevy::prelude::{
 use bevy::utils::HashMap;
 use bytes::Bytes;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::server_to_client::{OtherPlayerConnected, YouConnected};
+use game_common::network_events::server_to_client::{
+    OtherPlayerConnected, UpdateReadyStateForPlayer, YouConnected,
+};
 use game_common::network_events::NetworkMessage;
 use game_common::player::{Player, PlayerId};
+use game_common::DESYNC_TODO_MESSAGE;
 use tokio::sync::mpsc;
 
 pub struct NetworkPlugin;
@@ -32,6 +35,9 @@ impl Plugin for NetworkPlugin {
                         .run_if(in_state(NetworkState::Authenticating))
                         .run_if(on_event::<YouConnected>()),
                     on_other_player_connected
+                        .run_if(in_state(NetworkState::Connected))
+                        .run_if(on_event::<OtherPlayerConnected>()),
+                    on_update_ready_state_for_player
                         .run_if(in_state(NetworkState::Connected))
                         .run_if(on_event::<OtherPlayerConnected>()),
                 ),
@@ -147,5 +153,22 @@ fn on_other_player_connected(
             .insert(x.player.id, x.player.clone());
 
         info!("Other player connected: {:?}", x.player);
+    }
+}
+
+fn on_update_ready_state_for_player(
+    mut connected_players: ResMut<ConnectedPlayers>,
+    mut events: EventReader<UpdateReadyStateForPlayer>,
+) {
+    for x in events.read() {
+        match connected_players.players.get_mut(&x.player_id) {
+            None => {
+                error!("Player with id {} not found!", x.player_id);
+                error!(DESYNC_TODO_MESSAGE);
+            }
+            Some(player) => {
+                player.ready_state = x.ready_state;
+            }
+        }
     }
 }

@@ -2,9 +2,9 @@ use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::MatchData;
 use game_common::combat_turn::CombatTurn;
 use game_common::network_events::server_to_client::{
-    AddUnitToPlayerStorage, PlayerIsReady, PlayerTurnToPlaceUnit, ServerToClientMessage,
+    AddUnitToPlayerStorage, PlayerTurnToPlaceUnit, ServerToClientMessage, UpdateReadyStateForPlayer,
 };
-use game_common::player::{Player, PlayerId};
+use game_common::player::{Player, PlayerId, ReadyState};
 use game_common::unit::Unit;
 use std::collections::HashMap;
 
@@ -13,7 +13,7 @@ pub fn finish_loading(
     players: &mut HashMap<PlayerId, Player>,
     match_data: &mut MatchData,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
-    // TODO: Persist that player is ready
+    players.get_mut(&sender).unwrap().ready_state = ReadyState::LoadedInGame;
 
     let unit_count = match_data.combat_data.unit_storage.len() as u32;
     let unit_a = Unit::create_debug_unit(unit_count + 1, sender);
@@ -26,7 +26,10 @@ pub fn finish_loading(
 
     let mut messages = vec![
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerIsReady(
-            PlayerIsReady { player_id: sender },
+            UpdateReadyStateForPlayer {
+                player_id: sender,
+                ready_state: ReadyState::LoadedInGame,
+            },
         )),
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::AddUnitToPlayer(
             AddUnitToPlayerStorage { unit: unit_a },
@@ -39,9 +42,10 @@ pub fn finish_loading(
         )),
     ];
 
-    // TODO: Store is_ready somewhere and set that.
-
-    if players.values().all(|x| true) {
+    if players
+        .values()
+        .all(|x| x.ready_state == ReadyState::LoadedInGame)
+    {
         let starting_player_id = players.keys().min().unwrap().clone();
         match_data.combat_data.current_turn = CombatTurn::place_unit(starting_player_id);
         messages.push(ServerToClientMessageVariant::Broadcast(

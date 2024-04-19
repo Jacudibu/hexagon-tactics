@@ -3,7 +3,7 @@ use state::SharedState;
 use std::error::Error;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::{info, info_span, Instrument, Level};
+use tracing::{info, Level};
 use tracing_subscriber::EnvFilter;
 use wtransport::{Endpoint, Identity, ServerConfig};
 

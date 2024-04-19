@@ -12,6 +12,8 @@ use game_common::TEST_MAP_NAME;
 pub fn start_game(
     shared_state: &mut SharedState,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
+    // TODO: Validate player readiness
+
     let map = match GameMap::load_from_file(TEST_MAP_NAME) {
         Ok(map) => map,
         Err(_) => {
