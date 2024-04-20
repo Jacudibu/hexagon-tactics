@@ -7,7 +7,7 @@ pub struct ValidationError {
 
 impl ValidationError {
     #[must_use]
-    pub fn new(message: &str) -> Self {
+    pub fn new<T: Into<String>>(message: T) -> Self {
         ValidationError {
             message: message.into(),
         }

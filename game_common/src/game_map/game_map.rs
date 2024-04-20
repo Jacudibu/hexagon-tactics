@@ -16,6 +16,7 @@ pub struct GameMap {
 }
 
 impl GameMap {
+    #[must_use]
     pub fn new(radius: u32) -> Self {
         let mut tiles = HashMap::new();
         for hex in hexx::shapes::hexagon(Hex::ORIGIN, radius) {
@@ -41,6 +42,7 @@ impl GameMap {
         VersionedMapData::load_from_file(path)
     }
 
+    #[must_use]
     pub fn field_of_movement(&self, unit: &Unit, combat_data: &CombatData) -> Vec<Hex> {
         let unit_turn = combat_data.current_turn.as_unit_turn();
         let mut result = field_of_movement_with_edge_detection(
@@ -54,6 +56,7 @@ impl GameMap {
         result
     }
 
+    #[must_use]
     pub fn calculate_path(&self, combat_data: &CombatData, coordinate: Hex) -> Option<Vec<Hex>> {
         let unit_turn = combat_data.current_turn.as_unit_turn();
         let unit = combat_data.units.get(&unit_turn.unit_id).unwrap();
@@ -62,7 +65,8 @@ impl GameMap {
         })
     }
 
-    fn calculate_path_costs(
+    #[must_use]
+    pub(crate) fn calculate_path_costs(
         &self,
         unit: &Unit,
         combat_data: &CombatData,
