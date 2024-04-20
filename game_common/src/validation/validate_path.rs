@@ -58,3 +58,53 @@ pub fn validate_path_for_current_unit(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::combat_data::CombatData;
+    use crate::game_map::GameMap;
+    use crate::unit::Unit;
+    use crate::unit_stats::UnitStats;
+    use crate::validation::validate_path_for_current_unit;
+    use hexx::Hex;
+
+    #[test]
+    fn valid_path() {
+        let unit_pos = Hex::new(-2, 0);
+        let target_pos = Hex::new(2, 0);
+        let map = GameMap::new(2);
+        let combat_data = CombatData::create_mock()
+            .with_units(vec![Unit::create_mock(1, 1)
+                .with_position(unit_pos)
+                .with_stats(UnitStats::create_mock().with_movement(4))])
+            .with_unit_turn(1);
+        let path = hexx::algorithms::a_star(unit_pos, target_pos, |_, _| Some(1)).unwrap();
+
+        let result = validate_path_for_current_unit(&map, &combat_data, &path);
+        assert!(result.is_ok(), "{:?}", result);
+    }
+
+    #[test]
+    fn empty_path() {
+        let map = GameMap::new(1);
+        let combat_data = CombatData::create_mock();
+        let result = validate_path_for_current_unit(&map, &combat_data, &Vec::new());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn path_too_long() {
+        let unit_pos = Hex::new(-2, 0);
+        let target_pos = Hex::new(2, 0);
+        let map = GameMap::new(2);
+        let combat_data = CombatData::create_mock()
+            .with_units(vec![Unit::create_mock(1, 1)
+                .with_position(unit_pos)
+                .with_stats(UnitStats::create_mock().with_movement(3))])
+            .with_unit_turn(1);
+        let path = hexx::algorithms::a_star(unit_pos, target_pos, |_, _| Some(1)).unwrap();
+
+        let result = validate_path_for_current_unit(&map, &combat_data, &path);
+        assert!(result.is_err());
+    }
+}
