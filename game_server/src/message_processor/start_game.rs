@@ -1,4 +1,4 @@
-use crate::message_processor::{validation, ServerToClientMessageVariant};
+use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::ServerState::InGame;
 use crate::state::{MatchData, SharedState};
 use game_common::combat_data::CombatData;
@@ -8,7 +8,7 @@ use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, ServerToClientMessage, StartGameAndLoadMap,
 };
 use game_common::player::ReadyState;
-use game_common::TEST_MAP_NAME;
+use game_common::{validation, TEST_MAP_NAME};
 
 pub fn start_game(
     shared_state: &mut SharedState,

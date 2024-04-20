@@ -1,10 +1,11 @@
-use crate::message_processor::{validation, ServerToClientMessageVariant};
+use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::MatchData;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
 };
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::{Player, PlayerId};
+use game_common::validation;
 use std::collections::HashMap;
 use tracing::error;
 

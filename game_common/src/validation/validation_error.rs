@@ -1,6 +1,4 @@
-use game_common::network_events::server_to_client::{
-    ErrorWhenProcessingMessage, ServerToClientMessage,
-};
+use crate::network_events::server_to_client::{ErrorWhenProcessingMessage, ServerToClientMessage};
 
 #[derive(Debug)]
 pub struct ValidationError {

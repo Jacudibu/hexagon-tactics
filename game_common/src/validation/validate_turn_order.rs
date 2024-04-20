@@ -1,7 +1,7 @@
-use crate::message_processor::validation::validation_error::ValidationError;
-use game_common::combat_data::CombatData;
-use game_common::combat_turn::CombatTurn;
-use game_common::player::PlayerId;
+use crate::combat_data::CombatData;
+use crate::combat_turn::CombatTurn;
+use crate::player::PlayerId;
+use crate::validation::validation_error::ValidationError;
 
 pub fn validate_turn_order(
     player_id: PlayerId,

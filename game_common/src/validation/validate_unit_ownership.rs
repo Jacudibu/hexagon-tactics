@@ -1,8 +1,8 @@
-use crate::message_processor::validation::validation_error::ValidationError;
-use game_common::combat_data::CombatData;
-use game_common::combat_turn::CombatTurn;
-use game_common::player::PlayerId;
-use game_common::unit::{Unit, UnitId};
+use crate::combat_data::CombatData;
+use crate::combat_turn::CombatTurn;
+use crate::player::PlayerId;
+use crate::unit::{Unit, UnitId};
+use crate::validation::validation_error::ValidationError;
 
 pub fn validate_player_owns_unit_with_id(
     player_id: PlayerId,

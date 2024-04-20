@@ -1,8 +1,9 @@
-use crate::message_processor::{create_error_response, validation, ServerToClientMessageVariant};
+use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use crate::state::MatchData;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::PlayerId;
+use game_common::validation;
 
 pub fn move_unit(
     sender: PlayerId,
@@ -10,6 +11,7 @@ pub fn move_unit(
     data: client_to_server::MoveUnit,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
+    validation::validate_path_for_current_unit(sender, &match_data.combat_data, &data.path)?;
 
     if data.path.is_empty() {
         // TODO: Throw Validation Error

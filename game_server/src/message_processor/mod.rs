@@ -10,7 +10,6 @@ mod finish_loading;
 mod move_unit;
 mod place_unit;
 mod start_game;
-mod validation;
 
 #[derive(Debug)]
 pub enum ServerToClientMessageVariant {
@@ -32,20 +31,25 @@ pub fn process_message(
                 message
             ))),
         },
-        ServerState::InGame(ref mut match_data) => match message {
-            ClientToServerMessage::FinishedLoading => {
-                finish_loading::finish_loading(sender, players, match_data)
+        ServerState::InGame(ref mut match_data) => {
+            let players = &mut shared_state.players;
+            match message {
+                ClientToServerMessage::FinishedLoading => {
+                    finish_loading::finish_loading(sender, players, match_data)
+                }
+                ClientToServerMessage::EndTurn => end_turn::end_turn(sender, match_data),
+                ClientToServerMessage::PlaceUnit(data) => {
+                    place_unit::place_unit(sender, players, match_data, data)
+                }
+                ClientToServerMessage::MoveUnit(data) => {
+                    move_unit::move_unit(sender, match_data, data)
+                }
+                _ => Err(create_error_response(format!(
+                    "Unexpected message for server state InGame: {:?}",
+                    message
+                ))),
             }
-            ClientToServerMessage::EndTurn => end_turn::end_turn(sender, match_data),
-            ClientToServerMessage::PlaceUnit(data) => {
-                place_unit::place_unit(sender, players, match_data, data)
-            }
-            ClientToServerMessage::MoveUnit(data) => move_unit::move_unit(sender, match_data, data),
-            _ => Err(create_error_response(format!(
-                "Unexpected message for server state InGame: {:?}",
-                message
-            ))),
-        },
+        }
     }
 }
 

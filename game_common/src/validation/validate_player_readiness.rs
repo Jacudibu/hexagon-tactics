@@ -1,5 +1,5 @@
-use crate::message_processor::validation::validation_error::ValidationError;
-use game_common::player::{Player, PlayerId, ReadyState};
+use crate::player::{Player, PlayerId, ReadyState};
+use crate::validation::validation_error::ValidationError;
 use std::collections::HashMap;
 
 pub fn validate_player_readiness(

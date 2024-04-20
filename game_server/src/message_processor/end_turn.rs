@@ -1,8 +1,8 @@
-use crate::message_processor::validation;
 use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::MatchData;
 use game_common::network_events::server_to_client::{ServerToClientMessage, StartUnitTurn};
 use game_common::player::PlayerId;
+use game_common::validation;
 
 pub fn end_turn(
     sender: PlayerId,
