@@ -3,6 +3,7 @@ pub mod combat_turn;
 pub mod game_map;
 pub mod network_events;
 pub mod player;
+pub mod skill;
 pub mod turn_resources;
 pub mod unit;
 pub mod unit_stats;
