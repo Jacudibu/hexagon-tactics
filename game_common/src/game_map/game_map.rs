@@ -44,7 +44,7 @@ impl GameMap {
 
     #[must_use]
     pub fn field_of_movement(&self, unit: &Unit, combat_data: &CombatData) -> Vec<Hex> {
-        let unit_turn = combat_data.current_turn.as_unit_turn();
+        let unit_turn = combat_data.current_turn.as_unit_turn().unwrap();
         let mut result = field_of_movement_with_edge_detection(
             unit.position,
             unit_turn.remaining_movement.into(),
@@ -58,7 +58,7 @@ impl GameMap {
 
     #[must_use]
     pub fn calculate_path(&self, combat_data: &CombatData, coordinate: Hex) -> Option<Vec<Hex>> {
-        let unit_turn = combat_data.current_turn.as_unit_turn();
+        let unit_turn = combat_data.current_turn.as_unit_turn().unwrap();
         let unit = combat_data.units.get(&unit_turn.unit_id).unwrap();
         hexx::algorithms::a_star(unit.position, coordinate, |from, to| {
             self.calculate_path_costs(unit, &combat_data, &from, &to)

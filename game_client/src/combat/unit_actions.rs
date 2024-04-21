@@ -101,7 +101,7 @@ pub fn show_movement_range_preview(
 ) {
     let unit = combat_data
         .units
-        .get(&combat_data.current_turn.as_unit_turn().unit_id)
+        .get(&combat_data.current_turn.as_unit_turn().unwrap().unit_id)
         .expect("TODO");
 
     let range = map.field_of_movement(unit, combat_data);
@@ -170,13 +170,14 @@ pub fn on_move_unit(
 
         let old_pos = &event.path[0];
         let new_pos = &event.path[event.path.len() - 1];
-        let unit_id = combat_data.current_turn.as_unit_turn().unit_id;
+        let unit_id = combat_data.current_turn.as_unit_turn().unwrap().unit_id;
 
         combat_data.unit_positions.remove(old_pos);
         combat_data.unit_positions.insert(new_pos.clone(), unit_id);
         combat_data
             .current_turn
             .as_unit_turn_mut()
+            .unwrap()
             .remaining_movement -= event.path.len() as u8 - 1;
 
         let unit = combat_data

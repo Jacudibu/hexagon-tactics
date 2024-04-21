@@ -1,7 +1,8 @@
 use crate::player::PlayerId;
 use crate::unit::{Unit, UnitId};
+use enum_as_inner::EnumAsInner;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, EnumAsInner)]
 pub enum CombatTurn {
     Undefined,
     PlaceUnit(PlaceUnit),
@@ -17,26 +18,6 @@ impl CombatTurn {
     #[must_use]
     pub fn start_unit_turn(unit: &Unit) -> CombatTurn {
         CombatTurn::UnitTurn(UnitTurn::start(unit))
-    }
-
-    /// panics if self is not CombatTurn::UnitTurn
-    #[must_use]
-    pub fn as_unit_turn(&self) -> &UnitTurn {
-        if let CombatTurn::UnitTurn(unit_turn) = self {
-            return unit_turn;
-        } else {
-            panic!("{:?} is not a UnitTurn!", self);
-        }
-    }
-
-    /// panics if self is not CombatTurn::UnitTurn
-    #[must_use]
-    pub fn as_unit_turn_mut(&mut self) -> &mut UnitTurn {
-        if let CombatTurn::UnitTurn(unit_turn) = self {
-            return unit_turn;
-        } else {
-            panic!("{:?} is not a UnitTurn!", self);
-        }
     }
 }
 

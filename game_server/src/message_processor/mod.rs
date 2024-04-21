@@ -11,7 +11,11 @@ mod move_unit;
 mod place_unit;
 mod start_game;
 
+#[cfg(test)]
+use enum_as_inner::EnumAsInner;
+
 #[derive(Debug)]
+#[cfg_attr(test, derive(EnumAsInner))]
 pub enum ServerToClientMessageVariant {
     SendToSender(ServerToClientMessage),
     SendToEveryoneExceptSender(ServerToClientMessage),

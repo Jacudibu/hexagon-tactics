@@ -1961,6 +1961,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum-as-inner"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ffccbb6966c05b32ef8fbac435df276c4ae4d3dc55a8cd0eb9745e6c12f546a"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.60",
+]
+
+[[package]]
 name = "epaint"
 version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2268,6 +2280,7 @@ dependencies = [
  "bevy",
  "bincode",
  "bytes",
+ "enum-as-inner",
  "hexx",
  "ron",
  "serde",
@@ -2279,6 +2292,7 @@ name = "game-server"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "enum-as-inner",
  "futures",
  "game-common",
  "hexx",
@@ -2540,6 +2554,12 @@ dependencies = [
  "widestring",
  "winapi",
 ]
+
+[[package]]
+name = "heck"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hermit-abi"

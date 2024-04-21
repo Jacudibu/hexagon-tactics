@@ -17,9 +17,11 @@ pub fn move_unit(
         &data.path,
     )?;
 
-    // TODO: Test
-
-    let turn = match_data.combat_data.current_turn.as_unit_turn_mut();
+    let turn = match_data
+        .combat_data
+        .current_turn
+        .as_unit_turn_mut()
+        .unwrap();
     turn.remaining_movement -= data.path.len() as u8 - 1;
 
     let unit = match_data.combat_data.units.get_mut(&turn.unit_id).unwrap();
@@ -48,7 +50,7 @@ mod tests {
     use hexx::{EdgeDirection, Hex};
 
     #[test]
-    fn move_unit_should_work() {
+    fn move_unit_with_valid_data_should_work() {
         let unit_id = 1;
         let unit_movement = 3;
         let unit_start_pos = Hex::ZERO;
@@ -61,11 +63,21 @@ mod tests {
             loaded_map: GameMap::new(2),
         };
 
-        let data = MoveUnit {
-            path: vec![unit_start_pos, unit_new_pos],
-        };
+        let path = vec![unit_start_pos, unit_new_pos];
+        let data = MoveUnit { path: path.clone() };
 
         let result = move_unit(1, &mut match_data, data).unwrap();
+        assert_eq!(1, result.len());
+        assert_eq!(
+            path,
+            result[0]
+                .as_broadcast()
+                .unwrap()
+                .as_move_unit()
+                .unwrap()
+                .path
+        );
+
         assert_eq!(
             match_data.combat_data.units[&unit_id].position,
             unit_new_pos
@@ -75,6 +87,7 @@ mod tests {
                 .combat_data
                 .current_turn
                 .as_unit_turn()
+                .unwrap()
                 .remaining_movement,
             unit_movement - 1
         );

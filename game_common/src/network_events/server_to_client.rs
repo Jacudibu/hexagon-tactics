@@ -4,7 +4,11 @@ use bevy::prelude::Event;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "test_helpers")]
+use enum_as_inner::EnumAsInner;
+
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[cfg_attr(feature = "test_helpers", derive(EnumAsInner))]
 pub enum ServerToClientMessage {
     YouConnected(YouConnected),
     OtherPlayerConnected(OtherPlayerConnected),
