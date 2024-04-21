@@ -19,11 +19,10 @@ pub fn move_unit(
 
     // TODO: Test
 
-    let unit = match_data
-        .combat_data
-        .units
-        .get_mut(&match_data.combat_data.current_turn.as_unit_turn().unit_id)
-        .expect("TODO");
+    let turn = match_data.combat_data.current_turn.as_unit_turn_mut();
+    turn.remaining_movement -= data.path.len() as u8 - 1;
+
+    let unit = match_data.combat_data.units.get_mut(&turn.unit_id).unwrap();
 
     match_data.combat_data.unit_positions.remove(&unit.position);
     unit.position = data.path.last().unwrap().clone();
@@ -35,4 +34,49 @@ pub fn move_unit(
     Ok(vec![ServerToClientMessageVariant::Broadcast(
         ServerToClientMessage::MoveUnit(server_to_client::MoveUnit { path: data.path }),
     )])
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::message_processor::move_unit::move_unit;
+    use crate::state::MatchData;
+    use game_common::combat_data::CombatData;
+    use game_common::game_map::GameMap;
+    use game_common::network_events::client_to_server::MoveUnit;
+    use game_common::unit::Unit;
+    use game_common::unit_stats::UnitStats;
+    use hexx::{EdgeDirection, Hex};
+
+    #[test]
+    fn move_unit_should_work() {
+        let unit_id = 1;
+        let unit_movement = 3;
+        let unit_start_pos = Hex::ZERO;
+        let unit_new_pos = unit_start_pos.neighbor(EdgeDirection::POINTY_RIGHT);
+        let mut match_data = MatchData {
+            combat_data: CombatData::create_mock()
+                .with_units(vec![Unit::create_mock(unit_id, 1)
+                    .with_stats(UnitStats::create_mock().with_movement(unit_movement))])
+                .with_unit_turn(unit_id),
+            loaded_map: GameMap::new(2),
+        };
+
+        let data = MoveUnit {
+            path: vec![unit_start_pos, unit_new_pos],
+        };
+
+        let result = move_unit(1, &mut match_data, data).unwrap();
+        assert_eq!(
+            match_data.combat_data.units[&unit_id].position,
+            unit_new_pos
+        );
+        assert_eq!(
+            match_data
+                .combat_data
+                .current_turn
+                .as_unit_turn()
+                .remaining_movement,
+            unit_movement - 1
+        );
+    }
 }

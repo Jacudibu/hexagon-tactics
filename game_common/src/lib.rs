@@ -5,7 +5,7 @@ pub mod network_events;
 pub mod player;
 pub mod turn_resources;
 pub mod unit;
-mod unit_stats;
+pub mod unit_stats;
 pub mod validation;
 
 pub const TEST_MAP_NAME: &str = "test_map.map";

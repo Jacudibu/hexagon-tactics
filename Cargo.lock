@@ -2281,6 +2281,7 @@ dependencies = [
  "bytes",
  "futures",
  "game-common",
+ "hexx",
  "tokio",
  "tracing",
  "tracing-subscriber",
