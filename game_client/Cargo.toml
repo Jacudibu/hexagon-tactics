@@ -29,9 +29,9 @@ bevy = { workspace = true, features = [
     "default_font",
     "webgl2",
 ] }
-bevy_asset_loader = { version = "0.20.0", features = ["2d", "3d"] }
-bevy_egui = "0.26.0"
-bevy-inspector-egui = "0.23.4"
+bevy_asset_loader = { version = "0.20.1", features = ["2d", "3d"] }
+bevy_egui = "0.27.0"
+bevy-inspector-egui = "0.24.0"
 bevy_kira_audio = "0.19.0"
 bevy_screen_diagnostics = "0.5.0"
 bevy_mod_raycast = "0.17.0"

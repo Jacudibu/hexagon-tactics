@@ -18,8 +18,9 @@ opt-level = 3
 [workspace.dependencies]
 bevy = { version = "0.13.2", default-features = false, features = [] }
 bytes = "1.6.0"
-futures = "0.3.30"
-hexx = { version = "0.16.1", features = ["serde"] }
-tokio = { version = "1.36.0", features = ["full"] }
-wtransport = "0.1.12"
 enum-as-inner = "0.6.0"
+futures = "0.3.30"
+hexx = { version = "0.17.0", features = ["serde"] }
+wtransport = "0.1.12"
+serde = { version = "1.0.197", features = ["derive"] }
+tokio = { version = "1.36.0", features = ["full"] }
