@@ -17,5 +17,5 @@ wtransport.workspace = true
 
 [dev-dependencies]
 game-common = { path = "../game_common", features = ["test_helpers"] }
-enum-as-inner.worskpace = true
+enum-as-inner.workspace = true
 hexx.workspace = true

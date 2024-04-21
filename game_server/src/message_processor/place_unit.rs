@@ -1,5 +1,6 @@
 use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::MatchData;
+use game_common::combat_turn::{CombatTurn, PlaceUnit};
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
 };
@@ -63,6 +64,9 @@ pub fn place_unit(
     } else {
         // TODO: Better Turn Order
         let next_player_id = match_data.combat_data.unit_storage[0].owner;
+        match_data.combat_data.current_turn = CombatTurn::PlaceUnit(PlaceUnit {
+            player_id: next_player_id,
+        });
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerTurnToPlaceUnit(
             PlayerTurnToPlaceUnit {
                 player: next_player_id,

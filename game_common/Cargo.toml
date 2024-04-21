@@ -14,7 +14,7 @@ serde = { version = "1.0.197", features = ["derive"] }
 
 bevy.workspace = true
 bytes.workspace = true
-enum-as-inner.worskpace = true
+enum-as-inner.workspace = true
 hexx.workspace = true
 
 [dev-dependencies]
