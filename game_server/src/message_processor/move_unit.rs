@@ -68,15 +68,8 @@ mod tests {
 
         let result = move_unit(1, &mut match_data, data).unwrap();
         assert_eq!(1, result.len());
-        assert_eq!(
-            path,
-            result[0]
-                .as_broadcast()
-                .unwrap()
-                .as_move_unit()
-                .unwrap()
-                .path
-        );
+        let result = result[0].as_broadcast().unwrap().as_move_unit().unwrap();
+        assert_eq!(path, result.path);
 
         assert_eq!(
             match_data.combat_data.units[&unit_id].position,

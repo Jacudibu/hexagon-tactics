@@ -10,6 +10,7 @@ mod finish_loading;
 mod move_unit;
 mod place_unit;
 mod start_game;
+mod use_skill;
 
 #[cfg(test)]
 use enum_as_inner::EnumAsInner;
@@ -47,6 +48,9 @@ pub fn process_message(
                 }
                 ClientToServerMessage::MoveUnit(data) => {
                     move_unit::move_unit(sender, match_data, data)
+                }
+                ClientToServerMessage::UseSkill(data) => {
+                    use_skill::use_skill(sender, match_data, data)
                 }
                 _ => Err(create_error_response(format!(
                     "Unexpected message for server state InGame: {:?}",

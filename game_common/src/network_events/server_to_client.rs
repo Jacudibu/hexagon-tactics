@@ -4,6 +4,7 @@ use bevy::prelude::Event;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
+use crate::skill::{SkillId, SkillInvocationResult};
 #[cfg(feature = "test_helpers")]
 use enum_as_inner::EnumAsInner;
 
@@ -20,6 +21,7 @@ pub enum ServerToClientMessage {
     PlaceUnit(PlaceUnit),
     StartUnitTurn(StartUnitTurn),
     MoveUnit(MoveUnit),
+    UseSkill(UseSkill),
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 }
@@ -76,4 +78,10 @@ pub struct StartUnitTurn {
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MoveUnit {
     pub path: Vec<Hex>,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct UseSkill {
+    pub id: SkillId,
+    pub result: SkillInvocationResult,
 }

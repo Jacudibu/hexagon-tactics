@@ -17,6 +17,7 @@ impl Plugin for IncomingMessageProcessorPlugin {
             .add_event::<server_to_client::MoveUnit>()
             .add_event::<server_to_client::YouConnected>()
             .add_event::<server_to_client::OtherPlayerConnected>()
+            .add_event::<server_to_client::UseSkill>()
             .add_systems(
                 PreUpdate,
                 receive_updates.run_if(
@@ -39,6 +40,7 @@ fn receive_updates(
     mut move_unit: EventWriter<server_to_client::MoveUnit>,
     mut you_connected: EventWriter<server_to_client::YouConnected>,
     mut other_player_connected: EventWriter<server_to_client::OtherPlayerConnected>,
+    mut use_skill: EventWriter<server_to_client::UseSkill>,
 ) {
     if let Ok(bytes) = connection.message_receiver.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
@@ -92,6 +94,9 @@ fn receive_updates(
             }
             ServerToClientMessage::MoveUnit(event) => {
                 move_unit.send(event);
+            }
+            ServerToClientMessage::UseSkill(event) => {
+                use_skill.send(event);
             }
         };
     }

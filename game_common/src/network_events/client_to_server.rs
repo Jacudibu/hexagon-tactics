@@ -1,3 +1,4 @@
+use crate::skill::SkillId;
 use crate::unit::UnitId;
 use bevy::prelude::Event;
 use hexx::Hex;
@@ -11,6 +12,7 @@ pub enum ClientToServerMessage {
 
     PlaceUnit(PlaceUnit),
     MoveUnit(MoveUnit),
+    UseSkill(UseSkill),
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -22,4 +24,9 @@ pub struct PlaceUnit {
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MoveUnit {
     pub path: Vec<Hex>,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct UseSkill {
+    pub id: SkillId,
 }

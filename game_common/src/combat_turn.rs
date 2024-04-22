@@ -30,6 +30,7 @@ pub struct PlaceUnit {
 pub struct UnitTurn {
     pub unit_id: UnitId,
     pub remaining_movement: u8,
+    pub remaining_actions: u8,
 }
 
 impl UnitTurn {
@@ -38,6 +39,7 @@ impl UnitTurn {
         UnitTurn {
             unit_id: unit.id,
             remaining_movement: unit.stats_after_buffs.movement,
+            remaining_actions: 1,
         }
     }
 }
