@@ -29,4 +29,5 @@ pub struct MoveUnit {
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct UseSkill {
     pub id: SkillId,
+    pub target_coordinates: Hex,
 }

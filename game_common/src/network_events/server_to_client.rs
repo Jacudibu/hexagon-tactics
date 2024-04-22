@@ -83,5 +83,6 @@ pub struct MoveUnit {
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct UseSkill {
     pub id: SkillId,
-    pub result: SkillInvocationResult,
+    pub target_coordinates: Hex,
+    pub hits: Vec<SkillInvocationResult>,
 }

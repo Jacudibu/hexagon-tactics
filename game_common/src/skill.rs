@@ -1,5 +1,5 @@
 use crate::game_map::GameMap;
-use crate::unit::Unit;
+use crate::unit::{Unit, UnitId};
 use serde::{Deserialize, Serialize};
 
 pub type SkillId = u32;
@@ -9,12 +9,16 @@ pub struct Skill {
     pub id: SkillId,
     pub name: String,
     pub base_power: u32,
+    pub mp_costs: u32,
     pub range: SkillRange,
 }
 
 impl Skill {
-    pub fn calculate_damage(user: &Unit, target: &Unit, map: &GameMap) -> SkillInvocationResult {
-        SkillInvocationResult::default()
+    pub fn calculate_damage(&self, user: &Unit, target: &Unit) -> SkillInvocationResult {
+        SkillInvocationResult {
+            physical_damage: user.stats_after_buffs.strength + self.base_power,
+            target_unit_id: target.id,
+        }
     }
 
     pub fn debug_attack() -> Skill {
@@ -22,6 +26,7 @@ impl Skill {
             id: 1,
             name: "Debug Attack".into(),
             base_power: 5,
+            mp_costs: 0,
             range: SkillRange { min: 1, max: 1 },
         }
     }
@@ -35,11 +40,6 @@ pub struct SkillRange {
 
 #[derive(Default, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SkillInvocationResult {
-    pub target: SkillInvocationResultElement,
-    pub user: Option<SkillInvocationResultElement>,
-}
-
-#[derive(Default, Serialize, Deserialize, PartialEq, Debug)]
-pub struct SkillInvocationResultElement {
+    pub target_unit_id: UnitId,
     pub physical_damage: u32,
 }
