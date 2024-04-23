@@ -43,6 +43,7 @@ impl Plugin for UnitActionPlugin {
                     .run_if(resource_exists::<ActiveUnitAction>)
                     .run_if(resource_exists::<HighlightedTiles>),
                 on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
+                on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
             ),
         );
     }
@@ -231,6 +232,40 @@ pub fn on_move_unit(
         if let Ok(mut transform) = unit_entities.get_mut(entity) {
             transform.translation = unit_placement::unit_position_on_hexagon(unit.position, &map)
         }
+
+        if unit.owner == local_player_id.id {
+            next_combat_state.set(CombatState::ThisPlayerUnitTurn);
+        } else {
+            next_combat_state.set(CombatState::WaitingForOtherPlayer);
+        }
+    }
+}
+
+pub fn on_use_skill(
+    mut events: EventReader<server_to_client::UseSkill>,
+    mut combat_data: ResMut<CombatData>,
+    mut next_combat_state: ResMut<NextState<CombatState>>,
+    local_player_id: Res<LocalPlayerId>,
+) {
+    for event in events.read() {
+        for x in &event.hits {
+            let target = combat_data.units.get_mut(&x.target_unit_id).unwrap();
+
+            // TODO: Stat reduction should be extracted into common
+            if target.hp < x.physical_damage {
+                target.hp = 0;
+            } else {
+                target.hp -= x.physical_damage;
+            }
+        }
+
+        // TODO: Animate
+
+        let turn = combat_data.current_turn.as_unit_turn_mut().unwrap();
+        turn.remaining_actions -= 1;
+        let unit_id = turn.unit_id;
+
+        let unit = combat_data.units.get(&unit_id).unwrap();
 
         if unit.owner == local_player_id.id {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
