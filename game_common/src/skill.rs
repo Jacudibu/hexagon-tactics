@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 pub type SkillId = u32;
 
+pub const DEBUG_ATTACK_ID: SkillId = 1;
+
 #[derive(Debug, Clone)]
 pub struct Skill {
     pub id: SkillId,
@@ -23,7 +25,7 @@ impl Skill {
 
     pub fn debug_attack() -> Skill {
         Skill {
-            id: 1,
+            id: DEBUG_ATTACK_ID,
             name: "Debug Attack".into(),
             base_power: 5,
             mp_costs: 0,

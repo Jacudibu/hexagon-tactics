@@ -16,7 +16,9 @@ use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
+use game_common::skill::{Skill, SkillId};
 use game_common::DESYNC_TODO_MESSAGE;
+use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 use std::cmp::PartialEq;
 use std::ops::Deref;
@@ -49,11 +51,12 @@ impl Plugin for UnitActionPlugin {
 #[derive(Resource, Eq, PartialEq)]
 pub enum ActiveUnitAction {
     Move,
+    UseSkill(SkillId),
 }
 
 pub fn set_or_toggle_action(
-    mut commands: Commands,
-    current_action: Option<Res<ActiveUnitAction>>,
+    commands: &mut Commands,
+    current_action: &Option<Res<ActiveUnitAction>>,
     new_action: ActiveUnitAction,
 ) {
     if let Some(current_action) = current_action {
@@ -67,12 +70,12 @@ pub fn set_or_toggle_action(
 }
 
 pub fn change_action_on_input(
-    commands: Commands,
+    mut commands: Commands,
     action_state: Res<ActionState<CombatAction>>,
     current_action: Option<Res<ActiveUnitAction>>,
 ) {
     if action_state.just_pressed(&CombatAction::MoveUnit) {
-        set_or_toggle_action(commands, current_action, ActiveUnitAction::Move);
+        set_or_toggle_action(&mut commands, &current_action, ActiveUnitAction::Move);
     }
 }
 
@@ -91,6 +94,9 @@ pub fn on_active_unit_action_changed(
         ActiveUnitAction::Move => {
             show_movement_range_preview(commands, &combat_data, &map);
         }
+        ActiveUnitAction::UseSkill(id) => {
+            show_skill_range_preview(id, commands, &combat_data, &map);
+        }
     }
 }
 
@@ -107,6 +113,29 @@ pub fn show_movement_range_preview(
     let range = map.field_of_movement(unit, combat_data);
 
     commands.insert_resource(HighlightedTiles { tiles: range })
+}
+
+pub fn show_skill_range_preview(
+    _skill_id: &SkillId,
+    mut commands: Commands,
+    combat_data: &CombatData,
+    map: &GameMap,
+) {
+    let unit = combat_data
+        .units
+        .get(&combat_data.current_turn.as_unit_turn().unwrap().unit_id)
+        .expect("TODO");
+
+    let skill = Skill::debug_attack();
+
+    let tiles: Vec<Hex> = hexx::algorithms::range_fov(unit.position, skill.range.max, |hex| {
+        !map.tiles.contains_key(&hex)
+    })
+    .into_iter()
+    .filter(|x| x.unsigned_distance_to(unit.position) >= skill.range.min)
+    .collect();
+
+    commands.insert_resource(HighlightedTiles { tiles })
 }
 
 pub fn execute_action_on_click(
@@ -134,8 +163,8 @@ pub fn execute_action_on_click(
     }
 
     match active_unit_action.deref() {
-        // TODO: Path should already exist somewhere for highlighting/preview
         ActiveUnitAction::Move => {
+            // TODO: Path should already exist somewhere for highlighting/preview
             let Some(path) = map.calculate_path(&combat_data, selected_tile.clone()) else {
                 error!(
                     "Unable to calculate unit path for {:?} to {:?}",
@@ -147,10 +176,19 @@ pub fn execute_action_on_click(
             event_writer.send(ClientToServerMessage::MoveUnit(
                 client_to_server::MoveUnit { path },
             ));
-            next_combat_state.set(CombatState::WaitingForServer);
-            commands.remove_resource::<ActiveUnitAction>(); // TODO: Maybe we should extract that into a state transition event
+        }
+        ActiveUnitAction::UseSkill(id) => {
+            event_writer.send(ClientToServerMessage::UseSkill(
+                client_to_server::UseSkill {
+                    id: id.clone(),
+                    target_coordinates: selected_tile.clone(),
+                },
+            ));
         }
     }
+
+    next_combat_state.set(CombatState::WaitingForServer);
+    commands.remove_resource::<ActiveUnitAction>(); // TODO: Maybe we should extract that into a state transition event
 }
 
 pub fn on_move_unit(

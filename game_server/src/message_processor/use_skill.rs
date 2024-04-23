@@ -49,7 +49,12 @@ pub fn use_skill(
             .units
             .get_mut(&x.target_unit_id)
             .unwrap();
-        unit.hp -= x.physical_damage;
+
+        if x.physical_damage > unit.hp {
+            unit.hp = 0;
+        } else {
+            unit.hp -= x.physical_damage;
+        }
     }
 
     match_data

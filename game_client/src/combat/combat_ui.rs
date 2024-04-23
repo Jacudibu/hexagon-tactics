@@ -11,6 +11,7 @@ use bevy_egui::egui::{Align2, Pos2, Ui};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
+use game_common::skill::DEBUG_ATTACK_ID;
 use game_common::unit::Unit;
 
 pub(in crate::combat) struct CombatUiPlugin;
@@ -101,7 +102,7 @@ fn draw_unit_info(mut egui: EguiContexts, unit: &Unit, anchor: Align2) {
 }
 
 fn draw_state_ui(
-    commands: Commands,
+    mut commands: Commands,
     mut egui: EguiContexts,
     combat_state: Res<State<CombatState>>,
     combat_data: Res<CombatData>,
@@ -121,7 +122,7 @@ fn draw_state_ui(
             CombatState::PlaceUnit => build_place_unit_state_ui(ui),
             CombatState::ThisPlayerUnitTurn => {
                 build_this_player_unit_turn_ui(
-                    commands,
+                    &mut commands,
                     ui,
                     &combat_data,
                     active_unit_action,
@@ -155,7 +156,7 @@ fn build_waiting_for_player_ui(ui: &mut Ui, combat_data: &CombatData) {
 }
 
 fn build_this_player_unit_turn_ui(
-    commands: Commands,
+    commands: &mut Commands,
     ui: &mut Ui,
     combat_data: &CombatData,
     active_unit_action: Option<Res<ActiveUnitAction>>,
@@ -171,8 +172,15 @@ fn build_this_player_unit_turn_ui(
         if ui.button("Move").clicked() {
             unit_actions::set_or_toggle_action(
                 commands,
-                active_unit_action,
+                &active_unit_action,
                 ActiveUnitAction::Move,
+            );
+        }
+        if ui.button("Attack").clicked() {
+            unit_actions::set_or_toggle_action(
+                commands,
+                &active_unit_action,
+                ActiveUnitAction::UseSkill(DEBUG_ATTACK_ID),
             );
         }
         if ui.button("End Turn").clicked() {
