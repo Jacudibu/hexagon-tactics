@@ -3,16 +3,18 @@ use crate::map::highlights::attack_highlights::{AttackHighlightMarker, AttackHig
 use crate::map::highlights::cursor_highlights::CursorHighlightMarker;
 use crate::map::highlights::range_highlights::{RangeHighlightMarker, RangeHighlights};
 use crate::map::highlights::HighlightedTiles;
-use crate::map::tile_cursor::position_for_tile;
-use crate::map::{MapState, MouseCursorOnTile, TileChangeEvent};
+use crate::map::{CursorOnTile, MapState, TileChangeEvent, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, Update};
 use bevy::core::Name;
+use bevy::log::error;
+use bevy::math::Vec3;
 use bevy::pbr::{NotShadowCaster, PbrBundle};
 use bevy::prelude::{
     default, on_event, resource_changed_or_removed, Commands, Component, Condition, Entity,
     IntoSystemConfigs, OnExit, Plugin, Query, Res, Resource, Transform, With,
 };
-use game_common::game_map::GameMap;
+use game_common::game_map::{GameMap, HEX_LAYOUT};
+use hexx::Hex;
 
 const EXTRA_HEIGHT: f32 = 0.005;
 
@@ -26,8 +28,8 @@ impl Plugin for HighlightPlugin {
                     .run_if(resource_changed_or_removed::<RangeHighlights>()),
                 on_highlight_change::<AttackHighlightMarker, AttackHighlights>
                     .run_if(resource_changed_or_removed::<AttackHighlights>()),
-                on_highlight_change::<CursorHighlightMarker, MouseCursorOnTile>.run_if(
-                    resource_changed_or_removed::<MouseCursorOnTile>()
+                on_highlight_change::<CursorHighlightMarker, CursorOnTile>.run_if(
+                    resource_changed_or_removed::<CursorOnTile>()
                         .or_else(on_event::<TileChangeEvent>()),
                 ),
             ),
@@ -54,7 +56,7 @@ fn on_highlight_change<TMarker: Component + Default, TResource: Resource + Highl
     };
 
     for hex in highlighted_tiles.tiles().iter() {
-        let translation = position_for_tile(&map, hex, EXTRA_HEIGHT);
+        let translation = highlight_position(&map, hex, EXTRA_HEIGHT);
 
         commands.spawn((
             Name::new(format!(
@@ -89,5 +91,25 @@ fn clean_up(
     }
     for x in attack.iter() {
         commands.entity(x).despawn();
+    }
+}
+
+fn highlight_position(map: &GameMap, hex: &Hex, extra_height: f32) -> Vec3 {
+    let position = HEX_LAYOUT.hex_to_world_pos(hex.clone());
+    let height = if let Some(tile) = map.tiles.get(hex) {
+        if let Some(fluid) = &tile.fluid {
+            tile.height as f32 + fluid.height
+        } else {
+            tile.height as f32
+        }
+    } else {
+        error!("Was unable to find a tile for {:?} in map.", hex);
+        0.0
+    };
+
+    Vec3 {
+        x: position.x,
+        y: height * METERS_PER_TILE_HEIGHT_UNIT + extra_height,
+        z: position.y,
     }
 }

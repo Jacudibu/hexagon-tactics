@@ -1,5 +1,5 @@
 use crate::map::map_plugin::MapState;
-use crate::map::{MouseCursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{CursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::math::Vec3;
 use bevy::prelude::{
@@ -62,7 +62,7 @@ fn draw_hexagon_gizmos(mut gizmos: Gizmos<HexagonOutlineGizmos>, map: Res<GameMa
 }
 
 fn draw_cursor_gizmos(
-    cursor: Option<Res<MouseCursorOnTile>>,
+    cursor: Option<Res<CursorOnTile>>,
     mut gizmos: Gizmos<CursorGizmos>,
     map: Res<GameMap>,
 ) {

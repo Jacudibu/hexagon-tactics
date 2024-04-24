@@ -6,10 +6,8 @@ use bevy_mod_raycast::prelude::RaycastPluginState;
 use hexx::Hex;
 
 use crate::camera::MainCamera;
-use game_common::game_map::{GameMap, HEX_LAYOUT};
 
 use crate::map::map_plugin::{HexagonTileComponent, MapState};
-use crate::map::METERS_PER_TILE_HEIGHT_UNIT;
 use crate::MouseCursorOverUiState;
 
 pub(in crate::map) struct TileCursorPlugin;
@@ -48,14 +46,14 @@ pub struct TileCursor {
 }
 
 #[derive(Resource, Debug)]
-pub struct MouseCursorOnTile {
+pub struct CursorOnTile {
     pub temp_hexes: Vec<Hex>, // TODO: remove this
     pub hex: Hex,
 }
 
 fn update_mouse_cursor(
     mut commands: Commands,
-    mouse_cursor: Option<ResMut<MouseCursorOnTile>>,
+    mouse_cursor: Option<ResMut<CursorOnTile>>,
     tile_ray: Query<&RaycastSource<TileRaycastSet>>,
     ray_targets: Query<&HexagonTileComponent, With<RaycastMesh<TileRaycastSet>>>,
 ) {
@@ -74,7 +72,7 @@ fn update_mouse_cursor(
                                 mouse_cursor.temp_hexes = vec![tile_coordinates.hex];
                             }
                         } else {
-                            commands.insert_resource(MouseCursorOnTile {
+                            commands.insert_resource(CursorOnTile {
                                 hex: tile_coordinates.hex,
                                 temp_hexes: vec![tile_coordinates.hex],
                             });
@@ -90,27 +88,6 @@ fn update_mouse_cursor(
     }
 
     if mouse_cursor.is_some() {
-        commands.remove_resource::<MouseCursorOnTile>()
-    }
-}
-
-const EXTRA_HEIGHT: f32 = 0.01;
-pub fn position_for_tile(map: &GameMap, hex: &Hex, extra_height: f32) -> Vec3 {
-    let position = HEX_LAYOUT.hex_to_world_pos(hex.clone());
-    let height = if let Some(tile) = map.tiles.get(hex) {
-        if let Some(fluid) = &tile.fluid {
-            tile.height as f32 + fluid.height
-        } else {
-            tile.height as f32
-        }
-    } else {
-        error!("Was unable to find a tile for {:?} in map.", hex);
-        0.0
-    };
-
-    Vec3 {
-        x: position.x,
-        y: height * METERS_PER_TILE_HEIGHT_UNIT + extra_height,
-        z: position.y,
+        commands.remove_resource::<CursorOnTile>()
     }
 }

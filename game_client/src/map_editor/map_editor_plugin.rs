@@ -17,9 +17,7 @@ use leafwing_input_manager::Actionlike;
 
 use game_common::game_map::{Fluid, FluidKind, GameMap, TileData, TileSurface, MAX_HEIGHT};
 
-use crate::map::{
-    DespawnMapCommand, MapState, MouseCursorOnTile, SpawnMapCommand, TileChangeEvent,
-};
+use crate::map::{CursorOnTile, DespawnMapCommand, MapState, SpawnMapCommand, TileChangeEvent};
 use crate::map_editor::editor_ui::MapEditorUiPlugin;
 use crate::{ApplicationState, MouseCursorOverUiState};
 
@@ -176,7 +174,7 @@ impl MultiselectData {
 fn use_tool(
     map: ResMut<GameMap>,
     active_tool: Res<MapEditorTool>,
-    cursor: Option<Res<MouseCursorOnTile>>,
+    cursor: Option<Res<CursorOnTile>>,
     input_state: Res<ActionState<MapEditorAction>>,
     mut multiselect_data: Local<MultiselectData>,
     mut tile_change_event: EventWriter<TileChangeEvent>,
@@ -219,7 +217,7 @@ fn use_tool(
 fn create_tool_events_for_tile(
     mut map: ResMut<GameMap>,
     active_tool: &Res<MapEditorTool>,
-    cursor: &MouseCursorOnTile,
+    cursor: &CursorOnTile,
     mut multiselect_data: Local<MultiselectData>,
     tile_change_event: &mut EventWriter<TileChangeEvent>,
 ) {

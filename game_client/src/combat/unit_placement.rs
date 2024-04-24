@@ -2,7 +2,7 @@ use crate::combat::combat_input::CombatAction;
 use crate::combat::combat_plugin::CombatState;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::load::CharacterSprites;
-use crate::map::{MouseCursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{CursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::prelude::*;
 use bevy_sprite3d::{Sprite3d, Sprite3dParams};
 use game_common::combat_data::CombatData;
@@ -46,7 +46,7 @@ fn input_listener(
     mut currently_placed_unit: ResMut<CurrentlyPlacedUnit>,
     action_state: Res<ActionState<CombatAction>>,
     combat_data: Res<CombatData>,
-    cursor: Option<Res<MouseCursorOnTile>>,
+    cursor: Option<Res<CursorOnTile>>,
     mut client_to_server_events: EventWriter<ClientToServerMessage>,
 ) {
     let units = &combat_data.unit_storage;

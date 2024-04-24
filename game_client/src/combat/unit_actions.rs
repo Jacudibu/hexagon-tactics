@@ -4,7 +4,7 @@ use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_placement;
 use crate::combat::unit_placement::UnitMarker;
-use crate::map::{AttackHighlights, MouseCursorOnTile, RangeHighlights};
+use crate::map::{AttackHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::App;
@@ -52,7 +52,7 @@ impl Plugin for UnitActionPlugin {
                 on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
                 update_attack_highlights.run_if(
                     resource_changed_or_removed::<ActiveUnitAction>()
-                        .or_else(resource_changed_or_removed::<MouseCursorOnTile>()),
+                        .or_else(resource_changed_or_removed::<CursorOnTile>()),
                 ),
             ),
         );
@@ -171,7 +171,7 @@ pub fn execute_action_on_click(
     action_state: Res<ActionState<CombatAction>>,
     active_unit_action: Res<ActiveUnitAction>,
     highlighted_tiles: Res<RangeHighlights>,
-    mouse_cursor_on_tile: Option<Res<MouseCursorOnTile>>,
+    mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
     mut event_writer: EventWriter<ClientToServerMessage>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
 ) {
@@ -303,7 +303,7 @@ pub fn on_use_skill(
 pub fn update_attack_highlights(
     mut commands: Commands,
     active_unit_action: Option<Res<ActiveUnitAction>>,
-    mouse_cursor_on_tile: Option<Res<MouseCursorOnTile>>,
+    mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
 ) {
     let Some(active_unit_action) = active_unit_action else {
         commands.remove_resource::<AttackHighlights>();

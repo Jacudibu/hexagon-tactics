@@ -1,4 +1,4 @@
-use crate::map::tile_cursor::MouseCursorOnTile;
+use crate::map::tile_cursor::CursorOnTile;
 use crate::map::MapState;
 use crate::MouseCursorOverUiState;
 use bevy::app::{App, First, Plugin, Update};
@@ -19,7 +19,7 @@ impl Plugin for MapUiPlugin {
             .add_systems(
                 Update,
                 tile_cursor_ui
-                    .run_if(resource_exists::<MouseCursorOnTile>)
+                    .run_if(resource_exists::<CursorOnTile>)
                     .run_if(in_state(MapState::Loaded)),
             );
     }
@@ -41,7 +41,7 @@ fn detect_mouse_cursor_over_ui(
     }
 }
 
-fn tile_cursor_ui(mut egui: EguiContexts, cursor: Res<MouseCursorOnTile>, map: Res<GameMap>) {
+fn tile_cursor_ui(mut egui: EguiContexts, cursor: Res<CursorOnTile>, map: Res<GameMap>) {
     let text = if let Some(tile) = map.tiles.get(&cursor.hex) {
         if tile.height == 0 {
             return;

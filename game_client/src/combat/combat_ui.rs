@@ -2,7 +2,7 @@ use crate::combat::combat_plugin::CombatState;
 use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionEvent};
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
-use crate::map::{MapState, MouseCursorOnTile};
+use crate::map::{CursorOnTile, MapState};
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::*;
@@ -55,7 +55,7 @@ fn draw_currently_placed_unit_info(
 
 fn draw_selected_unit_info(
     egui: EguiContexts,
-    cursor: Option<Res<MouseCursorOnTile>>,
+    cursor: Option<Res<CursorOnTile>>,
     combat_data: Res<CombatData>,
 ) {
     let Some(cursor) = cursor else {
