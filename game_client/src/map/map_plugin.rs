@@ -1,15 +1,11 @@
-use crate::map::highlighted_tiles;
-use crate::map::highlighted_tiles::{RangeHighlightMarker, RangeHighlights};
+use crate::map::highlights::plugin::HighlightPlugin;
 use crate::map::map_gizmos::MapGizmosPlugin;
 use crate::map::map_ui::MapUiPlugin;
 use crate::map::spawning::MapSpawningPlugin;
 use crate::map::tile_cursor::TileCursorPlugin;
 use crate::map::update_tile::TileUpdaterPlugin;
 use bevy::app::{App, Plugin};
-use bevy::prelude::{
-    resource_changed_or_removed, Component, Entity, IntoSystemConfigs, Reflect, Resource, States,
-    Update,
-};
+use bevy::prelude::{Component, Entity, Reflect, Resource, States};
 use bevy::utils::HashMap;
 use hexx::Hex;
 
@@ -23,11 +19,7 @@ impl Plugin for GameMapPlugin {
         app.add_plugins(MapUiPlugin);
         app.add_plugins(MapSpawningPlugin);
         app.add_plugins(TileUpdaterPlugin);
-        app.add_systems(
-            Update,
-            highlighted_tiles::on_highlight_change::<RangeHighlightMarker, RangeHighlights>
-                .run_if(resource_changed_or_removed::<RangeHighlights>()),
-        );
+        app.add_plugins(HighlightPlugin);
     }
 }
 

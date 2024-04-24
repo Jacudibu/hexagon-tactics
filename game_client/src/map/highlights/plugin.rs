@@ -1,38 +1,31 @@
 use crate::load::{CursorMaterials, HexagonMeshes};
+use crate::map::highlights::range_highlights::RangeHighlightMarker;
+use crate::map::highlights::HighlightedTiles;
 use crate::map::tile_cursor::position_for_tile;
-use bevy::asset::Handle;
+use crate::map::RangeHighlights;
+use bevy::app::{App, Update};
 use bevy::core::Name;
-use bevy::pbr::{NotShadowCaster, PbrBundle, StandardMaterial};
-use bevy::prelude::{default, Commands, Component, Entity, Query, Res, Resource, Transform, With};
+use bevy::pbr::{NotShadowCaster, PbrBundle};
+use bevy::prelude::{
+    default, resource_changed_or_removed, Commands, Component, Entity, IntoSystemConfigs, Plugin,
+    Query, Res, Resource, Transform, With,
+};
 use game_common::game_map::GameMap;
-use hexx::Hex;
-
-pub trait HighlightedTiles {
-    fn tiles(&self) -> &Vec<Hex>;
-    fn material(materials: &CursorMaterials) -> Handle<StandardMaterial>;
-}
-
-#[derive(Debug, Resource)]
-pub struct RangeHighlights {
-    pub tiles: Vec<Hex>,
-}
-
-impl HighlightedTiles for RangeHighlights {
-    fn tiles(&self) -> &Vec<Hex> {
-        &self.tiles
-    }
-
-    fn material(materials: &CursorMaterials) -> Handle<StandardMaterial> {
-        materials.range_highlight.clone()
-    }
-}
-
-#[derive(Component, Default)]
-pub struct RangeHighlightMarker;
 
 const EXTRA_HEIGHT: f32 = 0.005;
 
-pub fn on_highlight_change<TMarker: Component + Default, TResource: Resource + HighlightedTiles>(
+pub struct HighlightPlugin;
+impl Plugin for HighlightPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            Update,
+            on_highlight_change::<RangeHighlightMarker, RangeHighlights>
+                .run_if(resource_changed_or_removed::<RangeHighlights>()),
+        );
+    }
+}
+
+fn on_highlight_change<TMarker: Component + Default, TResource: Resource + HighlightedTiles>(
     mut commands: Commands,
     existing_highlights: Query<Entity, With<TMarker>>,
     highlighted_tiles: Option<Res<TResource>>,
