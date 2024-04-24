@@ -4,14 +4,14 @@ use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_placement;
 use crate::combat::unit_placement::UnitMarker;
-use crate::map::{MouseCursorOnTile, RangeHighlights};
+use crate::map::{AttackHighlights, MouseCursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::{
-    error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands, Event,
-    EventReader, EventWriter, IntoSystemConfigs, NextState, Plugin, PreUpdate, Query, Res, ResMut,
-    Resource, Transform, Update, With,
+    error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands, Condition,
+    Event, EventReader, EventWriter, IntoSystemConfigs, NextState, Plugin, PreUpdate, Query, Res,
+    ResMut, Resource, Transform, Update, With,
 };
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
@@ -50,6 +50,10 @@ impl Plugin for UnitActionPlugin {
                     .run_if(resource_exists::<RangeHighlights>),
                 on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
                 on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
+                update_attack_highlights.run_if(
+                    resource_changed_or_removed::<ActiveUnitAction>()
+                        .or_else(resource_changed_or_removed::<MouseCursorOnTile>()),
+                ),
             ),
         );
     }
@@ -292,6 +296,34 @@ pub fn on_use_skill(
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer);
+        }
+    }
+}
+
+pub fn update_attack_highlights(
+    mut commands: Commands,
+    active_unit_action: Option<Res<ActiveUnitAction>>,
+    mouse_cursor_on_tile: Option<Res<MouseCursorOnTile>>,
+) {
+    let Some(active_unit_action) = active_unit_action else {
+        commands.remove_resource::<AttackHighlights>();
+        return;
+    };
+
+    let Some(mouse_cursor_on_tile) = mouse_cursor_on_tile else {
+        commands.remove_resource::<AttackHighlights>();
+        return;
+    };
+
+    match active_unit_action.deref() {
+        ActiveUnitAction::Move => commands.remove_resource::<AttackHighlights>(),
+        ActiveUnitAction::UseSkill(skill_id) => {
+            let _skill = Skill::get(skill_id);
+            // TODO: AoE support
+
+            commands.insert_resource(AttackHighlights {
+                tiles: vec![mouse_cursor_on_tile.hex],
+            });
         }
     }
 }

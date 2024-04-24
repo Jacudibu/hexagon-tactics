@@ -67,6 +67,7 @@ impl HexagonMaterialsForFluid {
 pub struct CursorMaterials {
     pub default: Handle<StandardMaterial>,
     pub range_highlight: Handle<StandardMaterial>,
+    pub attack_highlight: Handle<StandardMaterial>,
 }
 
 #[derive(Debug, Resource)]
@@ -190,6 +191,13 @@ pub fn load_materials(
         }),
         range_highlight: materials.add(StandardMaterial {
             base_color: Color::rgba(0.0, 1.0, 0.0, 1.0),
+            unlit: true,
+            alpha_mode: AlphaMode::Multiply,
+            //base_color_texture: Some(debug_texture.clone()),
+            ..default()
+        }),
+        attack_highlight: materials.add(StandardMaterial {
+            base_color: Color::rgba(1.0, 0.0, 0.0, 1.0),
             unlit: true,
             alpha_mode: AlphaMode::Multiply,
             //base_color_texture: Some(debug_texture.clone()),

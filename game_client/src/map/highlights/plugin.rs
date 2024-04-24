@@ -1,8 +1,8 @@
 use crate::load::{CursorMaterials, HexagonMeshes};
-use crate::map::highlights::range_highlights::RangeHighlightMarker;
+use crate::map::highlights::attack_highlights::{AttackHighlightMarker, AttackHighlights};
+use crate::map::highlights::range_highlights::{RangeHighlightMarker, RangeHighlights};
 use crate::map::highlights::HighlightedTiles;
 use crate::map::tile_cursor::position_for_tile;
-use crate::map::RangeHighlights;
 use bevy::app::{App, Update};
 use bevy::core::Name;
 use bevy::pbr::{NotShadowCaster, PbrBundle};
@@ -19,8 +19,12 @@ impl Plugin for HighlightPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            on_highlight_change::<RangeHighlightMarker, RangeHighlights>
-                .run_if(resource_changed_or_removed::<RangeHighlights>()),
+            (
+                on_highlight_change::<RangeHighlightMarker, RangeHighlights>
+                    .run_if(resource_changed_or_removed::<RangeHighlights>()),
+                on_highlight_change::<AttackHighlightMarker, AttackHighlights>
+                    .run_if(resource_changed_or_removed::<AttackHighlights>()),
+            ),
         );
     }
 }

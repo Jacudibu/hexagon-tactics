@@ -1,5 +1,5 @@
 use crate::combat::combat_plugin::CombatState;
-use crate::map::RangeHighlights;
+use crate::combat::unit_actions::ActiveUnitAction;
 use bevy::app::App;
 use bevy::prelude::{
     on_event, Commands, Event, EventWriter, IntoSystemConfigs, NextState, Plugin, ResMut, Update,
@@ -22,7 +22,7 @@ pub fn end_turn(
     mut network: EventWriter<ClientToServerMessage>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
 ) {
-    commands.remove_resource::<RangeHighlights>();
+    commands.remove_resource::<ActiveUnitAction>();
 
     network.send(ClientToServerMessage::EndTurn);
     next_combat_state.set(CombatState::WaitingForServer);

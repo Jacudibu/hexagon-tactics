@@ -1,3 +1,4 @@
+pub mod attack_highlights;
 pub mod plugin;
 pub mod range_highlights;
 

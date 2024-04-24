@@ -22,6 +22,15 @@ impl Skill {
         }
     }
 
+    pub fn get(id: &SkillId) -> Skill {
+        match id {
+            1 => Skill::debug_attack(),
+            _ => {
+                todo!()
+            }
+        }
+    }
+
     pub fn debug_attack() -> Skill {
         Skill {
             id: DEBUG_ATTACK_ID,
