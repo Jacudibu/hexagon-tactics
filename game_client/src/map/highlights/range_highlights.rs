@@ -21,4 +21,8 @@ impl HighlightedTiles for RangeHighlights {
     fn material(materials: &CursorMaterials) -> Handle<StandardMaterial> {
         materials.range_highlight.clone()
     }
+
+    fn name<'a>() -> &'a str {
+        "Range"
+    }
 }

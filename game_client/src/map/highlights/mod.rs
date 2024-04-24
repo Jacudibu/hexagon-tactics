@@ -9,4 +9,5 @@ use hexx::Hex;
 trait HighlightedTiles {
     fn tiles(&self) -> &Vec<Hex>;
     fn material(materials: &CursorMaterials) -> Handle<StandardMaterial>;
+    fn name<'a>() -> &'a str;
 }

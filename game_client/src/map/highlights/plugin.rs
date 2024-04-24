@@ -46,7 +46,12 @@ fn on_highlight_change<TMarker: Component + Default, TResource: Resource + Highl
         let translation = position_for_tile(&map, hex, EXTRA_HEIGHT);
 
         commands.spawn((
-            Name::new(format!("Highlight [{},{}]", hex.x, hex.y)),
+            Name::new(format!(
+                "{} Highlight [{},{}]",
+                TResource::name(),
+                hex.x,
+                hex.y
+            )),
             TMarker::default(),
             PbrBundle {
                 mesh: hexagon_meshes.flat.clone(),
