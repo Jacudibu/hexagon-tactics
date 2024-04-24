@@ -1,7 +1,8 @@
 use crate::combat::combat_plugin::CombatState;
+use crate::map::RangeHighlights;
 use bevy::app::App;
 use bevy::prelude::{
-    on_event, Event, EventWriter, IntoSystemConfigs, NextState, Plugin, ResMut, Update,
+    on_event, Commands, Event, EventWriter, IntoSystemConfigs, NextState, Plugin, ResMut, Update,
 };
 use game_common::network_events::client_to_server::ClientToServerMessage;
 
@@ -17,9 +18,12 @@ impl Plugin for EndTurnPlugin {
 pub struct EndTurnCommand;
 
 pub fn end_turn(
+    mut commands: Commands,
     mut network: EventWriter<ClientToServerMessage>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
 ) {
+    commands.remove_resource::<RangeHighlights>();
+
     network.send(ClientToServerMessage::EndTurn);
     next_combat_state.set(CombatState::WaitingForServer);
 }

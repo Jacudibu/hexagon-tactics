@@ -4,7 +4,7 @@ use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_placement;
 use crate::combat::unit_placement::UnitMarker;
-use crate::map::{HighlightedTiles, MouseCursorOnTile};
+use crate::map::{MouseCursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::App;
@@ -47,7 +47,7 @@ impl Plugin for UnitActionPlugin {
                     .run_if(in_state(ApplicationState::InGame))
                     .run_if(in_state(CombatState::ThisPlayerUnitTurn))
                     .run_if(resource_exists::<ActiveUnitAction>)
-                    .run_if(resource_exists::<HighlightedTiles>),
+                    .run_if(resource_exists::<RangeHighlights>),
                 on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
                 on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
             ),
@@ -108,7 +108,7 @@ pub fn on_active_unit_action_changed(
     active_unit_action: Option<Res<ActiveUnitAction>>,
 ) {
     let Some(active_unit_action) = active_unit_action else {
-        commands.remove_resource::<HighlightedTiles>();
+        commands.remove_resource::<RangeHighlights>();
         return;
     };
 
@@ -134,7 +134,7 @@ pub fn show_movement_range_preview(
 
     let range = map.field_of_movement(unit, combat_data);
 
-    commands.insert_resource(HighlightedTiles { tiles: range })
+    commands.insert_resource(RangeHighlights { tiles: range })
 }
 
 pub fn show_skill_range_preview(
@@ -157,7 +157,7 @@ pub fn show_skill_range_preview(
     .filter(|x| x.unsigned_distance_to(unit.position) >= skill.range.min)
     .collect();
 
-    commands.insert_resource(HighlightedTiles { tiles })
+    commands.insert_resource(RangeHighlights { tiles })
 }
 
 pub fn execute_action_on_click(
@@ -166,7 +166,7 @@ pub fn execute_action_on_click(
     map: Res<GameMap>,
     action_state: Res<ActionState<CombatAction>>,
     active_unit_action: Res<ActiveUnitAction>,
-    highlighted_tiles: Res<HighlightedTiles>,
+    highlighted_tiles: Res<RangeHighlights>,
     mouse_cursor_on_tile: Option<Res<MouseCursorOnTile>>,
     mut event_writer: EventWriter<ClientToServerMessage>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
@@ -299,7 +299,7 @@ pub fn on_use_skill(
 #[cfg(test)]
 mod tests {
     use crate::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
-    use crate::map::HighlightedTiles;
+    use crate::map::RangeHighlights;
     use crate::networking::NetworkPlugin;
     use bevy::app::App;
     use game_common::combat_data::CombatData;
@@ -326,7 +326,7 @@ mod tests {
         app.update();
 
         assert!(
-            app.world.get_resource::<HighlightedTiles>().is_some(),
+            app.world.get_resource::<RangeHighlights>().is_some(),
             "HighlightedTiles should have been created!"
         );
 
@@ -334,7 +334,7 @@ mod tests {
         app.update();
 
         assert!(
-            app.world.get_resource::<HighlightedTiles>().is_none(),
+            app.world.get_resource::<RangeHighlights>().is_none(),
             "HighlightedTiles should have been removed!"
         );
     }

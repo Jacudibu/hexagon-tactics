@@ -1,5 +1,5 @@
 use crate::map::highlighted_tiles;
-use crate::map::highlighted_tiles::HighlightedTiles;
+use crate::map::highlighted_tiles::{RangeHighlightMarker, RangeHighlights};
 use crate::map::map_gizmos::MapGizmosPlugin;
 use crate::map::map_ui::MapUiPlugin;
 use crate::map::spawning::MapSpawningPlugin;
@@ -25,8 +25,8 @@ impl Plugin for GameMapPlugin {
         app.add_plugins(TileUpdaterPlugin);
         app.add_systems(
             Update,
-            highlighted_tiles::on_highlight_change
-                .run_if(resource_changed_or_removed::<HighlightedTiles>()),
+            highlighted_tiles::on_highlight_change::<RangeHighlightMarker, RangeHighlights>
+                .run_if(resource_changed_or_removed::<RangeHighlights>()),
         );
     }
 }

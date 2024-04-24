@@ -66,6 +66,7 @@ impl HexagonMaterialsForFluid {
 #[derive(Debug, Resource)]
 pub struct CursorMaterials {
     pub default: Handle<StandardMaterial>,
+    pub range_highlight: Handle<StandardMaterial>,
 }
 
 #[derive(Debug, Resource)]
@@ -187,7 +188,14 @@ pub fn load_materials(
             //base_color_texture: Some(debug_texture.clone()),
             ..default()
         }),
-    })
+        range_highlight: materials.add(StandardMaterial {
+            base_color: Color::rgba(0.0, 1.0, 0.0, 1.0),
+            unlit: true,
+            alpha_mode: AlphaMode::Multiply,
+            //base_color_texture: Some(debug_texture.clone()),
+            ..default()
+        }),
+    });
 }
 
 fn load_image_with_repeated_address_mode(settings: &mut ImageLoaderSettings) {

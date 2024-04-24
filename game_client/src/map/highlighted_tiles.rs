@@ -1,25 +1,41 @@
 use crate::load::{CursorMaterials, HexagonMeshes};
 use crate::map::tile_cursor::position_for_tile;
+use bevy::asset::Handle;
 use bevy::core::Name;
-use bevy::pbr::{NotShadowCaster, PbrBundle};
+use bevy::pbr::{NotShadowCaster, PbrBundle, StandardMaterial};
 use bevy::prelude::{default, Commands, Component, Entity, Query, Res, Resource, Transform, With};
 use game_common::game_map::GameMap;
 use hexx::Hex;
 
+pub trait HighlightedTiles {
+    fn tiles(&self) -> &Vec<Hex>;
+    fn material(materials: &CursorMaterials) -> Handle<StandardMaterial>;
+}
+
 #[derive(Debug, Resource)]
-pub struct HighlightedTiles {
+pub struct RangeHighlights {
     pub tiles: Vec<Hex>,
 }
 
-#[derive(Component)]
-pub struct HighlightedTileMarker;
+impl HighlightedTiles for RangeHighlights {
+    fn tiles(&self) -> &Vec<Hex> {
+        &self.tiles
+    }
+
+    fn material(materials: &CursorMaterials) -> Handle<StandardMaterial> {
+        materials.range_highlight.clone()
+    }
+}
+
+#[derive(Component, Default)]
+pub struct RangeHighlightMarker;
 
 const EXTRA_HEIGHT: f32 = 0.005;
 
-pub fn on_highlight_change(
+pub fn on_highlight_change<TMarker: Component + Default, TResource: Resource + HighlightedTiles>(
     mut commands: Commands,
-    existing_highlights: Query<Entity, With<HighlightedTileMarker>>,
-    highlighted_tiles: Option<Res<HighlightedTiles>>,
+    existing_highlights: Query<Entity, With<TMarker>>,
+    highlighted_tiles: Option<Res<TResource>>,
     map: Res<GameMap>,
     hexagon_meshes: Res<HexagonMeshes>,
     cursor_materials: Res<CursorMaterials>,
@@ -33,16 +49,16 @@ pub fn on_highlight_change(
         return;
     };
 
-    for hex in highlighted_tiles.tiles.iter() {
+    for hex in highlighted_tiles.tiles().iter() {
         let translation = position_for_tile(&map, hex, EXTRA_HEIGHT);
 
         commands.spawn((
             Name::new(format!("Highlight [{},{}]", hex.x, hex.y)),
-            HighlightedTileMarker,
+            TMarker::default(),
             PbrBundle {
                 mesh: hexagon_meshes.flat.clone(),
                 transform: Transform::from_translation(translation),
-                material: cursor_materials.default.clone(),
+                material: TResource::material(&cursor_materials),
                 ..default()
             },
             NotShadowCaster,

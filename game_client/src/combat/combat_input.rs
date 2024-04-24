@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
-use std::fmt::Formatter;
 
 pub struct CombatInputPlugin;
 impl Plugin for CombatInputPlugin {
