@@ -1,7 +1,7 @@
 use crate::combat::combat_plugin::CombatState;
 use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::unit_actions;
-use crate::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionCommand};
+use crate::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionEvent};
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
 use crate::map::{MapState, MouseCursorOnTile};
 use crate::{ApplicationState, MouseCursorOverUiState};
@@ -106,7 +106,7 @@ fn draw_state_ui(
     combat_state: Res<State<CombatState>>,
     combat_data: Res<CombatData>,
     end_turn_event: EventWriter<EndTurnCommand>,
-    change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionCommand>,
+    change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionEvent>,
 ) {
     egui::Window::new("State Display Window")
         .collapsible(false)
@@ -156,7 +156,7 @@ fn build_waiting_for_player_ui(ui: &mut Ui, combat_data: &CombatData) {
 fn build_this_player_unit_turn_ui(
     ui: &mut Ui,
     combat_data: &CombatData,
-    mut change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionCommand>,
+    mut change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionEvent>,
     mut end_turn_event: EventWriter<EndTurnCommand>,
 ) {
     let unit = combat_data
@@ -169,14 +169,14 @@ fn build_this_player_unit_turn_ui(
         let turn = combat_data.current_turn.as_unit_turn().unwrap();
         ui.add_enabled_ui(turn.remaining_movement > 0, |ui| {
             if ui.button("Move").clicked() {
-                change_unit_action_event.send(SetOrToggleActiveUnitActionCommand {
+                change_unit_action_event.send(SetOrToggleActiveUnitActionEvent {
                     action: ActiveUnitAction::Move,
                 });
             }
         });
         ui.add_enabled_ui(turn.remaining_actions > 0, |ui| {
             if ui.button("Attack").clicked() {
-                change_unit_action_event.send(SetOrToggleActiveUnitActionCommand {
+                change_unit_action_event.send(SetOrToggleActiveUnitActionEvent {
                     action: ActiveUnitAction::UseSkill(DEBUG_ATTACK_ID),
                 });
             }

@@ -1,5 +1,6 @@
 use crate::combat::combat_input::CombatAction;
 use crate::combat::combat_plugin::CombatState;
+use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_placement;
 use crate::combat::unit_placement::UnitMarker;
@@ -16,7 +17,7 @@ use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
-use game_common::skill::{Skill, SkillId};
+use game_common::skill::{Skill, SkillId, DEBUG_ATTACK_ID};
 use game_common::DESYNC_TODO_MESSAGE;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
@@ -26,12 +27,12 @@ use std::ops::Deref;
 pub struct UnitActionPlugin;
 impl Plugin for UnitActionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SetOrToggleActiveUnitActionCommand>();
+        app.add_event::<SetOrToggleActiveUnitActionEvent>();
         app.add_systems(
             PreUpdate,
             (
                 change_action_on_input,
-                set_or_toggle_action.run_if(on_event::<SetOrToggleActiveUnitActionCommand>()),
+                on_set_or_toggle_action.run_if(on_event::<SetOrToggleActiveUnitActionEvent>()),
             )
                 .chain()
                 .run_if(in_state(ApplicationState::InGame))
@@ -61,14 +62,14 @@ pub enum ActiveUnitAction {
 }
 
 #[derive(Event)]
-pub struct SetOrToggleActiveUnitActionCommand {
+pub struct SetOrToggleActiveUnitActionEvent {
     pub action: ActiveUnitAction,
 }
 
-pub fn set_or_toggle_action(
+pub fn on_set_or_toggle_action(
     mut commands: Commands,
     current_action: Option<Res<ActiveUnitAction>>,
-    mut events: EventReader<SetOrToggleActiveUnitActionCommand>,
+    mut events: EventReader<SetOrToggleActiveUnitActionEvent>,
 ) {
     for event in events.read() {
         if let Some(current_action) = &current_action {
@@ -84,12 +85,19 @@ pub fn set_or_toggle_action(
 
 pub fn change_action_on_input(
     action_state: Res<ActionState<CombatAction>>,
-    mut event_writer: EventWriter<SetOrToggleActiveUnitActionCommand>,
+    mut action_state_change_events: EventWriter<SetOrToggleActiveUnitActionEvent>,
+    mut end_turn_events: EventWriter<EndTurnCommand>,
 ) {
     if action_state.just_pressed(&CombatAction::MoveUnit) {
-        event_writer.send(SetOrToggleActiveUnitActionCommand {
+        action_state_change_events.send(SetOrToggleActiveUnitActionEvent {
             action: ActiveUnitAction::Move,
         });
+    } else if action_state.just_pressed(&CombatAction::Attack) {
+        action_state_change_events.send(SetOrToggleActiveUnitActionEvent {
+            action: ActiveUnitAction::UseSkill(DEBUG_ATTACK_ID),
+        });
+    } else if action_state.just_pressed(&CombatAction::EndTurn) {
+        end_turn_events.send(EndTurnCommand {});
     }
 }
 

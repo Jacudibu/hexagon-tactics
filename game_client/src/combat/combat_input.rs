@@ -11,23 +11,14 @@ impl Plugin for CombatInputPlugin {
     }
 }
 
-#[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Debug, Reflect)]
+#[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Reflect)]
 pub enum CombatAction {
     SelectTile,
     NextUnit,
     PreviousUnit,
     MoveUnit,
-}
-
-impl std::fmt::Display for CombatAction {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            CombatAction::SelectTile => write!(f, "Select Tile"),
-            CombatAction::NextUnit => write!(f, "Next Unit"),
-            CombatAction::PreviousUnit => write!(f, "Previous Unit"),
-            CombatAction::MoveUnit => write!(f, "Move Unit"),
-        }
-    }
+    Attack,
+    EndTurn,
 }
 
 impl CombatAction {
@@ -37,6 +28,8 @@ impl CombatAction {
         input_map.insert(Self::NextUnit, KeyCode::KeyF);
         input_map.insert(Self::PreviousUnit, KeyCode::KeyR);
         input_map.insert(Self::MoveUnit, KeyCode::KeyZ);
+        input_map.insert(Self::Attack, KeyCode::KeyX);
+        input_map.insert(Self::EndTurn, KeyCode::Enter);
 
         input_map
     }
