@@ -1,5 +1,6 @@
 pub mod attack_highlights;
-pub mod plugin;
+mod cursor_highlights;
+pub mod highlight_plugin;
 pub mod range_highlights;
 
 use crate::load::CursorMaterials;

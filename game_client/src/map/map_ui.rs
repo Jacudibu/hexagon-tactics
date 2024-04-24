@@ -1,4 +1,5 @@
 use crate::map::tile_cursor::MouseCursorOnTile;
+use crate::map::MapState;
 use crate::MouseCursorOverUiState;
 use bevy::app::{App, First, Plugin, Update};
 use bevy::prelude::*;
@@ -17,7 +18,9 @@ impl Plugin for MapUiPlugin {
             .add_systems(First, detect_mouse_cursor_over_ui)
             .add_systems(
                 Update,
-                tile_cursor_ui.run_if(resource_exists::<MouseCursorOnTile>),
+                tile_cursor_ui
+                    .run_if(resource_exists::<MouseCursorOnTile>)
+                    .run_if(in_state(MapState::Loaded)),
             );
     }
 }

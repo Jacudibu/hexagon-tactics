@@ -1,4 +1,4 @@
-use crate::map::highlights::plugin::HighlightPlugin;
+use crate::map::highlights::highlight_plugin::HighlightPlugin;
 use crate::map::map_gizmos::MapGizmosPlugin;
 use crate::map::map_ui::MapUiPlugin;
 use crate::map::spawning::MapSpawningPlugin;

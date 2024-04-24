@@ -5,7 +5,7 @@ use bevy::app::{App, Plugin, Update};
 use bevy::log::{error, warn};
 use bevy::prelude::{
     in_state, Commands, EventWriter, IntoSystemConfigs, KeyCode, Local, MouseButton, OnEnter,
-    OnExit, Query, Reflect, Res, ResMut, Resource,
+    OnExit, Reflect, Res, ResMut, Resource,
 };
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
@@ -17,7 +17,9 @@ use leafwing_input_manager::Actionlike;
 
 use game_common::game_map::{Fluid, FluidKind, GameMap, TileData, TileSurface, MAX_HEIGHT};
 
-use crate::map::{DespawnMapCommand, MapState, SpawnMapCommand, TileChangeEvent, TileCursor};
+use crate::map::{
+    DespawnMapCommand, MapState, MouseCursorOnTile, SpawnMapCommand, TileChangeEvent,
+};
 use crate::map_editor::editor_ui::MapEditorUiPlugin;
 use crate::{ApplicationState, MouseCursorOverUiState};
 
@@ -174,11 +176,15 @@ impl MultiselectData {
 fn use_tool(
     map: ResMut<GameMap>,
     active_tool: Res<MapEditorTool>,
-    current_selection: Query<&TileCursor>,
+    cursor: Option<Res<MouseCursorOnTile>>,
     input_state: Res<ActionState<MapEditorAction>>,
     mut multiselect_data: Local<MultiselectData>,
     mut tile_change_event: EventWriter<TileChangeEvent>,
 ) {
+    let Some(cursor) = cursor else {
+        return;
+    };
+
     if !input_state.pressed(&MapEditorAction::UseTool) {
         return;
     }
@@ -188,7 +194,7 @@ fn use_tool(
         create_tool_events_for_tile(
             map,
             &active_tool,
-            current_selection,
+            &cursor,
             multiselect_data,
             &mut tile_change_event,
         );
@@ -202,7 +208,7 @@ fn use_tool(
             create_tool_events_for_tile(
                 map,
                 &active_tool,
-                current_selection,
+                &cursor,
                 multiselect_data,
                 &mut tile_change_event,
             );
@@ -213,28 +219,32 @@ fn use_tool(
 fn create_tool_events_for_tile(
     mut map: ResMut<GameMap>,
     active_tool: &Res<MapEditorTool>,
-    current_selection: Query<&TileCursor>,
+    cursor: &MouseCursorOnTile,
     mut multiselect_data: Local<MultiselectData>,
     tile_change_event: &mut EventWriter<TileChangeEvent>,
 ) {
-    tile_change_event.send_batch(current_selection.iter().filter_map(|x| {
-        if multiselect_data.previously_selected_tiles.contains(&x.hex) {
+    let cursor = std::iter::once(cursor);
+    tile_change_event.send_batch(cursor.filter_map(|cursor| {
+        if multiselect_data
+            .previously_selected_tiles
+            .contains(&cursor.hex)
+        {
             None
         } else {
-            multiselect_data.previously_selected_tiles.push(x.hex);
-            if let Some(tile) = map.tiles.get_mut(&x.hex) {
+            multiselect_data.previously_selected_tiles.push(cursor.hex);
+            if let Some(tile) = map.tiles.get_mut(&cursor.hex) {
                 if can_tool_be_used_on_tile(&active_tool, tile) {
                     let old_data = tile.clone();
                     use_tool_on_tile(&active_tool, tile);
                     Some(TileChangeEvent {
-                        hex: x.hex,
+                        hex: cursor.hex,
                         old_data,
                     })
                 } else {
                     None
                 }
             } else {
-                error!("Was unable to find hex tile_data at {:?} in map!", x);
+                error!("Was unable to find hex tile_data at {:?} in map!", cursor);
                 None
             }
         }

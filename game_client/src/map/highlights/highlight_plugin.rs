@@ -1,14 +1,16 @@
 use crate::load::{CursorMaterials, HexagonMeshes};
 use crate::map::highlights::attack_highlights::{AttackHighlightMarker, AttackHighlights};
+use crate::map::highlights::cursor_highlights::CursorHighlightMarker;
 use crate::map::highlights::range_highlights::{RangeHighlightMarker, RangeHighlights};
 use crate::map::highlights::HighlightedTiles;
 use crate::map::tile_cursor::position_for_tile;
+use crate::map::{MapState, MouseCursorOnTile, TileChangeEvent};
 use bevy::app::{App, Update};
 use bevy::core::Name;
 use bevy::pbr::{NotShadowCaster, PbrBundle};
 use bevy::prelude::{
-    default, resource_changed_or_removed, Commands, Component, Entity, IntoSystemConfigs, Plugin,
-    Query, Res, Resource, Transform, With,
+    default, on_event, resource_changed_or_removed, Commands, Component, Condition, Entity,
+    IntoSystemConfigs, OnExit, Plugin, Query, Res, Resource, Transform, With,
 };
 use game_common::game_map::GameMap;
 
@@ -24,8 +26,13 @@ impl Plugin for HighlightPlugin {
                     .run_if(resource_changed_or_removed::<RangeHighlights>()),
                 on_highlight_change::<AttackHighlightMarker, AttackHighlights>
                     .run_if(resource_changed_or_removed::<AttackHighlights>()),
+                on_highlight_change::<CursorHighlightMarker, MouseCursorOnTile>.run_if(
+                    resource_changed_or_removed::<MouseCursorOnTile>()
+                        .or_else(on_event::<TileChangeEvent>()),
+                ),
             ),
         );
+        app.add_systems(OnExit(MapState::Loaded), clean_up);
     }
 }
 
@@ -65,5 +72,22 @@ fn on_highlight_change<TMarker: Component + Default, TResource: Resource + Highl
             },
             NotShadowCaster,
         ));
+    }
+}
+
+fn clean_up(
+    mut commands: Commands,
+    cursor: Query<Entity, With<CursorHighlightMarker>>,
+    range: Query<Entity, With<RangeHighlightMarker>>,
+    attack: Query<Entity, With<AttackHighlightMarker>>,
+) {
+    for x in cursor.iter() {
+        commands.entity(x).despawn();
+    }
+    for x in range.iter() {
+        commands.entity(x).despawn();
+    }
+    for x in attack.iter() {
+        commands.entity(x).despawn();
     }
 }

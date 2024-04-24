@@ -1,10 +1,10 @@
 use crate::map::map_plugin::MapState;
-use crate::map::{TileCursor, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{MouseCursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::math::Vec3;
 use bevy::prelude::{
     error, in_state, AppGizmoBuilder, Color, GizmoConfigGroup, GizmoConfigStore, Gizmos,
-    IntoSystemConfigs, Query, Reflect, Res, ResMut,
+    IntoSystemConfigs, Reflect, Res, ResMut,
 };
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 use hexx::{GridVertex, HexLayout};
@@ -62,43 +62,45 @@ fn draw_hexagon_gizmos(mut gizmos: Gizmos<HexagonOutlineGizmos>, map: Res<GameMa
 }
 
 fn draw_cursor_gizmos(
-    cursors: Query<&TileCursor>,
+    cursor: Option<Res<MouseCursorOnTile>>,
     mut gizmos: Gizmos<CursorGizmos>,
     map: Res<GameMap>,
 ) {
-    for cursor in cursors.iter() {
-        let Some(tile) = map.tiles.get(&cursor.hex) else {
-            error!("Was unable to get map tile at {:?}", cursor.hex);
-            continue;
-        };
+    let Some(cursor) = cursor else {
+        return;
+    };
 
-        let Some(fluid) = &tile.fluid else {
-            continue;
-        };
+    let Some(tile) = map.tiles.get(&cursor.hex) else {
+        error!("Was unable to get map tile at {:?}", cursor.hex);
+        return;
+    };
 
-        let top_vertices = cursor.hex.all_vertices().map(|x| {
-            vertex_coordinates_3d(
-                &HEX_LAYOUT,
-                x,
-                (tile.height as f32 + fluid.height) * METERS_PER_TILE_HEIGHT_UNIT,
-            )
-        });
+    let Some(fluid) = &tile.fluid else {
+        return;
+    };
 
-        let bottom_vertices = cursor.hex.all_vertices().map(|x| {
-            vertex_coordinates_3d(
-                &HEX_LAYOUT,
-                x,
-                tile.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
-            )
-        });
+    let top_vertices = cursor.hex.all_vertices().map(|x| {
+        vertex_coordinates_3d(
+            &HEX_LAYOUT,
+            x,
+            (tile.height as f32 + fluid.height) * METERS_PER_TILE_HEIGHT_UNIT,
+        )
+    });
 
-        gizmos.line(top_vertices[0], bottom_vertices[0], Color::BLACK);
-        gizmos.line(top_vertices[1], bottom_vertices[1], Color::BLACK);
-        gizmos.line(top_vertices[2], bottom_vertices[2], Color::BLACK);
-        gizmos.line(top_vertices[3], bottom_vertices[3], Color::BLACK);
-        gizmos.line(top_vertices[4], bottom_vertices[4], Color::BLACK);
-        gizmos.line(top_vertices[5], bottom_vertices[5], Color::BLACK);
-    }
+    let bottom_vertices = cursor.hex.all_vertices().map(|x| {
+        vertex_coordinates_3d(
+            &HEX_LAYOUT,
+            x,
+            tile.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
+        )
+    });
+
+    gizmos.line(top_vertices[0], bottom_vertices[0], Color::BLACK);
+    gizmos.line(top_vertices[1], bottom_vertices[1], Color::BLACK);
+    gizmos.line(top_vertices[2], bottom_vertices[2], Color::BLACK);
+    gizmos.line(top_vertices[3], bottom_vertices[3], Color::BLACK);
+    gizmos.line(top_vertices[4], bottom_vertices[4], Color::BLACK);
+    gizmos.line(top_vertices[5], bottom_vertices[5], Color::BLACK);
 }
 
 fn connect_hexagon_vertices<T: GizmoConfigGroup>(gizmos: &mut Gizmos<T>, vertices: [Vec3; 6]) {
