@@ -1,4 +1,4 @@
-use crate::load::CursorMaterials;
+use crate::load::HighlightMaterials;
 use crate::map::highlights::HighlightedTiles;
 use crate::map::CursorOnTile;
 use bevy::asset::Handle;
@@ -14,11 +14,15 @@ impl HighlightedTiles for CursorOnTile {
         &self.temp_hexes
     }
 
-    fn material(materials: &CursorMaterials) -> Handle<StandardMaterial> {
-        materials.default.clone()
+    fn material(materials: &HighlightMaterials) -> Handle<StandardMaterial> {
+        materials.cursor.clone()
     }
 
     fn name<'a>() -> &'a str {
         "Cursor"
+    }
+
+    fn extra_height() -> f32 {
+        0.01
     }
 }

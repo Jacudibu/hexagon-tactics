@@ -1,4 +1,4 @@
-use crate::load::{CursorMaterials, HexagonMeshes};
+use crate::load::{HexagonMeshes, HighlightMaterials};
 use crate::map::highlights::attack_highlights::{AttackHighlightMarker, AttackHighlights};
 use crate::map::highlights::cursor_highlights::CursorHighlightMarker;
 use crate::map::highlights::range_highlights::{RangeHighlightMarker, RangeHighlights};
@@ -15,8 +15,6 @@ use bevy::prelude::{
 };
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 use hexx::Hex;
-
-const EXTRA_HEIGHT: f32 = 0.005;
 
 pub struct HighlightPlugin;
 impl Plugin for HighlightPlugin {
@@ -44,7 +42,7 @@ fn on_highlight_change<TMarker: Component + Default, TResource: Resource + Highl
     highlighted_tiles: Option<Res<TResource>>,
     map: Res<GameMap>,
     hexagon_meshes: Res<HexagonMeshes>,
-    cursor_materials: Res<CursorMaterials>,
+    cursor_materials: Res<HighlightMaterials>,
 ) {
     // TODO: Would probably be cheaper to move highlights instead of respawning them :^)
     for entity in existing_highlights.iter() {
@@ -56,7 +54,7 @@ fn on_highlight_change<TMarker: Component + Default, TResource: Resource + Highl
     };
 
     for hex in highlighted_tiles.tiles().iter() {
-        let translation = highlight_position(&map, hex, EXTRA_HEIGHT);
+        let translation = highlight_position(&map, hex, TResource::extra_height());
 
         commands.spawn((
             Name::new(format!(

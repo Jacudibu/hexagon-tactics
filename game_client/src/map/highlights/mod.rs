@@ -3,13 +3,20 @@ mod cursor_highlights;
 pub mod highlight_plugin;
 pub mod range_highlights;
 
-use crate::load::CursorMaterials;
+use crate::load::HighlightMaterials;
 use bevy::asset::Handle;
 use bevy::pbr::StandardMaterial;
 use hexx::Hex;
 
 trait HighlightedTiles {
     fn tiles(&self) -> &Vec<Hex>;
-    fn material(materials: &CursorMaterials) -> Handle<StandardMaterial>;
+    fn material(materials: &HighlightMaterials) -> Handle<StandardMaterial>;
+
     fn name<'a>() -> &'a str;
+
+    /// Vertical to the Hexagon Mesh.
+    /// Used for layering highlights which aren't mutually exclusive to avoid z-fighting.
+    fn extra_height() -> f32 {
+        0.005
+    }
 }

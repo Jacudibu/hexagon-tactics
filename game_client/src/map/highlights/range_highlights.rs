@@ -1,4 +1,4 @@
-use crate::load::CursorMaterials;
+use crate::load::HighlightMaterials;
 use crate::map::highlights::HighlightedTiles;
 use bevy::asset::Handle;
 use bevy::pbr::StandardMaterial;
@@ -18,8 +18,8 @@ impl HighlightedTiles for RangeHighlights {
         &self.tiles
     }
 
-    fn material(materials: &CursorMaterials) -> Handle<StandardMaterial> {
-        materials.range_highlight.clone()
+    fn material(materials: &HighlightMaterials) -> Handle<StandardMaterial> {
+        materials.range.clone()
     }
 
     fn name<'a>() -> &'a str {
