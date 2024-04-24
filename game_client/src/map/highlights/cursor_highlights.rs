@@ -10,8 +10,8 @@ use hexx::Hex;
 pub struct CursorHighlightMarker;
 
 impl HighlightedTiles for CursorOnTile {
-    fn tiles(&self) -> &Vec<Hex> {
-        &self.temp_hexes
+    fn tiles(&self) -> impl Iterator<Item = &Hex> {
+        std::iter::once(&self.hex)
     }
 
     fn material(materials: &HighlightMaterials) -> Handle<StandardMaterial> {

@@ -9,7 +9,8 @@ use bevy::pbr::StandardMaterial;
 use hexx::Hex;
 
 trait HighlightedTiles {
-    fn tiles(&self) -> &Vec<Hex>;
+    fn tiles(&self) -> impl Iterator<Item = &Hex>;
+
     fn material(materials: &HighlightMaterials) -> Handle<StandardMaterial>;
 
     fn name<'a>() -> &'a str;

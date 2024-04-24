@@ -14,8 +14,8 @@ pub struct AttackHighlights {
 }
 
 impl HighlightedTiles for AttackHighlights {
-    fn tiles(&self) -> &Vec<Hex> {
-        &self.tiles
+    fn tiles(&self) -> impl Iterator<Item = &Hex> {
+        self.tiles.iter()
     }
 
     fn material(materials: &HighlightMaterials) -> Handle<StandardMaterial> {

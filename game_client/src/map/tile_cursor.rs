@@ -40,14 +40,8 @@ fn setup_camera(
 #[derive(Reflect)]
 pub struct TileRaycastSet;
 
-#[derive(Component, Debug)]
-pub struct TileCursor {
-    pub hex: Hex,
-}
-
 #[derive(Resource, Debug)]
 pub struct CursorOnTile {
-    pub temp_hexes: Vec<Hex>, // TODO: remove this
     pub hex: Hex,
 }
 
@@ -69,12 +63,10 @@ fn update_mouse_cursor(
                             // Avoid change detection if the tile is still the same
                             if mouse_cursor.hex != tile_coordinates.hex {
                                 mouse_cursor.hex = tile_coordinates.hex;
-                                mouse_cursor.temp_hexes = vec![tile_coordinates.hex];
                             }
                         } else {
                             commands.insert_resource(CursorOnTile {
                                 hex: tile_coordinates.hex,
-                                temp_hexes: vec![tile_coordinates.hex],
                             });
                         }
                         return;

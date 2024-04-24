@@ -53,7 +53,7 @@ fn on_highlight_change<TMarker: Component + Default, TResource: Resource + Highl
         return;
     };
 
-    for hex in highlighted_tiles.tiles().iter() {
+    for hex in highlighted_tiles.tiles() {
         let translation = highlight_position(&map, hex, TResource::extra_height());
 
         commands.spawn((
