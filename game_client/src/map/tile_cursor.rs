@@ -70,11 +70,11 @@ pub struct TileCursor {
 #[derive(Resource, Debug)]
 pub struct MouseCursorOnTile {
     pub hex: Hex,
-    pub world_pos: Vec3,
 }
 
 fn update_mouse_cursor(
     mut commands: Commands,
+    mouse_cursor: Option<ResMut<MouseCursorOnTile>>,
     tile_ray: Query<&RaycastSource<TileRaycastSet>>,
     ray_targets: Query<&HexagonTileComponent, With<RaycastMesh<TileRaycastSet>>>,
 ) {
@@ -83,13 +83,19 @@ fn update_mouse_cursor(
             let nearest = intersections
                 .iter()
                 .min_by(|(_, a), (_, b)| a.distance().total_cmp(&b.distance()));
-            if let Some((entity, intersection)) = nearest {
+            if let Some((entity, _intersection)) = nearest {
                 match ray_targets.get(entity.clone()) {
                     Ok(tile_coordinates) => {
-                        commands.insert_resource(MouseCursorOnTile {
-                            hex: tile_coordinates.hex,
-                            world_pos: intersection.position(),
-                        });
+                        if let Some(mut mouse_cursor) = mouse_cursor {
+                            // Avoid change detection if the tile is still the same
+                            if mouse_cursor.hex != tile_coordinates.hex {
+                                mouse_cursor.hex = tile_coordinates.hex;
+                            }
+                        } else {
+                            commands.insert_resource(MouseCursorOnTile {
+                                hex: tile_coordinates.hex,
+                            });
+                        }
                         return;
                     }
                     Err(e) => {
@@ -100,7 +106,9 @@ fn update_mouse_cursor(
         }
     }
 
-    commands.remove_resource::<MouseCursorOnTile>()
+    if mouse_cursor.is_some() {
+        commands.remove_resource::<MouseCursorOnTile>()
+    }
 }
 
 fn handle_tile_change_event(
