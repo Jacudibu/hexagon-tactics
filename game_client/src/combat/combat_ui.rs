@@ -1,7 +1,7 @@
 use crate::combat::combat_plugin::CombatState;
 use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::unit_actions;
-use crate::combat::unit_actions::ActiveUnitAction;
+use crate::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionCommand};
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
 use crate::map::{MapState, MouseCursorOnTile};
 use crate::{ApplicationState, MouseCursorOverUiState};
@@ -102,12 +102,11 @@ fn draw_unit_info(mut egui: EguiContexts, unit: &Unit, anchor: Align2) {
 }
 
 fn draw_state_ui(
-    mut commands: Commands,
     mut egui: EguiContexts,
     combat_state: Res<State<CombatState>>,
     combat_data: Res<CombatData>,
-    active_unit_action: Option<Res<ActiveUnitAction>>,
     end_turn_event: EventWriter<EndTurnCommand>,
+    change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionCommand>,
 ) {
     egui::Window::new("State Display Window")
         .collapsible(false)
@@ -122,10 +121,9 @@ fn draw_state_ui(
             CombatState::PlaceUnit => build_place_unit_state_ui(ui),
             CombatState::ThisPlayerUnitTurn => {
                 build_this_player_unit_turn_ui(
-                    &mut commands,
                     ui,
                     &combat_data,
-                    active_unit_action,
+                    change_unit_action_event,
                     end_turn_event,
                 );
             }
@@ -156,10 +154,9 @@ fn build_waiting_for_player_ui(ui: &mut Ui, combat_data: &CombatData) {
 }
 
 fn build_this_player_unit_turn_ui(
-    commands: &mut Commands,
     ui: &mut Ui,
     combat_data: &CombatData,
-    active_unit_action: Option<Res<ActiveUnitAction>>,
+    mut change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionCommand>,
     mut end_turn_event: EventWriter<EndTurnCommand>,
 ) {
     let unit = combat_data
@@ -169,20 +166,21 @@ fn build_this_player_unit_turn_ui(
 
     ui.label(format!("Your turn: {}", unit.name));
     ui.horizontal(|ui| {
-        if ui.button("Move").clicked() {
-            unit_actions::set_or_toggle_action(
-                commands,
-                &active_unit_action,
-                ActiveUnitAction::Move,
-            );
-        }
-        if ui.button("Attack").clicked() {
-            unit_actions::set_or_toggle_action(
-                commands,
-                &active_unit_action,
-                ActiveUnitAction::UseSkill(DEBUG_ATTACK_ID),
-            );
-        }
+        let turn = combat_data.current_turn.as_unit_turn().unwrap();
+        ui.add_enabled_ui(turn.remaining_movement > 0, |ui| {
+            if ui.button("Move").clicked() {
+                change_unit_action_event.send(SetOrToggleActiveUnitActionCommand {
+                    action: ActiveUnitAction::Move,
+                });
+            }
+        });
+        ui.add_enabled_ui(turn.remaining_actions > 0, |ui| {
+            if ui.button("Attack").clicked() {
+                change_unit_action_event.send(SetOrToggleActiveUnitActionCommand {
+                    action: ActiveUnitAction::UseSkill(DEBUG_ATTACK_ID),
+                });
+            }
+        });
         if ui.button("End Turn").clicked() {
             end_turn_event.send(EndTurnCommand {});
         }

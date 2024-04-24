@@ -8,9 +8,9 @@ use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::{
-    error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands, EventReader,
-    EventWriter, IntoSystemConfigs, NextState, Plugin, PreUpdate, Query, Res, ResMut, Resource,
-    Transform, Update, With,
+    error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands, Event,
+    EventReader, EventWriter, IntoSystemConfigs, NextState, Plugin, PreUpdate, Query, Res, ResMut,
+    Resource, Transform, Update, With,
 };
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
@@ -26,9 +26,14 @@ use std::ops::Deref;
 pub struct UnitActionPlugin;
 impl Plugin for UnitActionPlugin {
     fn build(&self, app: &mut App) {
+        app.add_event::<SetOrToggleActiveUnitActionCommand>();
         app.add_systems(
             PreUpdate,
-            change_action_on_input
+            (
+                change_action_on_input,
+                set_or_toggle_action.run_if(on_event::<SetOrToggleActiveUnitActionCommand>()),
+            )
+                .chain()
                 .run_if(in_state(ApplicationState::InGame))
                 .run_if(in_state(CombatState::ThisPlayerUnitTurn)),
         );
@@ -49,34 +54,42 @@ impl Plugin for UnitActionPlugin {
     }
 }
 
-#[derive(Resource, Eq, PartialEq)]
+#[derive(Resource, Eq, PartialEq, Copy, Clone)]
 pub enum ActiveUnitAction {
     Move,
     UseSkill(SkillId),
 }
 
-pub fn set_or_toggle_action(
-    commands: &mut Commands,
-    current_action: &Option<Res<ActiveUnitAction>>,
-    new_action: ActiveUnitAction,
-) {
-    if let Some(current_action) = current_action {
-        if current_action.deref() == &new_action {
-            commands.remove_resource::<ActiveUnitAction>();
-            return;
-        }
-    }
+#[derive(Event)]
+pub struct SetOrToggleActiveUnitActionCommand {
+    pub action: ActiveUnitAction,
+}
 
-    commands.insert_resource(new_action)
+pub fn set_or_toggle_action(
+    mut commands: Commands,
+    current_action: Option<Res<ActiveUnitAction>>,
+    mut events: EventReader<SetOrToggleActiveUnitActionCommand>,
+) {
+    for event in events.read() {
+        if let Some(current_action) = &current_action {
+            if current_action.deref() == &event.action {
+                commands.remove_resource::<ActiveUnitAction>();
+                return;
+            }
+        }
+
+        commands.insert_resource(event.action);
+    }
 }
 
 pub fn change_action_on_input(
-    mut commands: Commands,
     action_state: Res<ActionState<CombatAction>>,
-    current_action: Option<Res<ActiveUnitAction>>,
+    mut event_writer: EventWriter<SetOrToggleActiveUnitActionCommand>,
 ) {
     if action_state.just_pressed(&CombatAction::MoveUnit) {
-        set_or_toggle_action(&mut commands, &current_action, ActiveUnitAction::Move);
+        event_writer.send(SetOrToggleActiveUnitActionCommand {
+            action: ActiveUnitAction::Move,
+        });
     }
 }
 
