@@ -20,6 +20,14 @@ impl CombatData {
         self.current_turn = CombatTurn::start_unit_turn(unit);
     }
 
+    /// Returns a reference to the currently active unit.
+    /// # Panics
+    /// In case turn data is invalid or there is no active unit.
+    #[must_use]
+    pub fn current_turn_unit(&self) -> &Unit {
+        &self.units[&self.current_turn.as_unit_turn().unwrap().unit_id]
+    }
+
     #[must_use]
     pub fn can_unit_be_placed_on_tile(&self, hex: &Hex, map: &GameMap) -> bool {
         if self.unit_positions.contains_key(hex) {

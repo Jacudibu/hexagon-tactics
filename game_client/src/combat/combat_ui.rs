@@ -159,11 +159,7 @@ fn build_this_player_unit_turn_ui(
     mut change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionEvent>,
     mut end_turn_event: EventWriter<EndTurnCommand>,
 ) {
-    let unit = combat_data
-        .units
-        .get(&combat_data.current_turn.as_unit_turn().unwrap().unit_id)
-        .expect("Unit should exist!");
-
+    let unit = combat_data.current_turn_unit();
     ui.label(format!("Your turn: {}", unit.name));
     ui.horizontal(|ui| {
         let turn = combat_data.current_turn.as_unit_turn().unwrap();

@@ -132,11 +132,7 @@ pub fn show_movement_range_preview(
     combat_data: &CombatData,
     map: &GameMap,
 ) {
-    let unit = combat_data
-        .units
-        .get(&combat_data.current_turn.as_unit_turn().unwrap().unit_id)
-        .expect("TODO");
-
+    let unit = combat_data.current_turn_unit();
     let range = map.field_of_movement(unit, combat_data);
 
     commands.insert_resource(RangeHighlights { tiles: range })
@@ -148,7 +144,7 @@ pub fn show_skill_range_preview(
     combat_data: &CombatData,
     map: &GameMap,
 ) {
-    let unit = &combat_data.units[&combat_data.current_turn.as_unit_turn().unwrap().unit_id];
+    let unit = combat_data.current_turn_unit();
     let skill = Skill::get(skill_id);
 
     let tiles: Vec<Hex> = hexx::algorithms::range_fov(unit.position, skill.range.max, |hex| {
