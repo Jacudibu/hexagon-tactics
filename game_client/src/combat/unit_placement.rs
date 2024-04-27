@@ -1,11 +1,11 @@
 use crate::combat::combat_input::CombatAction;
 use crate::combat::combat_plugin::CombatState;
 use crate::combat::local_combat_data::LocalCombatData;
+use crate::combat_data_resource::CombatDataResource;
 use crate::load::CharacterSprites;
 use crate::map::{CursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::prelude::*;
 use bevy_sprite3d::{Sprite3d, Sprite3dParams};
-use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::game_map::HEX_LAYOUT;
 use game_common::network_events::client_to_server::ClientToServerMessage;
@@ -45,7 +45,7 @@ fn leave_state(mut commands: Commands) {
 fn input_listener(
     mut currently_placed_unit: ResMut<CurrentlyPlacedUnit>,
     action_state: Res<ActionState<CombatAction>>,
-    combat_data: Res<CombatData>,
+    combat_data: Res<CombatDataResource>,
     cursor: Option<Res<CursorOnTile>>,
     mut client_to_server_events: EventWriter<ClientToServerMessage>,
 ) {
@@ -81,7 +81,7 @@ fn on_server_placed_unit(
     map: Res<GameMap>,
     mut sprite_params: Sprite3dParams,
     mut events: EventReader<server_to_client::PlaceUnit>,
-    mut combat_data: ResMut<CombatData>,
+    mut combat_data: ResMut<CombatDataResource>,
     mut local_combat_data: ResMut<LocalCombatData>,
     mut next_state: ResMut<NextState<CombatState>>,
 ) {

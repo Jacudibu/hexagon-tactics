@@ -1,5 +1,6 @@
 mod camera;
 mod combat;
+mod combat_data_resource;
 mod debugging;
 mod load;
 mod main_menu;

@@ -4,6 +4,7 @@ use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_placement;
 use crate::combat::unit_placement::UnitMarker;
+use crate::combat_data_resource::CombatDataResource;
 use crate::map::{AttackHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
@@ -107,7 +108,7 @@ pub fn change_action_on_input(
 
 pub fn on_active_unit_action_changed(
     mut commands: Commands,
-    combat_data: Res<CombatData>,
+    combat_data: Res<CombatDataResource>,
     map: Res<GameMap>,
     active_unit_action: Option<Res<ActiveUnitAction>>,
 ) {
@@ -162,7 +163,7 @@ pub fn show_skill_range_preview(
 
 pub fn execute_action_on_click(
     mut commands: Commands,
-    combat_data: Res<CombatData>,
+    combat_data: Res<CombatDataResource>,
     map: Res<GameMap>,
     action_state: Res<ActionState<CombatAction>>,
     active_unit_action: Res<ActiveUnitAction>,
@@ -215,7 +216,7 @@ pub fn execute_action_on_click(
 
 pub fn on_move_unit(
     mut events: EventReader<server_to_client::MoveUnit>,
-    mut combat_data: ResMut<CombatData>,
+    mut combat_data: ResMut<CombatDataResource>,
     local_combat_data: Res<LocalCombatData>,
     map: Res<GameMap>,
     mut unit_entities: Query<&mut Transform, With<UnitMarker>>,
@@ -264,7 +265,7 @@ pub fn on_move_unit(
 
 pub fn on_use_skill(
     mut events: EventReader<server_to_client::UseSkill>,
-    mut combat_data: ResMut<CombatData>,
+    mut combat_data: ResMut<CombatDataResource>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     local_player_id: Res<LocalPlayerId>,
 ) {
