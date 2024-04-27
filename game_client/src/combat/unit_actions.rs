@@ -17,7 +17,7 @@ use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
-use game_common::skill::{Skill, SkillId, DEBUG_ATTACK_ID};
+use game_common::skill::{Skill, SkillId, DEBUG_SINGLE_TARGET_ATTACK_ID};
 use game_common::DESYNC_TODO_MESSAGE;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
@@ -98,7 +98,7 @@ pub fn change_action_on_input(
         });
     } else if action_state.just_pressed(&CombatAction::Attack) {
         action_state_change_events.send(SetOrToggleActiveUnitActionEvent {
-            action: ActiveUnitAction::UseSkill(DEBUG_ATTACK_ID),
+            action: ActiveUnitAction::UseSkill(DEBUG_SINGLE_TARGET_ATTACK_ID),
         });
     } else if action_state.just_pressed(&CombatAction::EndTurn) {
         end_turn_events.send(EndTurnCommand {});
@@ -142,17 +142,13 @@ pub fn show_movement_range_preview(
 }
 
 pub fn show_skill_range_preview(
-    _skill_id: &SkillId,
+    skill_id: &SkillId,
     mut commands: Commands,
     combat_data: &CombatData,
     map: &GameMap,
 ) {
-    let unit = combat_data
-        .units
-        .get(&combat_data.current_turn.as_unit_turn().unwrap().unit_id)
-        .expect("TODO");
-
-    let skill = Skill::debug_attack();
+    let unit = &combat_data.units[&combat_data.current_turn.as_unit_turn().unwrap().unit_id];
+    let skill = Skill::get(skill_id);
 
     let tiles: Vec<Hex> = hexx::algorithms::range_fov(unit.position, skill.range.max, |hex| {
         !map.tiles.contains_key(&hex)
@@ -170,7 +166,7 @@ pub fn execute_action_on_click(
     map: Res<GameMap>,
     action_state: Res<ActionState<CombatAction>>,
     active_unit_action: Res<ActiveUnitAction>,
-    highlighted_tiles: Res<RangeHighlights>,
+    range_highlights: Res<RangeHighlights>,
     mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
     mut event_writer: EventWriter<ClientToServerMessage>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
@@ -184,7 +180,7 @@ pub fn execute_action_on_click(
     };
 
     let selected_tile = &mouse_cursor_on_tile.hex;
-    if !highlighted_tiles.tiles.contains(selected_tile) {
+    if !range_highlights.tiles.contains(selected_tile) {
         return;
     }
 
@@ -304,6 +300,7 @@ pub fn update_attack_highlights(
     mut commands: Commands,
     active_unit_action: Option<Res<ActiveUnitAction>>,
     mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
+    map: Res<GameMap>,
 ) {
     let Some(active_unit_action) = active_unit_action else {
         commands.remove_resource::<AttackHighlights>();
@@ -318,11 +315,9 @@ pub fn update_attack_highlights(
     match active_unit_action.deref() {
         ActiveUnitAction::Move => commands.remove_resource::<AttackHighlights>(),
         ActiveUnitAction::UseSkill(skill_id) => {
-            let _skill = Skill::get(skill_id);
-            // TODO: AoE support
-
+            let skill = Skill::get(skill_id);
             commands.insert_resource(AttackHighlights {
-                tiles: vec![mouse_cursor_on_tile.hex],
+                tiles: skill.get_valid_target_hexagons(mouse_cursor_on_tile.hex, &map),
             });
         }
     }

@@ -3,7 +3,7 @@ use crate::state::MatchData;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::PlayerId;
-use game_common::skill::{Skill, SkillInvocationResult};
+use game_common::skill::Skill;
 use game_common::validation;
 
 pub fn use_skill(
@@ -21,7 +21,7 @@ pub fn use_skill(
         .unwrap()
         .unit_id;
 
-    let used_skill = &Skill::debug_attack();
+    let used_skill = &Skill::get(&data.id);
     let user = &match_data.combat_data.units[&unit_id];
 
     validation::validate_unit_has_enough_resources_to_use_skill(user, used_skill)?;
@@ -31,14 +31,19 @@ pub fn use_skill(
         data.target_coordinates,
     )?;
 
-    // TODO: AoE Skills
     let mut hits = Vec::new();
-    if let Some(target) = match_data
-        .combat_data
-        .unit_positions
-        .get(&data.target_coordinates)
-    {
-        let target = &match_data.combat_data.units[target];
+    let targets = used_skill
+        .get_valid_target_hexagons(data.target_coordinates, &match_data.loaded_map)
+        .into_iter()
+        .filter_map(
+            |hex| match match_data.combat_data.unit_positions.get(&hex) {
+                None => None,
+                Some(unit_id) => Some(unit_id),
+            },
+        );
+
+    for unit_id in targets {
+        let target = &match_data.combat_data.units[unit_id];
         let hit = used_skill.calculate_damage(user, target);
         hits.push(hit);
     }
