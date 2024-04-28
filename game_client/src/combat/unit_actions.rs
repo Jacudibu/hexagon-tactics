@@ -18,7 +18,7 @@ use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
-use game_common::skill::{Skill, SkillId, SkillShape, DEBUG_SINGLE_TARGET_ATTACK_ID};
+use game_common::skill::{Skill, SkillId, SkillTargeting, DEBUG_SINGLE_TARGET_ATTACK_ID};
 use game_common::DESYNC_TODO_MESSAGE;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
@@ -146,21 +146,22 @@ pub fn show_skill_range_preview(
     let unit = combat_data.current_turn_unit();
     let skill = Skill::get(skill_id);
 
-    if let SkillShape::Custom(shape) = &skill.shape {
-        if shape.centered_around_user {
+    match skill.targeting {
+        SkillTargeting::UserPosition => {
             commands.remove_resource::<RangeHighlights>();
             return;
         }
+        SkillTargeting::MouseCursor(range) => {
+            let tiles: Vec<Hex> = hexx::algorithms::range_fov(unit.position, range.max, |hex| {
+                !map.tiles.contains_key(&hex)
+            })
+            .into_iter()
+            .filter(|x| x.unsigned_distance_to(unit.position) >= range.min)
+            .collect();
+
+            commands.insert_resource(RangeHighlights { tiles })
+        }
     }
-
-    let tiles: Vec<Hex> = hexx::algorithms::range_fov(unit.position, skill.range.max, |hex| {
-        !map.tiles.contains_key(&hex)
-    })
-    .into_iter()
-    .filter(|x| x.unsigned_distance_to(unit.position) >= skill.range.min)
-    .collect();
-
-    commands.insert_resource(RangeHighlights { tiles })
 }
 
 pub fn execute_action_on_click(
@@ -208,13 +209,7 @@ pub fn execute_action_on_click(
         }
         ActiveUnitAction::UseSkill(id) => {
             let skill = Skill::get(id);
-            let test_if_cursor_is_in_range = if let SkillShape::Custom(custom) = skill.shape {
-                !custom.centered_around_user
-            } else {
-                true
-            };
-
-            if test_if_cursor_is_in_range {
+            if skill.targeting != SkillTargeting::UserPosition {
                 let Some(range_highlights) = range_highlights else {
                     return;
                 };

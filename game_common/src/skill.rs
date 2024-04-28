@@ -15,7 +15,7 @@ pub struct Skill {
     pub name: String,
     pub base_power: u32,
     pub mp_costs: u32,
-    pub range: SkillRange,
+    pub targeting: SkillTargeting,
     pub shape: SkillShape,
 }
 
@@ -44,45 +44,47 @@ impl Skill {
         user_position: Hex,
         map: &GameMap,
     ) -> Vec<Hex> {
+        let target_position = match self.targeting {
+            SkillTargeting::UserPosition => user_position,
+            SkillTargeting::MouseCursor(_) => cursor_position,
+        };
+
         match &self.shape {
-            SkillShape::CursorTile => {
+            SkillShape::SingleTile => {
                 vec![cursor_position]
             }
             SkillShape::Circle(circle) => cursor_position
                 .range(circle.radius)
-                .filter(|x| {
-                    let Some(tile) = map.tiles.get(x) else {
-                        return false;
-                    };
-
-                    tile.height > 0
-                })
+                .filter(|hex| Self::is_tile_valid_for_map(hex, map))
                 .collect(),
             SkillShape::Custom(custom) => {
-                let target_pos = if custom.centered_around_user {
-                    user_position
-                } else {
-                    cursor_position
-                };
-
                 // Assuming EDGE_DIRECTION::POINTY_EAST is 0, so all shapes need to be aligned to the right.
-                let rotations_needed =
-                    user_position.main_direction_to(cursor_position).index() as u32;
+                let rotations_needed = if custom.can_rotate {
+                    if user_position == cursor_position {
+                        0
+                    } else {
+                        user_position.main_direction_to(cursor_position).index() as u32
+                    }
+                } else {
+                    0
+                };
 
                 custom
                     .tiles
                     .iter()
-                    .map(|x| x.rotate_cw(rotations_needed) + target_pos)
-                    .filter(|x| {
-                        let Some(tile) = map.tiles.get(x) else {
-                            return false;
-                        };
-
-                        tile.height > 0
-                    })
+                    .map(|x| x.rotate_cw(rotations_needed) + target_position)
+                    .filter(|hex| Self::is_tile_valid_for_map(hex, map))
                     .collect()
             }
         }
+    }
+
+    fn is_tile_valid_for_map(hex: &Hex, map: &GameMap) -> bool {
+        let Some(tile) = map.tiles.get(hex) else {
+            return false;
+        };
+
+        tile.height > 0
     }
 
     fn debug_attack_single_target() -> Skill {
@@ -91,8 +93,8 @@ impl Skill {
             name: "Debug Attack".into(),
             base_power: 5,
             mp_costs: 0,
-            range: SkillRange { min: 1, max: 1 },
-            shape: SkillShape::CursorTile,
+            targeting: SkillTargeting::MouseCursor(SkillRange { min: 1, max: 1 }),
+            shape: SkillShape::SingleTile,
         }
     }
 
@@ -102,7 +104,7 @@ impl Skill {
             name: "Debug Attack".into(),
             base_power: 5,
             mp_costs: 0,
-            range: SkillRange { min: 2, max: 5 },
+            targeting: SkillTargeting::MouseCursor(SkillRange { min: 2, max: 5 }),
             shape: SkillShape::Circle(CircleShapeData { radius: 1 }),
         }
     }
@@ -113,8 +115,9 @@ impl Skill {
             name: "Debug Attack".into(),
             base_power: 5,
             mp_costs: 0,
-            range: SkillRange { min: 1, max: 1 },
+            targeting: SkillTargeting::UserPosition,
             shape: SkillShape::Custom(CustomShapeData {
+                can_rotate: true,
                 tiles: vec![
                     Hex::new(1, 0),
                     Hex::new(2, 0),
@@ -122,14 +125,12 @@ impl Skill {
                     Hex::new(2, 1),
                     Hex::new(3, -1),
                 ],
-                centered_around_user: true,
-                rotate: true,
             }),
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SkillRange {
     pub min: u32,
     pub max: u32,
@@ -143,7 +144,7 @@ pub struct SkillInvocationResult {
 
 #[derive(Debug, Clone)]
 pub enum SkillShape {
-    CursorTile,
+    SingleTile,
     Circle(CircleShapeData),
     Custom(CustomShapeData),
 }
@@ -156,6 +157,12 @@ pub struct CircleShapeData {
 #[derive(Debug, Clone)]
 pub struct CustomShapeData {
     pub tiles: Vec<Hex>,
-    pub centered_around_user: bool,
-    pub rotate: bool,
+    /// Whether the shape will be rotated to "face" the cursor position.
+    pub can_rotate: bool,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum SkillTargeting {
+    UserPosition,
+    MouseCursor(SkillRange),
 }
