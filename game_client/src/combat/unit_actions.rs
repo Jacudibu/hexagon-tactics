@@ -298,6 +298,7 @@ pub fn update_attack_highlights(
     active_unit_action: Option<Res<ActiveUnitAction>>,
     mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
     map: Res<GameMap>,
+    combat_data: Res<CombatDataResource>,
 ) {
     let Some(active_unit_action) = active_unit_action else {
         commands.remove_resource::<AttackHighlights>();
@@ -309,12 +310,14 @@ pub fn update_attack_highlights(
         return;
     };
 
+    let user_pos = combat_data.current_turn_unit().position;
+
     match active_unit_action.deref() {
         ActiveUnitAction::Move => commands.remove_resource::<AttackHighlights>(),
         ActiveUnitAction::UseSkill(skill_id) => {
             let skill = Skill::get(skill_id);
             commands.insert_resource(AttackHighlights {
-                tiles: skill.get_valid_target_hexagons(mouse_cursor_on_tile.hex, &map),
+                tiles: skill.get_valid_target_hexagons(mouse_cursor_on_tile.hex, user_pos, &map),
             });
         }
     }

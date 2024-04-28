@@ -11,7 +11,9 @@ use bevy_egui::egui::{Align2, Pos2, Ui};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
-use game_common::skill::{DEBUG_AOE_TARGET_ATTACK_ID, DEBUG_SINGLE_TARGET_ATTACK_ID};
+use game_common::skill::{
+    DEBUG_AOE_TARGET_ATTACK_ID, DEBUG_AOE_T_SHAPED, DEBUG_SINGLE_TARGET_ATTACK_ID,
+};
 use game_common::unit::Unit;
 
 pub(in crate::combat) struct CombatUiPlugin;
@@ -179,6 +181,11 @@ fn build_this_player_unit_turn_ui(
             if ui.button("Aoe Attack").clicked() {
                 change_unit_action_event.send(SetOrToggleActiveUnitActionEvent {
                     action: ActiveUnitAction::UseSkill(DEBUG_AOE_TARGET_ATTACK_ID),
+                });
+            }
+            if ui.button("T Attack").clicked() {
+                change_unit_action_event.send(SetOrToggleActiveUnitActionEvent {
+                    action: ActiveUnitAction::UseSkill(DEBUG_AOE_T_SHAPED),
                 });
             }
         });

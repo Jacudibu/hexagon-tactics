@@ -33,7 +33,11 @@ pub fn use_skill(
 
     let mut hits = Vec::new();
     let targets = used_skill
-        .get_valid_target_hexagons(data.target_coordinates, &match_data.loaded_map)
+        .get_valid_target_hexagons(
+            data.target_coordinates,
+            user.position,
+            &match_data.loaded_map,
+        )
         .into_iter()
         .filter_map(
             |hex| match match_data.combat_data.unit_positions.get(&hex) {

@@ -7,6 +7,7 @@ pub type SkillId = u32;
 
 pub const DEBUG_SINGLE_TARGET_ATTACK_ID: SkillId = 1;
 pub const DEBUG_AOE_TARGET_ATTACK_ID: SkillId = 2;
+pub const DEBUG_AOE_T_SHAPED: SkillId = 3;
 
 #[derive(Debug, Clone)]
 pub struct Skill {
@@ -30,18 +31,24 @@ impl Skill {
         match id {
             &DEBUG_SINGLE_TARGET_ATTACK_ID => Skill::debug_attack_single_target(),
             &DEBUG_AOE_TARGET_ATTACK_ID => Skill::debug_attack_aoe(),
+            &DEBUG_AOE_T_SHAPED => Skill::debug_attack_t_shaped(),
             _ => {
                 todo!()
             }
         }
     }
 
-    pub fn get_valid_target_hexagons(&self, center_coordinate: Hex, map: &GameMap) -> Vec<Hex> {
+    pub fn get_valid_target_hexagons(
+        &self,
+        cursor_position: Hex,
+        user_position: Hex,
+        map: &GameMap,
+    ) -> Vec<Hex> {
         match &self.shape {
             SkillShape::CursorTile => {
-                vec![center_coordinate]
+                vec![cursor_position]
             }
-            SkillShape::Circle(circle) => center_coordinate
+            SkillShape::Circle(circle) => cursor_position
                 .range(circle.radius)
                 .filter(|x| {
                     let Some(tile) = map.tiles.get(x) else {
@@ -51,6 +58,30 @@ impl Skill {
                     tile.height > 0
                 })
                 .collect(),
+            SkillShape::Custom(custom) => {
+                let target_pos = if custom.centered_around_user {
+                    user_position
+                } else {
+                    cursor_position
+                };
+
+                // Assuming EDGE_DIRECTION::POINTY_EAST is 0, so all shapes need to be aligned to the right.
+                let rotations_needed =
+                    user_position.main_direction_to(cursor_position).index() as u32;
+
+                custom
+                    .tiles
+                    .iter()
+                    .map(|x| x.rotate_cw(rotations_needed) + target_pos)
+                    .filter(|x| {
+                        let Some(tile) = map.tiles.get(x) else {
+                            return false;
+                        };
+
+                        tile.height > 0
+                    })
+                    .collect()
+            }
         }
     }
 
@@ -75,6 +106,27 @@ impl Skill {
             shape: SkillShape::Circle(CircleShapeData { radius: 1 }),
         }
     }
+
+    fn debug_attack_t_shaped() -> Skill {
+        Skill {
+            id: DEBUG_AOE_T_SHAPED,
+            name: "Debug Attack".into(),
+            base_power: 5,
+            mp_costs: 0,
+            range: SkillRange { min: 1, max: 1 },
+            shape: SkillShape::Custom(CustomShapeData {
+                tiles: vec![
+                    Hex::new(1, 0),
+                    Hex::new(2, 0),
+                    Hex::new(3, 0),
+                    Hex::new(2, 1),
+                    Hex::new(3, -1),
+                ],
+                centered_around_user: true,
+                rotate: true,
+            }),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -93,9 +145,17 @@ pub struct SkillInvocationResult {
 pub enum SkillShape {
     CursorTile,
     Circle(CircleShapeData),
+    Custom(CustomShapeData),
 }
 
 #[derive(Debug, Clone)]
 pub struct CircleShapeData {
     pub radius: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct CustomShapeData {
+    pub tiles: Vec<Hex>,
+    pub centered_around_user: bool,
+    pub rotate: bool,
 }
