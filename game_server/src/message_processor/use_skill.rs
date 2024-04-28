@@ -26,7 +26,7 @@ pub fn use_skill(
 
     validation::validate_unit_has_enough_resources_to_use_skill(user, used_skill)?;
     validation::validate_skill_target_is_in_range(
-        &used_skill.range,
+        &used_skill,
         user.position,
         data.target_coordinates,
     )?;

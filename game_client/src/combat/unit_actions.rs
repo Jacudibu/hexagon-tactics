@@ -18,7 +18,7 @@ use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
-use game_common::skill::{Skill, SkillId, DEBUG_SINGLE_TARGET_ATTACK_ID};
+use game_common::skill::{Skill, SkillId, SkillShape, DEBUG_SINGLE_TARGET_ATTACK_ID};
 use game_common::DESYNC_TODO_MESSAGE;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
@@ -47,8 +47,7 @@ impl Plugin for UnitActionPlugin {
                 execute_action_on_click
                     .run_if(in_state(ApplicationState::InGame))
                     .run_if(in_state(CombatState::ThisPlayerUnitTurn))
-                    .run_if(resource_exists::<ActiveUnitAction>)
-                    .run_if(resource_exists::<RangeHighlights>),
+                    .run_if(resource_exists::<ActiveUnitAction>),
                 on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
                 on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
                 update_attack_highlights.run_if(
@@ -147,6 +146,13 @@ pub fn show_skill_range_preview(
     let unit = combat_data.current_turn_unit();
     let skill = Skill::get(skill_id);
 
+    if let SkillShape::Custom(shape) = &skill.shape {
+        if shape.centered_around_user {
+            commands.remove_resource::<RangeHighlights>();
+            return;
+        }
+    }
+
     let tiles: Vec<Hex> = hexx::algorithms::range_fov(unit.position, skill.range.max, |hex| {
         !map.tiles.contains_key(&hex)
     })
@@ -163,7 +169,7 @@ pub fn execute_action_on_click(
     map: Res<GameMap>,
     action_state: Res<ActionState<CombatAction>>,
     active_unit_action: Res<ActiveUnitAction>,
-    range_highlights: Res<RangeHighlights>,
+    range_highlights: Option<Res<RangeHighlights>>,
     mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
     mut event_writer: EventWriter<ClientToServerMessage>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
@@ -177,12 +183,16 @@ pub fn execute_action_on_click(
     };
 
     let selected_tile = &mouse_cursor_on_tile.hex;
-    if !range_highlights.tiles.contains(selected_tile) {
-        return;
-    }
-
     match active_unit_action.deref() {
         ActiveUnitAction::Move => {
+            let Some(range_highlights) = range_highlights else {
+                return;
+            };
+
+            if !range_highlights.tiles.contains(selected_tile) {
+                return;
+            }
+
             // TODO: Path should already exist somewhere for highlighting/preview
             let Some(path) = map.calculate_path(&combat_data, selected_tile.clone()) else {
                 error!(
@@ -197,6 +207,23 @@ pub fn execute_action_on_click(
             ));
         }
         ActiveUnitAction::UseSkill(id) => {
+            let skill = Skill::get(id);
+            let test_if_cursor_is_in_range = if let SkillShape::Custom(custom) = skill.shape {
+                !custom.centered_around_user
+            } else {
+                true
+            };
+
+            if test_if_cursor_is_in_range {
+                let Some(range_highlights) = range_highlights else {
+                    return;
+                };
+
+                if !range_highlights.tiles.contains(selected_tile) {
+                    return;
+                }
+            }
+
             event_writer.send(ClientToServerMessage::UseSkill(
                 client_to_server::UseSkill {
                     id: id.clone(),
