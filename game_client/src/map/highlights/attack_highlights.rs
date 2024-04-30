@@ -25,4 +25,8 @@ impl HighlightedTiles for AttackHighlights {
     fn name<'a>() -> &'a str {
         "Attack"
     }
+
+    fn extra_height() -> f32 {
+        0.0075
+    }
 }

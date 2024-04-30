@@ -50,10 +50,12 @@ impl Plugin for UnitActionPlugin {
                     .run_if(resource_exists::<ActiveUnitAction>),
                 on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
                 on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
-                update_attack_highlights.run_if(
-                    resource_changed_or_removed::<ActiveUnitAction>()
-                        .or_else(resource_changed_or_removed::<CursorOnTile>()),
-                ),
+                update_attack_highlights
+                    .run_if(in_state(ApplicationState::InGame))
+                    .run_if(
+                        resource_changed_or_removed::<ActiveUnitAction>()
+                            .or_else(resource_changed_or_removed::<CursorOnTile>()),
+                    ),
             ),
         );
     }

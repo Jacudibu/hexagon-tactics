@@ -184,23 +184,23 @@ pub fn load_materials(
     commands.insert_resource(HighlightMaterials {
         cursor: materials.add(StandardMaterial {
             base_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
+            base_color_texture: Some(asset_server.load("textures/tile_cursor.png")),
             unlit: true,
-            alpha_mode: AlphaMode::Multiply,
-            //base_color_texture: Some(debug_texture.clone()),
+            alpha_mode: AlphaMode::Blend,
             ..default()
         }),
         range: materials.add(StandardMaterial {
             base_color: Color::rgba(0.0, 1.0, 0.0, 1.0),
+            base_color_texture: Some(asset_server.load("textures/tile_cursor_range.png")),
             unlit: true,
-            alpha_mode: AlphaMode::Multiply,
-            //base_color_texture: Some(debug_texture.clone()),
+            alpha_mode: AlphaMode::Blend,
             ..default()
         }),
         attack: materials.add(StandardMaterial {
             base_color: Color::rgba(1.0, 0.0, 0.0, 1.0),
+            base_color_texture: Some(asset_server.load("textures/tile_cursor_attack.png")),
             unlit: true,
-            alpha_mode: AlphaMode::Multiply,
-            //base_color_texture: Some(debug_texture.clone()),
+            alpha_mode: AlphaMode::Blend,
             ..default()
         }),
     });
