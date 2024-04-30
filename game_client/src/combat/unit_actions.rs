@@ -350,6 +350,7 @@ pub fn update_attack_highlights(
 #[cfg(test)]
 mod tests {
     use crate::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
+    use crate::combat_data_resource::CombatDataResource;
     use crate::map::RangeHighlights;
     use crate::networking::NetworkPlugin;
     use bevy::app::App;
@@ -368,11 +369,11 @@ mod tests {
         let unit_id = 1;
         let unit = Unit::create_mock(unit_id, 1).with_position(Hex::ZERO);
 
-        app.insert_resource(
+        app.insert_resource(CombatDataResource::new(
             CombatData::create_mock()
                 .with_units(vec![unit])
                 .with_unit_turn(unit_id),
-        );
+        ));
         app.insert_resource(ActiveUnitAction::Move);
         app.update();
 

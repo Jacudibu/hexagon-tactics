@@ -165,7 +165,8 @@ mod tests {
         assert_eq!(
             CombatTurn::UnitTurn(UnitTurn {
                 unit_id: 1,
-                remaining_movement: 5
+                remaining_movement: 5,
+                remaining_actions: 1,
             }),
             combat_state.current_turn
         );
@@ -174,7 +175,8 @@ mod tests {
         assert_eq!(
             CombatTurn::UnitTurn(UnitTurn {
                 unit_id: 2,
-                remaining_movement: 10
+                remaining_movement: 10,
+                remaining_actions: 1,
             }),
             combat_state.current_turn
         );
@@ -183,7 +185,8 @@ mod tests {
         assert_eq!(
             CombatTurn::UnitTurn(UnitTurn {
                 unit_id: 3,
-                remaining_movement: 15
+                remaining_movement: 15,
+                remaining_actions: 1,
             }),
             combat_state.current_turn
         );
