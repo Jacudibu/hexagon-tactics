@@ -1,20 +1,26 @@
-## Stats
+# Stats
 
-Let's use well-established D&D Style stats. Different classes will have their damage numbers be based on different
-attributes, so these here are just rough ideas.
+WIP
 
-- Strength: How strong physical attacks are
+- Strength: Physical Attacks, Health Pool (?)
 - Dexterity: Unit Speed, Evasion Chance (Or just general damage reduction to avoid RNG)
 - Constitution: Health pool and defense against physical attacks
-- Intelligence: Damaging Magic, Magical Defense
-- Wisdom: Healing Magic, Magical Defense
+- Intelligence: Magical Attacks, Magical Defense
+- Wisdom: Support Magic, Magical Defense
+
+## Base Stats
+
+Depend on a character's Race and Background
+
+## Stat Growth
+
+Character stats will increase whenever they level up. The stats for their class will be added on top to what they
+already got. Additionally, random events might have lasting effects on total stats.
 
 ### Sub-Stats
 
-- Health: 10 * Constitution
-- Mana: Intelligence * X + Wisdom * X
-- Speed: 50 + X * Dex
+- Health: Constitution
+- Mana: Intelligence, Wisdom
+- Mana Regeneration: ? Wisdom?
+- Speed: 50 + Dex
 - Happiness: Flexible -15% to +15% stat boost depending on a variety of factors: Food, Housing, recent events...
-
-(Mana is kinda necessary, to limit how many super-strong spells can be used in quick succession, especially with
-multiclassing?)
