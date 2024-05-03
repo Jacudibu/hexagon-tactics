@@ -1,4 +1,7 @@
 use crate::load::{HexagonMeshes, HighlightMaterials};
+use crate::map::highlights::active_unit_highlights::{
+    ActiveUnitHighlightMarker, ActiveUnitHighlights,
+};
 use crate::map::highlights::attack_highlights::{AttackHighlightMarker, AttackHighlights};
 use crate::map::highlights::cursor_highlights::CursorHighlightMarker;
 use crate::map::highlights::range_highlights::{RangeHighlightMarker, RangeHighlights};
@@ -26,6 +29,8 @@ impl Plugin for HighlightPlugin {
                     .run_if(resource_changed_or_removed::<RangeHighlights>()),
                 on_highlight_change::<AttackHighlightMarker, AttackHighlights>
                     .run_if(resource_changed_or_removed::<AttackHighlights>()),
+                on_highlight_change::<ActiveUnitHighlightMarker, ActiveUnitHighlights>
+                    .run_if(resource_changed_or_removed::<ActiveUnitHighlights>()),
                 on_highlight_change::<CursorHighlightMarker, CursorOnTile>.run_if(
                     resource_changed_or_removed::<CursorOnTile>()
                         .or_else(on_event::<TileChangeEvent>()),

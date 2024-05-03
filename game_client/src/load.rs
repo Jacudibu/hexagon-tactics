@@ -68,6 +68,7 @@ pub struct HighlightMaterials {
     pub cursor: Handle<StandardMaterial>,
     pub range: Handle<StandardMaterial>,
     pub attack: Handle<StandardMaterial>,
+    pub active_unit: Handle<StandardMaterial>,
 }
 
 #[derive(Debug, Resource)]
@@ -199,6 +200,13 @@ pub fn load_materials(
         attack: materials.add(StandardMaterial {
             base_color: Color::rgba(1.0, 0.0, 0.0, 1.0),
             base_color_texture: Some(asset_server.load("textures/tile_cursor_attack.png")),
+            unlit: true,
+            alpha_mode: AlphaMode::Blend,
+            ..default()
+        }),
+        active_unit: materials.add(StandardMaterial {
+            base_color: Color::rgba(0.0, 0.0, 1.0, 1.0),
+            base_color_texture: Some(asset_server.load("textures/tile_cursor_active_unit.png")),
             unlit: true,
             alpha_mode: AlphaMode::Blend,
             ..default()

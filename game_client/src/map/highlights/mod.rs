@@ -1,3 +1,4 @@
+pub mod active_unit_highlights;
 pub mod attack_highlights;
 mod cursor_highlights;
 pub mod highlight_plugin;

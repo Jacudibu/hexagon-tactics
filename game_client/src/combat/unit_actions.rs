@@ -5,7 +5,7 @@ use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_placement;
 use crate::combat::unit_placement::UnitMarker;
 use crate::combat_data_resource::CombatDataResource;
-use crate::map::{AttackHighlights, CursorOnTile, RangeHighlights};
+use crate::map::{ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::App;
@@ -235,6 +235,7 @@ pub fn execute_action_on_click(
 }
 
 pub fn on_move_unit(
+    mut commands: Commands,
     mut events: EventReader<server_to_client::MoveUnit>,
     mut combat_data: ResMut<CombatDataResource>,
     local_combat_data: Res<LocalCombatData>,
@@ -274,6 +275,10 @@ pub fn on_move_unit(
         if let Ok(mut transform) = unit_entities.get_mut(entity) {
             transform.translation = unit_placement::unit_position_on_hexagon(unit.position, &map)
         }
+
+        commands.insert_resource(ActiveUnitHighlights {
+            tile: unit.position,
+        });
 
         if unit.owner == local_player_id.id {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);

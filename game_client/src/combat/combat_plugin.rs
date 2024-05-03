@@ -5,7 +5,7 @@ use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_actions::UnitActionPlugin;
 use crate::combat::unit_placement::UnitPlacementPlugin;
 use crate::combat_data_resource::CombatDataResource;
-use crate::map::MapState;
+use crate::map::{ActiveUnitHighlights, MapState};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::{App, Plugin, Update};
@@ -100,6 +100,7 @@ pub fn on_player_turn_to_place_unit(
 }
 
 pub fn on_start_unit_turn(
+    mut commands: Commands,
     mut event: EventReader<StartUnitTurn>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     mut combat_data: ResMut<CombatDataResource>,
@@ -124,6 +125,9 @@ pub fn on_start_unit_turn(
             next_combat_state.set(CombatState::WaitingForOtherPlayer)
         }
 
+        commands.insert_resource(ActiveUnitHighlights {
+            tile: unit.position,
+        });
         combat_data.start_unit_turn(event.unit_id);
     }
 }
