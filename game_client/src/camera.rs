@@ -21,12 +21,13 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<CameraAction>::default())
-            .add_systems(Startup, init)
+            .add_systems(Startup, spawn_main_camera)
             .add_systems(
                 Update,
                 zoom_camera.run_if(in_state(MouseCursorOverUiState::NotOverUI)),
             )
-            .add_systems(Last, move_camera);
+            .add_systems(Update, move_camera)
+            .add_systems(Update, rotate_camera);
     }
 }
 
@@ -90,7 +91,7 @@ impl CameraAction {
     }
 }
 
-fn init(mut commands: Commands) {
+fn spawn_main_camera(mut commands: Commands) {
     let main_camera = commands
         .spawn((
             Name::new("Main Camera"),
@@ -110,6 +111,7 @@ fn init(mut commands: Commands) {
         .spawn((
             Name::new("Main Camera Parent"),
             MainCameraParent {},
+            FixedCameraRotationData::default(),
             SpatialBundle::default(),
             InputManagerBundle::<CameraAction> {
                 input_map: CameraAction::default_input_map(),
@@ -124,11 +126,6 @@ fn move_camera(
     mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<MainCameraParent>>,
 ) {
     if let Ok((mut transform, action_state)) = camera.get_single_mut() {
-        let rotation = rotation_from_input(action_state, &time);
-        if let Some(rotation_dir) = rotation {
-            transform.rotate_local_y(rotation_dir);
-        }
-
         let movement = movement_from_input(action_state, &time);
         if let Some(movement) = movement {
             let movement = transform.rotation * movement;
@@ -139,14 +136,73 @@ fn move_camera(
     }
 }
 
-fn rotation_from_input(action_state: &ActionState<CameraAction>, time: &Time) -> Option<f32> {
-    if action_state.pressed(&CameraAction::RotateLeft) {
-        Some(-1.0 * ROTATION_SPEED * time.delta_seconds())
-    } else if action_state.pressed(&CameraAction::RotateRight) {
-        Some(1.0 * ROTATION_SPEED * time.delta_seconds())
-    } else {
-        None
+#[derive(Component, Default)]
+struct FixedCameraRotationData {
+    pub target_rotation: u8,
+    pub current_rotation: f32,
+}
+
+impl FixedCameraRotationData {
+    fn remaining_rotation(&self) -> f32 {
+        self.target_rotation as f32 - self.current_rotation
     }
+}
+
+fn rotate_camera(
+    time: Res<Time>,
+    mut camera: Query<
+        (
+            &mut Transform,
+            &mut FixedCameraRotationData,
+            &ActionState<CameraAction>,
+        ),
+        With<MainCameraParent>,
+    >,
+) {
+    let Ok((mut transform, mut rotation_data, action_state)) = camera.get_single_mut() else {
+        error!("Unable to find MainCamera for fixed camera rotation!");
+        return;
+    };
+
+    if action_state.just_pressed(&CameraAction::RotateLeft) {
+        if rotation_data.target_rotation == 0 {
+            rotation_data.target_rotation = 5;
+            if rotation_data.current_rotation < 6.0 {
+                rotation_data.current_rotation += 6.0;
+            }
+        } else {
+            rotation_data.target_rotation -= 1;
+        }
+    } else if action_state.just_pressed(&CameraAction::RotateRight) {
+        if rotation_data.target_rotation == 5 {
+            rotation_data.target_rotation = 0;
+            if rotation_data.current_rotation > 0.0 {
+                rotation_data.current_rotation -= 6.0;
+            }
+        } else {
+            rotation_data.target_rotation += 1;
+        }
+    }
+
+    let remaining_rotation = rotation_data.remaining_rotation();
+    if remaining_rotation.abs() < 0.0001 {
+        return;
+    }
+
+    let mut delta = time.delta_seconds() * ROTATION_SPEED;
+    if delta > remaining_rotation.abs() {
+        delta = remaining_rotation;
+    }
+
+    delta = if remaining_rotation < 0.0 {
+        delta * -1.0
+    } else {
+        delta
+    };
+
+    rotation_data.current_rotation += delta;
+    transform.rotation =
+        Quat::from_rotation_y(rotation_data.current_rotation * std::f32::consts::FRAC_PI_3);
 }
 
 fn movement_from_input(action_state: &ActionState<CameraAction>, time: &Time) -> Option<Vec3> {
