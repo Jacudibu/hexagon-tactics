@@ -3,16 +3,15 @@ use crate::combat::combat_plugin::CombatState;
 use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_placement;
-use crate::combat::unit_placement::UnitMarker;
 use crate::combat_data_resource::CombatDataResource;
 use crate::map::{ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::{
-    error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands, Condition,
-    Event, EventReader, EventWriter, IntoSystemConfigs, NextState, Plugin, PreUpdate, Query, Res,
-    ResMut, Resource, Transform, Update, With,
+    error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands, Component,
+    Condition, Entity, Event, EventReader, EventWriter, IntoSystemConfigs, NextState, Plugin,
+    PreUpdate, Query, Res, ResMut, Resource, Time, Transform, Update,
 };
 use game_common::combat_data::CombatData;
 use game_common::game_map::GameMap;
@@ -20,7 +19,7 @@ use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::skill::{Skill, SkillId, SkillTargeting, DEBUG_SINGLE_TARGET_ATTACK_ID};
 use game_common::DESYNC_TODO_MESSAGE;
-use hexx::Hex;
+use hexx::{Hex, Vec3};
 use leafwing_input_manager::action_state::ActionState;
 use std::cmp::PartialEq;
 use std::ops::Deref;
@@ -50,6 +49,7 @@ impl Plugin for UnitActionPlugin {
                     .run_if(resource_exists::<ActiveUnitAction>),
                 on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
                 on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
+                animate_movement.run_if(in_state(ApplicationState::InGame)),
                 update_attack_highlights
                     .run_if(in_state(ApplicationState::InGame))
                     .run_if(
@@ -234,13 +234,72 @@ pub fn execute_action_on_click(
     commands.remove_resource::<ActiveUnitAction>(); // TODO: Maybe we should extract that into a state transition event
 }
 
+#[derive(Component)]
+pub struct MoveUnitComponent {
+    pub path: Vec<Hex>,
+    pub current_step: usize,
+    pub progress: f32,
+}
+
+impl MoveUnitComponent {
+    pub fn new(path: Vec<Hex>) -> Self {
+        debug_assert!(
+            path.len() > 1,
+            "A path needs to consist of at least a start and an end point!"
+        );
+
+        MoveUnitComponent {
+            path,
+            current_step: 0,
+            progress: 0.0,
+        }
+    }
+}
+
+pub fn animate_movement(
+    mut commands: Commands,
+    mut units: Query<(Entity, &mut Transform, &mut MoveUnitComponent)>,
+    map: Res<GameMap>,
+    time: Res<Time>,
+) {
+    const UNIT_MOVE_SPEED: f32 = 5.0;
+
+    for (entity, mut transform, mut move_data) in units.iter_mut() {
+        let delta = time.delta_seconds() * UNIT_MOVE_SPEED;
+        move_data.progress += delta;
+        if move_data.progress >= 1.0 {
+            if move_data.current_step < move_data.path.len() - 2 {
+                move_data.current_step += 1;
+                move_data.progress -= 1.0;
+                // This is probably where we would pick the appropriate animation to be played
+                // (jump or walk)
+            } else {
+                commands.entity(entity).remove::<MoveUnitComponent>();
+                transform.translation = unit_placement::unit_position_on_hexagon(
+                    move_data.path.last().unwrap().clone(),
+                    &map,
+                );
+                continue;
+            }
+        }
+
+        let from =
+            unit_placement::unit_position_on_hexagon(move_data.path[move_data.current_step], &map);
+
+        let to = unit_placement::unit_position_on_hexagon(
+            move_data.path[move_data.current_step + 1],
+            &map,
+        );
+
+        transform.translation = Vec3::lerp(from, to, move_data.progress);
+    }
+}
+
 pub fn on_move_unit(
     mut commands: Commands,
     mut events: EventReader<server_to_client::MoveUnit>,
     mut combat_data: ResMut<CombatDataResource>,
     local_combat_data: Res<LocalCombatData>,
-    map: Res<GameMap>,
-    mut unit_entities: Query<&mut Transform, With<UnitMarker>>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     local_player_id: Res<LocalPlayerId>,
 ) {
@@ -271,10 +330,9 @@ pub fn on_move_unit(
 
         let entity = local_combat_data.unit_entities[&unit_id];
 
-        // TODO: Animate Movement
-        if let Ok(mut transform) = unit_entities.get_mut(entity) {
-            transform.translation = unit_placement::unit_position_on_hexagon(unit.position, &map)
-        }
+        commands
+            .entity(entity)
+            .insert(MoveUnitComponent::new(event.path.clone()));
 
         commands.insert_resource(ActiveUnitHighlights {
             tile: unit.position,
