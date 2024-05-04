@@ -1,6 +1,7 @@
 use crate::connection_handler::ConnectionId;
 use bytes::Bytes;
 use game_common::combat_data::CombatData;
+use game_common::game_data::GameData;
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
     OtherPlayerConnected, ServerToClientMessage, YouConnected,
@@ -23,13 +24,26 @@ pub struct MatchData {
     pub combat_data: CombatData,
 }
 
-#[derive(Default)]
 pub struct SharedState {
     pub connections: HashMap<ConnectionId, mpsc::UnboundedSender<Bytes>>,
+    pub game_data: GameData,
     pub players: HashMap<PlayerId, Player>,
     pub player_to_connection_map: HashMap<PlayerId, ConnectionId>,
-    pub connection_to_player_map: HashMap<ConnectionId, PlayerId>, // TODO: We would want to allow multiple players from the same connection for local multiplayer
+    pub connection_to_player_map: HashMap<ConnectionId, PlayerId>, // TODO: We would want to allow multiple players from the same connection for local multiplayer, tho splitscreen is an extra headache I guess
     pub server_state: ServerState,
+}
+
+impl Default for SharedState {
+    fn default() -> Self {
+        Self {
+            connections: Default::default(),
+            game_data: GameData::load(),
+            players: Default::default(),
+            player_to_connection_map: Default::default(),
+            connection_to_player_map: Default::default(),
+            server_state: Default::default(),
+        }
+    }
 }
 
 impl SharedState {

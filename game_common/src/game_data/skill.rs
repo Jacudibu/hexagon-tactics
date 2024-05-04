@@ -1,5 +1,6 @@
 use crate::game_map::GameMap;
 use crate::unit::{Unit, UnitId};
+use bevy::utils::HashMap;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
@@ -9,8 +10,9 @@ pub const DEBUG_SINGLE_TARGET_ATTACK_ID: SkillId = 1;
 pub const DEBUG_AOE_TARGET_ATTACK_ID: SkillId = 2;
 pub const DEBUG_AOE_T_SHAPED: SkillId = 3;
 
+///
 #[derive(Debug, Clone)]
-pub struct Skill {
+pub struct SkillDefinition {
     pub id: SkillId,
     pub name: String,
     pub base_power: u32,
@@ -19,22 +21,11 @@ pub struct Skill {
     pub shape: SkillShape,
 }
 
-impl Skill {
+impl SkillDefinition {
     pub fn calculate_damage(&self, user: &Unit, target: &Unit) -> SkillInvocationResult {
         SkillInvocationResult {
             physical_damage: user.stats_after_buffs.strength + self.base_power,
             target_unit_id: target.id,
-        }
-    }
-
-    pub fn get(id: &SkillId) -> Skill {
-        match id {
-            &DEBUG_SINGLE_TARGET_ATTACK_ID => Skill::debug_attack_single_target(),
-            &DEBUG_AOE_TARGET_ATTACK_ID => Skill::debug_attack_aoe(),
-            &DEBUG_AOE_T_SHAPED => Skill::debug_attack_t_shaped(),
-            _ => {
-                todo!()
-            }
         }
     }
 
@@ -87,8 +78,21 @@ impl Skill {
         tile.height > 0
     }
 
-    fn debug_attack_single_target() -> Skill {
-        Skill {
+    pub(in crate::game_data) fn mock_skills() -> HashMap<SkillId, SkillDefinition> {
+        let mut result = HashMap::new();
+
+        result.insert(
+            DEBUG_SINGLE_TARGET_ATTACK_ID,
+            Self::debug_attack_single_target(),
+        );
+        result.insert(DEBUG_AOE_T_SHAPED, Self::debug_attack_t_shaped());
+        result.insert(DEBUG_AOE_TARGET_ATTACK_ID, Self::debug_attack_aoe());
+
+        result
+    }
+
+    fn debug_attack_single_target() -> SkillDefinition {
+        SkillDefinition {
             id: DEBUG_SINGLE_TARGET_ATTACK_ID,
             name: "Debug Attack".into(),
             base_power: 5,
@@ -98,8 +102,8 @@ impl Skill {
         }
     }
 
-    fn debug_attack_aoe() -> Skill {
-        Skill {
+    fn debug_attack_aoe() -> SkillDefinition {
+        SkillDefinition {
             id: DEBUG_AOE_TARGET_ATTACK_ID,
             name: "Debug Attack".into(),
             base_power: 5,
@@ -109,8 +113,8 @@ impl Skill {
         }
     }
 
-    fn debug_attack_t_shaped() -> Skill {
-        Skill {
+    fn debug_attack_t_shaped() -> SkillDefinition {
+        SkillDefinition {
             id: DEBUG_AOE_T_SHAPED,
             name: "Debug Attack".into(),
             base_power: 5,

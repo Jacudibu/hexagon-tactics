@@ -38,6 +38,7 @@ pub fn process_message(
         },
         ServerState::InGame(ref mut match_data) => {
             let players = &mut shared_state.players;
+            let game_data = &shared_state.game_data;
             match message {
                 ClientToServerMessage::FinishedLoading => {
                     finish_loading::finish_loading(sender, players, match_data)
@@ -50,7 +51,7 @@ pub fn process_message(
                     move_unit::move_unit(sender, match_data, data)
                 }
                 ClientToServerMessage::UseSkill(data) => {
-                    use_skill::use_skill(sender, match_data, data)
+                    use_skill::use_skill(sender, match_data, data, game_data)
                 }
                 _ => Err(create_error_response(format!(
                     "Unexpected message for server state InGame: {:?}",

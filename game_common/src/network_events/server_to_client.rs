@@ -4,7 +4,7 @@ use bevy::prelude::Event;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
-use crate::skill::{SkillId, SkillInvocationResult};
+use crate::game_data::skill::{SkillId, SkillInvocationResult};
 #[cfg(feature = "test_helpers")]
 use enum_as_inner::EnumAsInner;
 

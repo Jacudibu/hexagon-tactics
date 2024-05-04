@@ -1,15 +1,18 @@
 use crate::message_processor::ServerToClientMessageVariant;
 use crate::state::MatchData;
-use game_common::network_events::server_to_client::ServerToClientMessage;
+use game_common::game_data::GameData;
+use game_common::network_events::server_to_client::{
+    ErrorWhenProcessingMessage, ServerToClientMessage,
+};
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::PlayerId;
-use game_common::skill::Skill;
 use game_common::validation;
 
 pub fn use_skill(
     sender: PlayerId,
     match_data: &mut MatchData,
     data: client_to_server::UseSkill,
+    game_data: &GameData,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
     validation::validate_unit_has_at_least_one_action(&match_data.combat_data)?;
@@ -21,7 +24,13 @@ pub fn use_skill(
         .unwrap()
         .unit_id;
 
-    let used_skill = &Skill::get(&data.id);
+    let Some(used_skill) = game_data.skills.get(&data.id) else {
+        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
+            ErrorWhenProcessingMessage {
+                message: format!("Invalid Skill Id: {}", data.id),
+            },
+        ));
+    };
     let user = &match_data.combat_data.units[&unit_id];
 
     validation::validate_unit_has_enough_resources_to_use_skill(user, used_skill)?;
@@ -90,6 +99,7 @@ mod tests {
     use crate::message_processor::use_skill::use_skill;
     use crate::state::MatchData;
     use game_common::combat_data::CombatData;
+    use game_common::game_data::GameData;
     use game_common::game_map::GameMap;
     use game_common::network_events::client_to_server;
     use game_common::unit::Unit;
@@ -102,6 +112,7 @@ mod tests {
         let target_id = 2;
         let target_position = Hex::ZERO.neighbor(EdgeDirection::POINTY_RIGHT);
         let skill_id = 1;
+        let game_data = GameData::create_mock().with_all_mock_skills();
         let mut match_data = MatchData {
             combat_data: CombatData::create_mock()
                 .with_units(vec![
@@ -121,7 +132,7 @@ mod tests {
             target_coordinates: target_position,
         };
 
-        let result = use_skill(1, &mut match_data, data).unwrap();
+        let result = use_skill(1, &mut match_data, data, &game_data).unwrap();
         assert_eq!(1, result.len());
 
         let result = result[0].as_broadcast().unwrap().as_use_skill().unwrap();

@@ -1,9 +1,9 @@
-use crate::skill::{Skill, SkillTargeting};
+use crate::game_data::skill::{SkillDefinition, SkillTargeting};
 use crate::validation::validation_error::ValidationError;
 use hexx::Hex;
 
 pub fn validate_skill_target_is_in_range(
-    skill: &Skill,
+    skill: &SkillDefinition,
     origin: Hex,
     target: Hex,
 ) -> Result<(), ValidationError> {

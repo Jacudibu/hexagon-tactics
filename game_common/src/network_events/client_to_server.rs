@@ -1,4 +1,4 @@
-use crate::skill::SkillId;
+use crate::game_data::skill::SkillId;
 use crate::unit::UnitId;
 use bevy::prelude::Event;
 use hexx::Hex;

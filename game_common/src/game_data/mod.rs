@@ -1,10 +1,12 @@
+use crate::game_data::skill::{SkillDefinition, SkillId};
 use crate::player::PlayerId;
 use crate::unit::UnitId;
 use crate::unit_stats::UnitStats;
 use base_stats::BaseStats;
 use bevy::utils::HashMap;
 
-mod base_stats;
+pub mod base_stats;
+pub mod skill;
 
 // In bevy, all components and resources have to be 'static, so if we don't want to hardcode these,
 // we'll need to abstract them a little instead of just holding references to everything.
@@ -28,9 +30,6 @@ pub struct ClassDefinition {
     pub learnable_skills: Vec<SkillId>,
 }
 
-pub type SkillId = u32;
-pub type SkillDefinition = BaseDefinition<SkillId>;
-
 pub type WeaponId = u32;
 pub type WeaponDefinition = BaseDefinition<WeaponId>;
 
@@ -48,6 +47,45 @@ pub struct GameData {
     pub weapons: HashMap<WeaponId, WeaponDefinition>,
     pub armor: HashMap<RaceId, RaceDefinition>,
     pub accessories: HashMap<RaceId, RaceDefinition>,
+}
+
+impl GameData {
+    pub fn load() -> Self {
+        GameData {
+            races: Default::default(),
+            classes: Default::default(),
+            skills: SkillDefinition::mock_skills(),
+            weapons: Default::default(),
+            armor: Default::default(),
+            accessories: Default::default(),
+        }
+    }
+}
+
+#[cfg(feature = "test_helpers")]
+pub mod test_helpers {
+    use crate::game_data::skill::SkillDefinition;
+    use crate::game_data::GameData;
+
+    impl GameData {
+        /// Create empty GameData.
+        /// Use `.with_<attribute>` methods to selectively load specific values for tests.
+        pub fn create_mock() -> Self {
+            GameData {
+                races: Default::default(),
+                classes: Default::default(),
+                skills: Default::default(),
+                weapons: Default::default(),
+                armor: Default::default(),
+                accessories: Default::default(),
+            }
+        }
+
+        pub fn with_all_mock_skills(mut self) -> Self {
+            self.skills = SkillDefinition::mock_skills();
+            self
+        }
+    }
 }
 
 pub struct Level {

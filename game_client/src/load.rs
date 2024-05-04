@@ -1,3 +1,4 @@
+use crate::game_data_resource::GameDataResource;
 use crate::map::METERS_PER_TILE_HEIGHT_UNIT;
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
@@ -6,6 +7,7 @@ use bevy::render::texture::{
     ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor,
 };
 use bevy::utils::HashMap;
+use game_common::game_data::GameData;
 use game_common::game_map;
 use game_common::game_map::{FluidKind, TileData, TileSurface, HEX_LAYOUT};
 use hexx::{ColumnMeshBuilder, HexLayout, MeshInfo, UVOptions};
@@ -258,5 +260,6 @@ fn generate_generic_side_mat(
 pub fn load_sprites(mut commands: Commands, asset_server: Res<AssetServer>) {
     let image = asset_server.load("sprites/test_character.png");
 
-    commands.insert_resource(CharacterSprites { test: image })
+    commands.insert_resource(CharacterSprites { test: image });
+    commands.insert_resource(GameDataResource::new(GameData::load()));
 }
