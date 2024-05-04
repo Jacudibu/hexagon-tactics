@@ -1,5 +1,6 @@
 pub mod combat_data;
 pub mod combat_turn;
+pub mod game_data;
 pub mod game_map;
 pub mod network_events;
 pub mod player;

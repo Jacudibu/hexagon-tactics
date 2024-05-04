@@ -20,3 +20,8 @@ of the encounter.
 
 By parsing all game data from external files at game launch, certain aspects like classes, skills, monsters and events
 will be easy to change or extend.
+
+# Multiplayer
+
+- Control the same kingdom (control different groups or share units within the same fight)
+- Control different kingdoms (As allies or foes)

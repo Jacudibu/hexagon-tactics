@@ -1,13 +1,20 @@
 ## Classes
 
-Every Class has a signature weapon assigned to them. Character classes can be changed at will, but stats are persistent
-and raise depending on the active class on level up.
+Every new Unit will have a class with level >= 1 assigned to them.
+
+Character classes can be changed at will, but stats are persistent and raise depending on the active class on level up.
+Certain classes might be locked behind specific character races, as might certain equipment.
 
 ### Multiclassing
 
-Every Unit can access the skills of one other class, but without access to their equipment. This means a black mage
-could use white magic, or a warrior could use a lancer's skills. Thus, we don't necessarily need hybrid classes like
-traditional red mages, players can just build those themselves, but still having them might be more interesting.
+Every Unit can access the skills of all their classes. This means a black mage could use white magic, or a warrior could
+use an archer's skills, as long as they've learned those beforehand. Changing classes means starting at level 0: A unit
+knows nothing about that class and has to figure it out first.
+
+### Class Requirements
+
+Some classes might require minimum stat requirements to be available, for example an intelligence threshold for an
+advanced spellcaster class.
 
 #### Melee-Focused Units
 

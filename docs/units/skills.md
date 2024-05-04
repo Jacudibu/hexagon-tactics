@@ -1,14 +1,10 @@
 # Skills
 
-A new Skill is unlocked whenever a unit levels up or after purchasing an upgrade to unlock that skill for every unit of
-the respective class.
+A new Skill is unlocked whenever a unit levels up. Which skill they get is randomized. The player might get to pick
+between multiple skills, and certain signature skills might be locked behind specific level requirements. New Skills
+could also be unlocked through random event or after purchasing specific upgrades.
 
-Additionally, every weapon has a "weapon skill" assigned to them, which can only be used while that weapon is equipped.
-
-## Roguelite Alternative
-
-Which skills a unit learns on level up is randomized. Whenever a unit levels up, the player gets to pick between two
-randomly selected skills.
+Additionally, equipment might unlock new skills for the time it's equipped to a unit.
 
 ### Some wacky Skill ideas
 
