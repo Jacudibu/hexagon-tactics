@@ -1,6 +1,6 @@
 use crate::message_processor::ServerToClientMessageVariant;
-use crate::state::ServerState::InCombat;
-use crate::state::{MatchData, SharedState};
+use crate::state::ServerState::InGame;
+use crate::state::{InGameData, InGameState, MatchData, SharedState};
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
 use game_common::game_map::GameMap;
@@ -25,18 +25,26 @@ pub fn start_game(
             ))
         }
     };
-    let combat_state = CombatData {
+    let combat_data = CombatData {
         units: Default::default(),
         unit_positions: Default::default(),
         unit_storage: Default::default(),
         current_turn: CombatTurn::Undefined,
     };
-    let server_data = MatchData {
-        combat_data: combat_state,
+    let match_data = MatchData {
+        combat_data,
         loaded_map: map,
     };
 
-    shared_state.server_state = InCombat(server_data);
+    let mut in_game_data = InGameData::default();
+    let first = shared_state.players.keys().find(|x| true).unwrap();
+    in_game_data.insert_state_for_player(first.clone(), InGameState::Combat(match_data));
+
+    for player_id in shared_state.players.keys().filter(|&x| x != first) {
+        in_game_data.add_player_to_other_player_state(first, player_id.clone());
+    }
+
+    shared_state.server_state = InGame(in_game_data);
 
     Ok(vec![ServerToClientMessageVariant::Broadcast(
         ServerToClientMessage::LoadMap(StartGameAndLoadMap {

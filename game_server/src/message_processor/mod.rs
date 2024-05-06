@@ -1,4 +1,4 @@
-use crate::state::{ServerState, SharedState};
+use crate::state::{InGameState, ServerState, SharedState};
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, ServerToClientMessage,
@@ -26,10 +26,16 @@ pub fn process_message(
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     match &mut shared_state.server_state {
         ServerState::Lobby => lobby::process_message(shared_state, sender, message),
-        ServerState::InCombat(ref mut match_data) => {
+        ServerState::InGame(ref mut in_game_data) => {
             let players = &mut shared_state.players;
             let game_data = &shared_state.game_data;
-            combat::process_message(players, sender, game_data, match_data, message)
+            let player_state = in_game_data.player_state_mut(&sender);
+
+            match player_state {
+                InGameState::Combat(ref mut match_data) => {
+                    combat::process_message(players, sender, game_data, match_data, message)
+                }
+            }
         }
     }
 }
