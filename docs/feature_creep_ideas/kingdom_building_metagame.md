@@ -40,3 +40,21 @@ Buildings can be built onto Tiles to acquire extra effects, such as resource ref
 
 Tiles will show a preview of what they can expect on a tile: Monsters, Bandits, An Army...
 Players can assembled squads of their units and have to pick one of them to engage in Combat.
+
+### Turning this into a roguelite
+
+Somewhere on the map, the Demon King has spawned and is also expanding, though much faster and with stronger units than
+the player.
+Eventually, they will clash. The player can attempt to fight back, but that will become gradually harder over time,
+given that the increased resistance will raise the big bad's attention.
+
+In between runs, permanent upgrades can be purchased. Higher resource production, unit buffs, new unit classes,
+increased distance to the demon spawn location... Maybe allow them to take a unit from their previous run with them.
+
+If the player eventually manages to overcome and defeat the big bad, they have an option of becoming the big bad
+themselves for their next run.
+
+# Multiplayer
+
+- Control the same kingdom (control different groups or share units within the same fight)
+- Control different kingdoms (As allies or foes)
