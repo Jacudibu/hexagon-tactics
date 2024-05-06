@@ -1,5 +1,5 @@
+use crate::in_game_state::MatchData;
 use crate::message_processor::ServerToClientMessageVariant;
-use crate::state::MatchData;
 use game_common::game_data::GameData;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, ServerToClientMessage,
@@ -96,8 +96,8 @@ pub fn use_skill(
 
 #[cfg(test)]
 mod tests {
+    use crate::in_game_state::MatchData;
     use crate::message_processor::use_skill::use_skill;
-    use crate::state::MatchData;
     use game_common::combat_data::CombatData;
     use game_common::game_data::GameData;
     use game_common::game_map::GameMap;

@@ -1,5 +1,5 @@
 use game_common::network_events::NETWORK_IDLE_TIMEOUT;
-use state::SharedState;
+use shared_state::SharedState;
 use std::error::Error;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -8,8 +8,9 @@ use tracing_subscriber::EnvFilter;
 use wtransport::{Endpoint, Identity, ServerConfig};
 
 mod connection_handler;
+mod in_game_state;
 mod message_processor;
-mod state;
+mod shared_state;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

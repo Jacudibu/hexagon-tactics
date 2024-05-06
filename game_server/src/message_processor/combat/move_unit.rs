@@ -1,5 +1,5 @@
+use crate::in_game_state::MatchData;
 use crate::message_processor::ServerToClientMessageVariant;
-use crate::state::MatchData;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::PlayerId;
@@ -40,8 +40,8 @@ pub fn move_unit(
 
 #[cfg(test)]
 mod tests {
+    use crate::in_game_state::MatchData;
     use crate::message_processor::move_unit::move_unit;
-    use crate::state::MatchData;
     use game_common::combat_data::CombatData;
     use game_common::game_map::GameMap;
     use game_common::network_events::client_to_server::MoveUnit;

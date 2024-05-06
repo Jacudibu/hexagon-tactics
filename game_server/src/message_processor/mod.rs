@@ -1,4 +1,4 @@
-use crate::state::{InGameState, ServerState, SharedState};
+use crate::shared_state::{ServerState, SharedState};
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, ServerToClientMessage,
@@ -8,6 +8,7 @@ use game_common::player::PlayerId;
 mod combat;
 mod lobby;
 
+use crate::in_game_state::InGameState;
 #[cfg(test)]
 use enum_as_inner::EnumAsInner;
 

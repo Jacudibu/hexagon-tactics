@@ -1,6 +1,7 @@
+use crate::in_game_state::{InGameData, InGameState, MatchData};
 use crate::message_processor::ServerToClientMessageVariant;
-use crate::state::ServerState::InGame;
-use crate::state::{InGameData, InGameState, MatchData, SharedState};
+use crate::shared_state::ServerState::InGame;
+use crate::shared_state::SharedState;
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
 use game_common::game_map::GameMap;
@@ -37,7 +38,7 @@ pub fn start_game(
     };
 
     let mut in_game_data = InGameData::default();
-    let first = shared_state.players.keys().find(|x| true).unwrap();
+    let first = shared_state.players.keys().find(|_| true).unwrap();
     in_game_data.insert_state_for_player(first.clone(), InGameState::Combat(match_data));
 
     for player_id in shared_state.players.keys().filter(|&x| x != first) {

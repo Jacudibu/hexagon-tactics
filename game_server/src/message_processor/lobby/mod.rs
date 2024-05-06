@@ -1,5 +1,5 @@
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
-use crate::state::SharedState;
+use crate::shared_state::SharedState;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::player::PlayerId;
