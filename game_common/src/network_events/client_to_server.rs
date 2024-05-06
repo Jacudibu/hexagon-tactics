@@ -6,10 +6,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub enum ClientToServerMessage {
+    // Lobby
     StartGame,
+
+    // Combat
     FinishedLoading,
     EndTurn,
-
     PlaceUnit(PlaceUnit),
     MoveUnit(MoveUnit),
     UseSkill(UseSkill),

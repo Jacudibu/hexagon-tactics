@@ -26,4 +26,10 @@ Proper values have to be figured out through gameplay testing, obviously.
 
 To handle ties, each unit gets an initial tiebreaker value assigned to them, depending on their speed. The unit with the
 higher tiebreaker goes first, but then these values are swapped. That swap should only occur when there are enough
-units, otherwise they'd get two turns in a row. 
+units, otherwise they'd get two turns in a row.
+
+## Permadeath
+
+Once a Unit's HP reaches 0, they'll die. *gasp*
+We could also make those units enter a "downed" state where they'd need to receive some kind of healing (or the combat
+needs to finish) within 3 turns to make it less punishing.

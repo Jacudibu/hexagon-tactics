@@ -6,7 +6,7 @@ use game_common::network_events::server_to_client::{
 use game_common::player::PlayerId;
 
 mod combat;
-mod start_game;
+mod lobby;
 
 #[cfg(test)]
 use enum_as_inner::EnumAsInner;
@@ -25,16 +25,7 @@ pub fn process_message(
     message: ClientToServerMessage,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     match &mut shared_state.server_state {
-        ServerState::WaitingForConnection => match message {
-            ClientToServerMessage::StartGame => start_game::start_game(shared_state),
-            _ => Err(create_error_response(format!(
-                "Unexpected message for server state WaitingForConnection: {:?}",
-                message
-            ))),
-        },
-        ServerState::SelectingStartingUnits(ref mut data) => {
-            todo!()
-        }
+        ServerState::Lobby => lobby::process_message(shared_state, sender, message),
         ServerState::InCombat(ref mut match_data) => {
             let players = &mut shared_state.players;
             let game_data = &shared_state.game_data;
