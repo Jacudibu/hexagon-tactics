@@ -5,12 +5,8 @@ use game_common::network_events::server_to_client::{
 };
 use game_common::player::PlayerId;
 
-mod end_turn;
-mod finish_loading;
-mod move_unit;
-mod place_unit;
+mod combat;
 mod start_game;
-mod use_skill;
 
 #[cfg(test)]
 use enum_as_inner::EnumAsInner;
@@ -36,28 +32,13 @@ pub fn process_message(
                 message
             ))),
         },
-        ServerState::InGame(ref mut match_data) => {
+        ServerState::SelectingStartingUnits(ref mut data) => {
+            todo!()
+        }
+        ServerState::InCombat(ref mut match_data) => {
             let players = &mut shared_state.players;
             let game_data = &shared_state.game_data;
-            match message {
-                ClientToServerMessage::FinishedLoading => {
-                    finish_loading::finish_loading(sender, players, match_data)
-                }
-                ClientToServerMessage::EndTurn => end_turn::end_turn(sender, match_data),
-                ClientToServerMessage::PlaceUnit(data) => {
-                    place_unit::place_unit(sender, players, match_data, data)
-                }
-                ClientToServerMessage::MoveUnit(data) => {
-                    move_unit::move_unit(sender, match_data, data)
-                }
-                ClientToServerMessage::UseSkill(data) => {
-                    use_skill::use_skill(sender, match_data, data, game_data)
-                }
-                _ => Err(create_error_response(format!(
-                    "Unexpected message for server state InGame: {:?}",
-                    message
-                ))),
-            }
+            combat::process_message(players, sender, game_data, match_data, message)
         }
     }
 }

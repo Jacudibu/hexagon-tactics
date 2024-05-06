@@ -1,7 +1,7 @@
 use crate::connection_handler::ConnectionId;
 use bytes::Bytes;
 use game_common::combat_data::CombatData;
-use game_common::game_data::GameData;
+use game_common::game_data::{GameData, UnitDefinition};
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
     OtherPlayerConnected, ServerToClientMessage, YouConnected,
@@ -16,12 +16,17 @@ use tracing::error;
 pub enum ServerState {
     #[default]
     WaitingForConnection,
-    InGame(MatchData),
+    SelectingStartingUnits(SelectingUnitsData),
+    InCombat(MatchData),
 }
 
 pub struct MatchData {
     pub loaded_map: GameMap,
     pub combat_data: CombatData,
+}
+
+pub struct SelectingUnitsData {
+    pub units: Vec<UnitDefinition>,
 }
 
 pub struct SharedState {
@@ -30,7 +35,7 @@ pub struct SharedState {
     pub players: HashMap<PlayerId, Player>,
     pub player_to_connection_map: HashMap<PlayerId, ConnectionId>,
     pub connection_to_player_map: HashMap<ConnectionId, PlayerId>, // TODO: We would want to allow multiple players from the same connection for local multiplayer, tho splitscreen is an extra headache I guess
-    pub server_state: ServerState,
+    pub server_state: ServerState, // TODO: Technically, multiple players could be in different states
 }
 
 impl Default for SharedState {

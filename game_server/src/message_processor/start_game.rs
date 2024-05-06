@@ -1,5 +1,5 @@
 use crate::message_processor::ServerToClientMessageVariant;
-use crate::state::ServerState::InGame;
+use crate::state::ServerState::InCombat;
 use crate::state::{MatchData, SharedState};
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
@@ -36,7 +36,7 @@ pub fn start_game(
         loaded_map: map,
     };
 
-    shared_state.server_state = InGame(server_data);
+    shared_state.server_state = InCombat(server_data);
 
     Ok(vec![ServerToClientMessageVariant::Broadcast(
         ServerToClientMessage::LoadMap(StartGameAndLoadMap {
