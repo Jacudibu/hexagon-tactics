@@ -15,6 +15,14 @@ pub enum ClientToServerMessage {
     PlaceUnit(PlaceUnit),
     MoveUnit(MoveUnit),
     UseSkill(UseSkill),
+
+    // Events
+    PickUnit(PickUnit),
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct PickUnit {
+    pub unit_id: UnitId,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

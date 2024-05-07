@@ -1,4 +1,5 @@
 use crate::in_game_state::MatchData;
+use crate::message_processor::state_transitions::StateTransition;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
@@ -18,8 +19,8 @@ pub fn process_message(
     game_data: &GameData,
     match_data: &mut MatchData,
     message: ClientToServerMessage,
-) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
-    match message {
+) -> Result<(Option<StateTransition>, Vec<ServerToClientMessageVariant>), ServerToClientMessage> {
+    let result = match message {
         ClientToServerMessage::FinishedLoading => {
             finish_loading::finish_loading(sender, players, match_data)
         }
@@ -35,5 +36,7 @@ pub fn process_message(
             "Unexpected message for server state InGame: {:?}",
             message
         ))),
-    }
+    }?;
+
+    Ok((None, result))
 }

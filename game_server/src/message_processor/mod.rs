@@ -7,6 +7,8 @@ use game_common::player::PlayerId;
 
 mod combat;
 mod lobby;
+mod pick_unit;
+pub mod state_transitions;
 
 use crate::in_game_state::InGameState;
 #[cfg(test)]
@@ -30,13 +32,33 @@ pub fn process_message(
         ServerState::InGame(ref mut in_game_data) => {
             let players = &mut shared_state.players;
             let game_data = &shared_state.game_data;
-            let player_state = in_game_data.player_state_mut(&sender);
-
-            match player_state {
+            let (player_state, player_resources) = in_game_data.deconstruct_for_processing(&sender);
+            let (state_transition, mut result) = match player_state {
+                InGameState::StartingGame => {
+                    // Technically this should never happen, as this is just the dummy initialization value
+                    todo!()
+                }
                 InGameState::Combat(ref mut match_data) => {
                     combat::process_message(players, sender, game_data, match_data, message)
                 }
+                InGameState::PickUnit(ref mut pick_unit_data) => pick_unit::process_message(
+                    players,
+                    sender,
+                    game_data,
+                    player_resources,
+                    pick_unit_data,
+                    message,
+                ),
+            }?;
+
+            if let Some(state_transition) = state_transition {
+                let mut new_messages =
+                    state_transitions::handle_transition(&sender, state_transition, in_game_data);
+
+                result.append(&mut new_messages);
             }
+
+            Ok(result)
         }
     }
 }

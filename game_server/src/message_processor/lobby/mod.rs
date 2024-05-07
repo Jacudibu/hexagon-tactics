@@ -12,7 +12,7 @@ pub fn process_message(
     message: ClientToServerMessage,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     match message {
-        ClientToServerMessage::StartGame => start_game::start_game(shared_state),
+        ClientToServerMessage::StartGame => start_game::start_game(sender, shared_state),
         _ => Err(create_error_response(format!(
             "Unexpected message for server state WaitingForConnection: {:?}",
             message
