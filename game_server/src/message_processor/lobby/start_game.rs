@@ -8,8 +8,8 @@ use crate::message_processor::{state_transitions, ServerToClientMessageVariant};
 use crate::shared_state::{ServerState, SharedState};
 
 pub fn start_game(
-    sender: PlayerId,
     shared_state: &mut SharedState,
+    sender: PlayerId,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_player_readiness(&shared_state.players, &ReadyState::ReadyInLobby)?;
 

@@ -12,16 +12,20 @@ use tracing::error;
 
 pub fn place_unit(
     sender: PlayerId,
+    message: client_to_server::PlaceUnit,
     players: &HashMap<PlayerId, Player>,
     match_data: &mut MatchData,
-    data: client_to_server::PlaceUnit,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
-    validation::validate_player_owns_unit_with_id(sender, data.unit_id, &match_data.combat_data)?;
+    validation::validate_player_owns_unit_with_id(
+        sender,
+        message.unit_id,
+        &match_data.combat_data,
+    )?;
 
     if !match_data
         .combat_data
-        .can_unit_be_placed_on_tile(&data.hex, &match_data.loaded_map)
+        .can_unit_be_placed_on_tile(&message.hex, &match_data.loaded_map)
     {
         return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
             ErrorWhenProcessingMessage {
@@ -34,11 +38,11 @@ pub fn place_unit(
         .combat_data
         .unit_storage
         .iter()
-        .position(|x| x.id == data.unit_id)
+        .position(|x| x.id == message.unit_id)
     else {
         error!(
             "Was unable to find unit with id {} in unit storage!",
-            data.unit_id
+            message.unit_id
         );
         return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
             ErrorWhenProcessingMessage {
@@ -48,11 +52,11 @@ pub fn place_unit(
     };
 
     let mut unit = match_data.combat_data.unit_storage.remove(index);
-    unit.position = data.hex;
+    unit.position = message.hex;
     match_data
         .combat_data
         .unit_positions
-        .insert(data.hex, data.unit_id);
+        .insert(message.hex, message.unit_id);
     match_data.combat_data.units.insert(unit.id, unit);
 
     let next = if match_data.combat_data.unit_storage.is_empty() {
@@ -77,8 +81,8 @@ pub fn place_unit(
     Ok(vec![
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlaceUnit(
             server_to_client::PlaceUnit {
-                unit_id: data.unit_id,
-                hex: data.hex,
+                unit_id: message.unit_id,
+                hex: message.hex,
             },
         )),
         next,

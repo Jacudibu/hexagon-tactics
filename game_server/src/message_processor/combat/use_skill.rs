@@ -10,8 +10,8 @@ use game_common::validation;
 
 pub fn use_skill(
     sender: PlayerId,
+    message: client_to_server::UseSkill,
     match_data: &mut MatchData,
-    data: client_to_server::UseSkill,
     game_data: &GameData,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
@@ -24,10 +24,10 @@ pub fn use_skill(
         .unwrap()
         .unit_id;
 
-    let Some(used_skill) = game_data.skills.get(&data.id) else {
+    let Some(used_skill) = game_data.skills.get(&message.id) else {
         return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
             ErrorWhenProcessingMessage {
-                message: format!("Invalid Skill Id: {}", data.id),
+                message: format!("Invalid Skill Id: {}", message.id),
             },
         ));
     };
@@ -37,13 +37,13 @@ pub fn use_skill(
     validation::validate_skill_target_is_in_range(
         &used_skill,
         user.position,
-        data.target_coordinates,
+        message.target_coordinates,
     )?;
 
     let mut hits = Vec::new();
     let targets = used_skill
         .get_valid_target_hexagons(
-            data.target_coordinates,
+            message.target_coordinates,
             user.position,
             &match_data.loaded_map,
         )
@@ -87,8 +87,8 @@ pub fn use_skill(
 
     return Ok(vec![ServerToClientMessageVariant::Broadcast(
         ServerToClientMessage::UseSkill(server_to_client::UseSkill {
-            id: data.id,
-            target_coordinates: data.target_coordinates,
+            id: message.id,
+            target_coordinates: message.target_coordinates,
             hits,
         }),
     )]);

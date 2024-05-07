@@ -14,23 +14,25 @@ pub mod place_unit;
 pub mod use_skill;
 
 pub fn process_message(
-    players: &mut HashMap<PlayerId, Player>,
     sender: PlayerId,
+    message: ClientToServerMessage,
+    players: &mut HashMap<PlayerId, Player>,
     game_data: &GameData,
     match_data: &mut MatchData,
-    message: ClientToServerMessage,
 ) -> Result<(Option<StateTransition>, Vec<ServerToClientMessageVariant>), ServerToClientMessage> {
     let result = match message {
         ClientToServerMessage::FinishedLoading => {
             finish_loading::finish_loading(sender, players, match_data)
         }
         ClientToServerMessage::EndTurn => end_turn::end_turn(sender, match_data),
-        ClientToServerMessage::PlaceUnit(data) => {
-            place_unit::place_unit(sender, players, match_data, data)
+        ClientToServerMessage::PlaceUnit(message) => {
+            place_unit::place_unit(sender, message, players, match_data)
         }
-        ClientToServerMessage::MoveUnit(data) => move_unit::move_unit(sender, match_data, data),
-        ClientToServerMessage::UseSkill(data) => {
-            use_skill::use_skill(sender, match_data, data, game_data)
+        ClientToServerMessage::MoveUnit(message) => {
+            move_unit::move_unit(sender, message, match_data)
+        }
+        ClientToServerMessage::UseSkill(message) => {
+            use_skill::use_skill(sender, message, match_data, game_data)
         }
         _ => Err(create_error_response(format!(
             "Unexpected message for server state InGame: {:?}",

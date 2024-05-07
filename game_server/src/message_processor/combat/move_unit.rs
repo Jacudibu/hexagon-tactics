@@ -7,14 +7,14 @@ use game_common::validation;
 
 pub fn move_unit(
     sender: PlayerId,
+    message: client_to_server::MoveUnit,
     match_data: &mut MatchData,
-    data: client_to_server::MoveUnit,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
     validation::validate_path_for_current_unit(
         &match_data.loaded_map,
         &match_data.combat_data,
-        &data.path,
+        &message.path,
     )?;
 
     let turn = match_data
@@ -22,19 +22,19 @@ pub fn move_unit(
         .current_turn
         .as_unit_turn_mut()
         .unwrap();
-    turn.remaining_movement -= data.path.len() as u8 - 1;
+    turn.remaining_movement -= message.path.len() as u8 - 1;
 
     let unit = match_data.combat_data.units.get_mut(&turn.unit_id).unwrap();
 
     match_data.combat_data.unit_positions.remove(&unit.position);
-    unit.position = data.path.last().unwrap().clone();
+    unit.position = message.path.last().unwrap().clone();
     match_data
         .combat_data
         .unit_positions
         .insert(unit.position, unit.id);
 
     Ok(vec![ServerToClientMessageVariant::Broadcast(
-        ServerToClientMessage::MoveUnit(server_to_client::MoveUnit { path: data.path }),
+        ServerToClientMessage::MoveUnit(server_to_client::MoveUnit { path: message.path }),
     )])
 }
 

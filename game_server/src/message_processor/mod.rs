@@ -39,7 +39,7 @@ pub fn process_message(
                     todo!()
                 }
                 InGameState::Combat(ref mut match_data) => {
-                    combat::process_message(players, sender, game_data, match_data, message)
+                    combat::process_message(sender, message, players, game_data, match_data)
                 }
                 InGameState::PickUnit(ref mut pick_unit_data) => pick_unit::process_message(
                     players,
