@@ -12,6 +12,7 @@ use leafwing_input_manager::action_state::ActionState;
 
 use game_common::combat_data::CombatData;
 use game_common::game_data::skill::{SkillId, SkillTargeting, DEBUG_SINGLE_TARGET_ATTACK_ID};
+use game_common::game_data::GameData;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
@@ -22,8 +23,6 @@ use crate::combat::combat_plugin::CombatState;
 use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_animations::MoveUnitComponent;
-use crate::combat_data_resource::CombatDataResource;
-use crate::game_data_resource::GameDataResource;
 use crate::map::{ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
@@ -112,8 +111,8 @@ pub fn change_action_on_input(
 
 pub fn on_active_unit_action_changed(
     mut commands: Commands,
-    combat_data: Res<CombatDataResource>,
-    game_data: Res<GameDataResource>,
+    combat_data: Res<CombatData>,
+    game_data: Res<GameData>,
     map: Res<GameMap>,
     active_unit_action: Option<Res<ActiveUnitAction>>,
 ) {
@@ -148,7 +147,7 @@ pub fn show_skill_range_preview(
     mut commands: Commands,
     combat_data: &CombatData,
     map: &GameMap,
-    data: &GameDataResource,
+    data: &GameData,
 ) {
     let unit = combat_data.current_turn_unit();
     let skill = &data.skills[skill_id];
@@ -173,7 +172,7 @@ pub fn show_skill_range_preview(
 
 pub fn execute_action_on_click(
     mut commands: Commands,
-    combat_data: Res<CombatDataResource>,
+    combat_data: Res<CombatData>,
     map: Res<GameMap>,
     action_state: Res<ActionState<CombatAction>>,
     active_unit_action: Res<ActiveUnitAction>,
@@ -181,7 +180,7 @@ pub fn execute_action_on_click(
     mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
     mut event_writer: EventWriter<ClientToServerMessage>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
-    game_data: Res<GameDataResource>,
+    game_data: Res<GameData>,
 ) {
     if !action_state.just_pressed(&CombatAction::SelectTile) {
         return;
@@ -243,7 +242,7 @@ pub fn execute_action_on_click(
 pub fn on_move_unit(
     mut commands: Commands,
     mut events: EventReader<server_to_client::MoveUnit>,
-    mut combat_data: ResMut<CombatDataResource>,
+    mut combat_data: ResMut<CombatData>,
     local_combat_data: Res<LocalCombatData>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     local_player_id: Res<LocalPlayerId>,
@@ -293,7 +292,7 @@ pub fn on_move_unit(
 
 pub fn on_use_skill(
     mut events: EventReader<server_to_client::UseSkill>,
-    mut combat_data: ResMut<CombatDataResource>,
+    mut combat_data: ResMut<CombatData>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     local_player_id: Res<LocalPlayerId>,
 ) {
@@ -330,8 +329,8 @@ pub fn update_attack_highlights(
     active_unit_action: Option<Res<ActiveUnitAction>>,
     mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
     map: Res<GameMap>,
-    combat_data: Res<CombatDataResource>,
-    game_data: Res<GameDataResource>,
+    combat_data: Res<CombatData>,
+    game_data: Res<GameData>,
 ) {
     let Some(active_unit_action) = active_unit_action else {
         commands.remove_resource::<AttackHighlights>();
@@ -367,8 +366,8 @@ mod tests {
     use game_common::unit::Unit;
 
     use crate::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
-    use crate::combat_data_resource::CombatDataResource;
-    use crate::game_data_resource::GameDataResource;
+    use crate::combat_data_resource::CombatData;
+    use crate::game_data_resource::GameData;
     use crate::map::RangeHighlights;
     use crate::networking::NetworkPlugin;
 
@@ -378,12 +377,12 @@ mod tests {
         app.add_plugins(UnitActionPlugin);
         app.add_plugins(NetworkPlugin);
         app.insert_resource(GameMap::new(1));
-        app.insert_resource(GameDataResource::new(GameData::create_mock()));
+        app.insert_resource(GameData::new(GameData::create_mock()));
 
         let unit_id = 1;
         let unit = Unit::create_mock(unit_id, 1).with_position(Hex::ZERO);
 
-        app.insert_resource(CombatDataResource::new(
+        app.insert_resource(CombatData::new(
             CombatData::create_mock()
                 .with_units(vec![unit])
                 .with_unit_turn(unit_id),

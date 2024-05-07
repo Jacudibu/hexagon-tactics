@@ -3,6 +3,7 @@ use crate::player::PlayerId;
 use crate::unit::UnitId;
 use crate::unit_stats::UnitStats;
 use base_stats::BaseStats;
+use bevy::prelude::Resource;
 use bevy::utils::HashMap;
 
 pub mod base_stats;
@@ -40,6 +41,7 @@ pub type AccessoryId = u32;
 pub type AccessoryDefinition = BaseDefinition<AccessoryId>;
 
 /// Contains hashmaps of all parseable data
+#[cfg_attr(feature = "ecs", derive(Resource))]
 pub struct GameData {
     pub races: HashMap<RaceId, RaceDefinition>,
     pub classes: HashMap<ClassId, ClassDefinition>,

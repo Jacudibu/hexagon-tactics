@@ -1,4 +1,3 @@
-use crate::game_data_resource::GameDataResource;
 use crate::map::METERS_PER_TILE_HEIGHT_UNIT;
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
@@ -261,5 +260,5 @@ pub fn load_sprites(mut commands: Commands, asset_server: Res<AssetServer>) {
     let image = asset_server.load("sprites/test_character.png");
 
     commands.insert_resource(CharacterSprites { test: image });
-    commands.insert_resource(GameDataResource::new(GameData::load()));
+    commands.insert_resource(GameData::load());
 }

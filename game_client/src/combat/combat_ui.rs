@@ -2,7 +2,6 @@ use crate::combat::combat_plugin::CombatState;
 use crate::combat::end_turn::EndTurnCommand;
 use crate::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionEvent};
 use crate::combat::unit_placement::CurrentlyPlacedUnit;
-use crate::combat_data_resource::CombatDataResource;
 use crate::map::{CursorOnTile, MapState};
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
@@ -40,7 +39,7 @@ impl Plugin for CombatUiPlugin {
 fn draw_currently_placed_unit_info(
     egui: EguiContexts,
     currently_placed_unit: Res<CurrentlyPlacedUnit>,
-    combat_data: Res<CombatDataResource>,
+    combat_data: Res<CombatData>,
 ) {
     let Some(unit) = combat_data
         .unit_storage
@@ -59,7 +58,7 @@ fn draw_currently_placed_unit_info(
 fn draw_selected_unit_info(
     egui: EguiContexts,
     cursor: Option<Res<CursorOnTile>>,
-    combat_data: Res<CombatDataResource>,
+    combat_data: Res<CombatData>,
 ) {
     let Some(cursor) = cursor else {
         return;
@@ -106,7 +105,7 @@ fn draw_unit_info(mut egui: EguiContexts, unit: &Unit, anchor: Align2) {
 fn draw_state_ui(
     mut egui: EguiContexts,
     combat_state: Res<State<CombatState>>,
-    combat_data: Res<CombatDataResource>,
+    combat_data: Res<CombatData>,
     end_turn_event: EventWriter<EndTurnCommand>,
     change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionEvent>,
 ) {

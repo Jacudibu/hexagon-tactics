@@ -5,7 +5,6 @@ use crate::combat::local_combat_data::LocalCombatData;
 use crate::combat::unit_actions::UnitActionPlugin;
 use crate::combat::unit_animations::UnitAnimationPlugin;
 use crate::combat::unit_placement::UnitPlacementPlugin;
-use crate::combat_data_resource::CombatDataResource;
 use crate::map::{ActiveUnitHighlights, MapState};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
@@ -63,12 +62,12 @@ pub fn on_map_loaded(
     mut client_to_server_messages: EventWriter<ClientToServerMessage>,
 ) {
     client_to_server_messages.send(ClientToServerMessage::FinishedLoading);
-    commands.insert_resource(CombatDataResource::new(CombatData {
+    commands.insert_resource(CombatData {
         units: Default::default(),
         unit_positions: Default::default(),
         unit_storage: vec![],
         current_turn: CombatTurn::Undefined,
-    }));
+    });
     commands.insert_resource(LocalCombatData {
         unit_entities: Default::default(),
     });
@@ -76,7 +75,7 @@ pub fn on_map_loaded(
 
 pub fn on_add_unit_to_player_storage(
     mut add_unit_to_player_event: EventReader<AddUnitToPlayerStorage>,
-    mut combat_data: ResMut<CombatDataResource>,
+    mut combat_data: ResMut<CombatData>,
 ) {
     for x in add_unit_to_player_event.read() {
         combat_data.unit_storage.push(x.unit.clone());
@@ -87,7 +86,7 @@ pub fn on_add_unit_to_player_storage(
 pub fn on_player_turn_to_place_unit(
     mut event: EventReader<PlayerTurnToPlaceUnit>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
-    mut combat_data: ResMut<CombatDataResource>,
+    mut combat_data: ResMut<CombatData>,
     local_player_id: Res<LocalPlayerId>,
 ) {
     for event in event.read() {
@@ -105,7 +104,7 @@ pub fn on_start_unit_turn(
     mut commands: Commands,
     mut event: EventReader<StartUnitTurn>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
-    mut combat_data: ResMut<CombatDataResource>,
+    mut combat_data: ResMut<CombatData>,
     local_player_id: Res<LocalPlayerId>,
 ) {
     for event in event.read() {

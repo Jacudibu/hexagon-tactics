@@ -5,6 +5,7 @@ version.workspace = true
 edition.workspace = true
 
 [features]
+ecs = []
 test_helpers = []
 
 [dependencies]

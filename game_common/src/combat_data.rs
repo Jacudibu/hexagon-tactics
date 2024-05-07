@@ -1,12 +1,13 @@
 use crate::combat_turn::CombatTurn;
 use crate::game_map::GameMap;
 use crate::unit::{Unit, UnitId};
-use bevy::prelude::error;
+use bevy::prelude::{error, Resource};
 use bevy::utils::HashMap;
 use hexx::Hex;
 
 /// Combat Data shared between client and server. Things in here should always be kept in sync.
 #[derive(Debug)]
+#[cfg_attr(feature = "ecs", derive(Resource))]
 pub struct CombatData {
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,

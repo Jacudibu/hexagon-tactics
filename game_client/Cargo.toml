@@ -5,7 +5,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-game-common = { path = "../game_common" }
+game-common = { path = "../game_common", features = ["ecs"] }
 bevy = { workspace = true, features = [
     "animation",
     "bevy_asset",
