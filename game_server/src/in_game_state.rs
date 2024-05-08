@@ -21,6 +21,7 @@ pub struct InGameData {
     pub player_resources: HashMap<PlayerId, PlayerResources>,
 }
 
+#[derive(Default)]
 pub struct PlayerResources {
     pub units: Vec<UnitDefinition>,
 }
@@ -40,6 +41,8 @@ impl InGameData {
         data.states.insert(state_id, state);
         for (id, _) in &shared_state.players {
             data.assign_player_state(id.clone(), state_id);
+            data.player_resources
+                .insert(id.clone(), PlayerResources::default());
         }
 
         data

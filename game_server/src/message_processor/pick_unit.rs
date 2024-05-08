@@ -43,7 +43,7 @@ pub fn process_message(
         })),
     );
 
-    if pick_unit_data.remaining_choices > 0 {
+    if pick_unit_data.remaining_choices > 1 {
         result.set_state_transition(StateTransition::PickUnit {
             remaining: pick_unit_data.remaining_choices - 1,
         });
