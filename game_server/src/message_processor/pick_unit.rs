@@ -1,4 +1,4 @@
-use crate::in_game_state::{PickUnitData, PlayerResources};
+use crate::in_game_state::PickUnitData;
 use crate::message_processor::command_invocation_result::{
     CommandInvocationResult, StateTransition,
 };
@@ -7,6 +7,7 @@ use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{AddUnit, ServerToClientMessage};
 use game_common::player::{Player, PlayerId};
+use game_common::player_resources::PlayerResources;
 use std::collections::HashMap;
 
 pub fn process_message(

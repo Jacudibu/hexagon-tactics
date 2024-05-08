@@ -3,6 +3,7 @@ use game_common::combat_data::CombatData;
 use game_common::game_data::UnitDefinition;
 use game_common::game_map::GameMap;
 use game_common::player::PlayerId;
+use game_common::player_resources::PlayerResources;
 use std::collections::HashMap;
 
 type StateId = u32;
@@ -19,11 +20,6 @@ pub struct InGameData {
 
     /// Stores everything a player owns.
     pub player_resources: HashMap<PlayerId, PlayerResources>,
-}
-
-#[derive(Default)]
-pub struct PlayerResources {
-    pub units: Vec<UnitDefinition>,
 }
 
 impl InGameData {

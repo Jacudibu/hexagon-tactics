@@ -4,6 +4,7 @@ pub mod game_data;
 pub mod game_map;
 pub mod network_events;
 pub mod player;
+pub mod player_resources;
 pub mod turn_resources;
 pub mod unit;
 pub mod unit_stats;
