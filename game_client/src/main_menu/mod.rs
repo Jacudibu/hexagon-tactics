@@ -1,4 +1,3 @@
-use crate::map::SpawnMapCommand;
 use crate::networking::Network;
 use crate::networking::NetworkState;
 use crate::ApplicationState;
@@ -10,7 +9,6 @@ use bevy::prelude::{
 };
 use bevy_egui::egui::Align2;
 use bevy_egui::{egui, EguiContexts};
-use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client;
 use std::process::Child;
@@ -36,8 +34,7 @@ impl Plugin for MainMenuPlugin {
                     (connection_menu).run_if(in_state(NetworkState::Authenticating)),
                     (
                         play_menu,
-                        load_map_listener
-                            .run_if(on_event::<server_to_client::StartGameAndLoadMap>()),
+                        start_game_listener.run_if(on_event::<server_to_client::StartGame>()),
                     )
                         .run_if(in_state(NetworkState::Connected)),
                 )
@@ -139,23 +136,12 @@ fn play_menu(
         });
 }
 
-fn load_map_listener(
-    mut commands: Commands,
-    mut incoming_events: EventReader<server_to_client::StartGameAndLoadMap>,
-    mut outgoing_events: EventWriter<SpawnMapCommand>,
+fn start_game_listener(
+    mut incoming_events: EventReader<server_to_client::StartGame>,
     mut next_application_state: ResMut<NextState<ApplicationState>>,
 ) {
-    for event in incoming_events.read() {
-        match GameMap::load_from_file(&event.path) {
-            Ok(map) => {
-                commands.insert_resource(map);
-                outgoing_events.send(SpawnMapCommand {});
-                next_application_state.set(ApplicationState::InGame);
-            }
-            Err(e) => {
-                error!("Failed to load map {} - error: {:?}", event.path, e)
-            }
-        }
+    for _ in incoming_events.read() {
+        next_application_state.set(ApplicationState::InGame);
     }
 }
 

@@ -6,7 +6,7 @@ use game_common::combat_turn::CombatTurn;
 use game_common::game_data::UnitDefinition;
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
-    ErrorWhenProcessingMessage, ServerToClientMessage, StartGameAndLoadMap,
+    ChooseBetweenUnits, ErrorWhenProcessingMessage, LoadMap, ServerToClientMessage,
 };
 use game_common::player::PlayerId;
 use game_common::TEST_MAP_NAME;
@@ -39,10 +39,12 @@ pub fn pick_unit(
             units: create_units(3),
             remaining_choices: remaining,
         };
-        in_game_data.insert_state_for_player(player, InGameState::PickUnit(data));
         result.push(ServerToClientMessageVariant::SendToSender(
-            ServerToClientMessage::ChooseBetweenUnits(),
-        ))
+            ServerToClientMessage::ChooseBetweenUnits(ChooseBetweenUnits {
+                units: data.units.clone(),
+            }),
+        ));
+        in_game_data.insert_state_for_player(player, InGameState::PickUnit(data));
     }
 
     result
@@ -106,7 +108,7 @@ pub fn start_combat(
     }
 
     result.push(ServerToClientMessageVariant::Broadcast(
-        ServerToClientMessage::LoadMap(StartGameAndLoadMap {
+        ServerToClientMessage::LoadMap(LoadMap {
             path: TEST_MAP_NAME.into(),
         }),
     ));

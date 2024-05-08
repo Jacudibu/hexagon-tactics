@@ -8,7 +8,7 @@ use game_common::network_events::{server_to_client, NetworkMessage};
 pub struct IncomingMessageProcessorPlugin;
 impl Plugin for IncomingMessageProcessorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<server_to_client::StartGameAndLoadMap>()
+        app.add_event::<server_to_client::LoadMap>()
             .add_event::<server_to_client::UpdateReadyStateForPlayer>()
             .add_event::<server_to_client::AddUnitToPlayerStorage>()
             .add_event::<server_to_client::PlayerTurnToPlaceUnit>()
@@ -18,6 +18,9 @@ impl Plugin for IncomingMessageProcessorPlugin {
             .add_event::<server_to_client::YouConnected>()
             .add_event::<server_to_client::OtherPlayerConnected>()
             .add_event::<server_to_client::UseSkill>()
+            .add_event::<server_to_client::StartGame>()
+            .add_event::<server_to_client::ChooseBetweenUnits>()
+            .add_event::<server_to_client::AddUnit>()
             .add_systems(
                 PreUpdate,
                 receive_updates.run_if(
@@ -31,7 +34,7 @@ impl Plugin for IncomingMessageProcessorPlugin {
 fn receive_updates(
     mut connection: ResMut<ServerConnection>,
     mut event_queue: Local<IncomingNetworkEventQueue>,
-    mut load_map_event_from_server: EventWriter<server_to_client::StartGameAndLoadMap>,
+    mut load_map_event_from_server: EventWriter<server_to_client::LoadMap>,
     mut player_is_ready: EventWriter<server_to_client::UpdateReadyStateForPlayer>,
     mut add_unit_to_player: EventWriter<server_to_client::AddUnitToPlayerStorage>,
     mut player_turn_to_place_unit: EventWriter<server_to_client::PlayerTurnToPlaceUnit>,
@@ -41,6 +44,9 @@ fn receive_updates(
     mut you_connected: EventWriter<server_to_client::YouConnected>,
     mut other_player_connected: EventWriter<server_to_client::OtherPlayerConnected>,
     mut use_skill: EventWriter<server_to_client::UseSkill>,
+    mut start_game: EventWriter<server_to_client::StartGame>,
+    mut choose_between_units: EventWriter<server_to_client::ChooseBetweenUnits>,
+    mut add_unit: EventWriter<server_to_client::AddUnit>,
 ) {
     if let Ok(bytes) = connection.message_receiver.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
@@ -97,6 +103,16 @@ fn receive_updates(
             }
             ServerToClientMessage::UseSkill(event) => {
                 use_skill.send(event);
+            }
+
+            ServerToClientMessage::StartGame(event) => {
+                start_game.send(event);
+            }
+            ServerToClientMessage::ChooseBetweenUnits(event) => {
+                choose_between_units.send(event);
+            }
+            ServerToClientMessage::AddUnit(event) => {
+                add_unit.send(event);
             }
         };
     }

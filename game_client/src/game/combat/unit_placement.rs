@@ -1,6 +1,6 @@
-use crate::combat::combat_input::CombatAction;
-use crate::combat::combat_plugin::CombatState;
-use crate::combat::local_combat_data::LocalCombatData;
+use crate::game::combat::combat_input::CombatAction;
+use crate::game::combat::combat_plugin::CombatState;
+use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::load::CharacterSprites;
 use crate::map::{CursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::prelude::*;

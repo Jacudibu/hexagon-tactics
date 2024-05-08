@@ -15,7 +15,9 @@ pub enum ServerToClientMessage {
     YouConnected(YouConnected),
     OtherPlayerConnected(OtherPlayerConnected),
 
-    LoadMap(StartGameAndLoadMap),
+    StartGame(StartGame),
+
+    LoadMap(LoadMap),
     PlayerIsReady(UpdateReadyStateForPlayer),
     AddUnitToPlayerStorage(AddUnitToPlayerStorage),
     PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit),
@@ -26,12 +28,15 @@ pub enum ServerToClientMessage {
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 
-    ChooseBetweenUnits(),
+    ChooseBetweenUnits(ChooseBetweenUnits),
     AddUnit(AddUnit),
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
-pub struct StartGameAndLoadMap {
+pub struct StartGame {}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct LoadMap {
     // TODO: Either send some kind of map identifier or just the entire GameMap struct
     pub path: String,
 }

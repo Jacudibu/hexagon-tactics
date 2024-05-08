@@ -1,7 +1,7 @@
-use crate::combat::combat_plugin::CombatState;
-use crate::combat::end_turn::EndTurnCommand;
-use crate::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionEvent};
-use crate::combat::unit_placement::CurrentlyPlacedUnit;
+use crate::game::combat::combat_plugin::CombatState;
+use crate::game::combat::end_turn::EndTurnCommand;
+use crate::game::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionEvent};
+use crate::game::combat::unit_placement::CurrentlyPlacedUnit;
 use crate::map::{CursorOnTile, MapState};
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
@@ -15,7 +15,7 @@ use game_common::game_data::skill::{
 };
 use game_common::unit::Unit;
 
-pub(in crate::combat) struct CombatUiPlugin;
+pub(crate) struct CombatUiPlugin;
 impl Plugin for CombatUiPlugin {
     fn build(&self, app: &mut App) {
         if !app.is_plugin_added::<EguiPlugin>() {

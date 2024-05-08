@@ -1,4 +1,4 @@
-use game_common::network_events::server_to_client::ServerToClientMessage;
+use game_common::network_events::server_to_client::{ServerToClientMessage, StartGame};
 use game_common::player::{PlayerId, ReadyState};
 use game_common::validation;
 
@@ -13,13 +13,18 @@ pub fn start_game(
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_player_readiness(&shared_state.players, &ReadyState::ReadyInLobby)?;
 
-    let mut in_game_data = InGameData::new(&shared_state);
+    let mut messages = Vec::new();
+    messages.push(ServerToClientMessageVariant::Broadcast(
+        ServerToClientMessage::StartGame(StartGame {}),
+    ));
 
-    let messages = state_transitions::handle_transition(
+    let mut in_game_data = InGameData::new(&shared_state);
+    messages.append(&mut state_transitions::handle_transition(
         &sender,
         &StateTransition::PickUnit { remaining: 3 },
         &mut in_game_data,
-    );
+    ));
+
     shared_state.server_state = ServerState::InGame(in_game_data);
     Ok(messages)
 }

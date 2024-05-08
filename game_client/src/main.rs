@@ -1,6 +1,6 @@
 mod camera;
-mod combat;
 mod debugging;
+mod game;
 mod load;
 mod main_menu;
 mod map;
@@ -9,6 +9,7 @@ mod networking;
 
 use crate::camera::CameraPlugin;
 use crate::debugging::DebuggingPlugin;
+use crate::game::game_plugin::GamePlugin;
 use crate::load::LoadPlugin;
 use crate::main_menu::MainMenuPlugin;
 use crate::networking::NetworkPlugin;
@@ -17,7 +18,6 @@ use bevy::window::PresentMode;
 use bevy_kira_audio::AudioPlugin;
 use bevy_screen_diagnostics::*;
 use bevy_sprite3d::Sprite3dPlugin;
-use combat::CombatPlugin;
 use map::GameMapPlugin;
 use map_editor::MapEditorPlugin;
 
@@ -52,7 +52,7 @@ fn main() {
         .add_plugins(CameraPlugin)
         .add_plugins(LoadPlugin)
         .add_plugins(MainMenuPlugin)
-        .add_plugins(CombatPlugin)
+        .add_plugins(GamePlugin)
         .init_state::<ApplicationState>()
         .init_state::<MouseCursorOverUiState>()
         .run();

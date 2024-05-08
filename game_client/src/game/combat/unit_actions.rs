@@ -18,11 +18,11 @@ use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::DESYNC_TODO_MESSAGE;
 
-use crate::combat::combat_input::CombatAction;
-use crate::combat::combat_plugin::CombatState;
-use crate::combat::end_turn::EndTurnCommand;
-use crate::combat::local_combat_data::LocalCombatData;
-use crate::combat::unit_animations::MoveUnitComponent;
+use crate::game::combat::combat_input::CombatAction;
+use crate::game::combat::combat_plugin::CombatState;
+use crate::game::combat::end_turn::EndTurnCommand;
+use crate::game::combat::local_combat_data::LocalCombatData;
+use crate::game::combat::unit_animations::MoveUnitComponent;
 use crate::map::{ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
@@ -365,8 +365,8 @@ mod tests {
     use game_common::game_map::GameMap;
     use game_common::unit::Unit;
 
-    use crate::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
     use crate::combat_data_resource::CombatData;
+    use crate::game::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
     use crate::game_data_resource::GameData;
     use crate::map::RangeHighlights;
     use crate::networking::NetworkPlugin;

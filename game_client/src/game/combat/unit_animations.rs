@@ -1,4 +1,5 @@
-use crate::combat::unit_placement;
+use crate::game::combat::unit_placement;
+use crate::game::game_plugin::GameState;
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::math::Vec3;
@@ -14,7 +15,9 @@ impl Plugin for UnitAnimationPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            animate_movement.run_if(in_state(ApplicationState::InGame)),
+            animate_movement
+                .run_if(in_state(ApplicationState::InGame))
+                .run_if(in_state(GameState::Combat)),
         );
     }
 }

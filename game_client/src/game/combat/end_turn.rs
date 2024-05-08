@@ -1,5 +1,5 @@
-use crate::combat::combat_plugin::CombatState;
-use crate::combat::unit_actions::ActiveUnitAction;
+use crate::game::combat::combat_plugin::CombatState;
+use crate::game::combat::unit_actions::ActiveUnitAction;
 use bevy::app::App;
 use bevy::prelude::{
     on_event, Commands, Event, EventWriter, IntoSystemConfigs, NextState, Plugin, ResMut, Update,

@@ -1,10 +1,10 @@
-use crate::combat::combat_input::CombatInputPlugin;
-use crate::combat::combat_ui::CombatUiPlugin;
-use crate::combat::end_turn::EndTurnPlugin;
-use crate::combat::local_combat_data::LocalCombatData;
-use crate::combat::unit_actions::UnitActionPlugin;
-use crate::combat::unit_animations::UnitAnimationPlugin;
-use crate::combat::unit_placement::UnitPlacementPlugin;
+use crate::game::combat::combat_input::CombatInputPlugin;
+use crate::game::combat::combat_ui::CombatUiPlugin;
+use crate::game::combat::end_turn::EndTurnPlugin;
+use crate::game::combat::local_combat_data::LocalCombatData;
+use crate::game::combat::unit_actions::UnitActionPlugin;
+use crate::game::combat::unit_animations::UnitAnimationPlugin;
+use crate::game::combat::unit_placement::UnitPlacementPlugin;
 use crate::map::{ActiveUnitHighlights, MapState};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
