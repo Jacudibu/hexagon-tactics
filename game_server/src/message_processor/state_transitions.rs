@@ -1,14 +1,16 @@
-use crate::in_game_state::{InGameData, InGameState, MatchData};
+use crate::in_game_state::{InGameData, InGameState, MatchData, PickUnitData};
 use crate::message_processor::command_invocation_result::StateTransition;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
+use game_common::game_data::UnitDefinition;
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, ServerToClientMessage, StartGameAndLoadMap,
 };
 use game_common::player::PlayerId;
 use game_common::TEST_MAP_NAME;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 #[must_use]
 pub fn handle_transition(
@@ -18,8 +20,55 @@ pub fn handle_transition(
 ) -> Vec<ServerToClientMessageVariant> {
     let players_in_state = in_game_data.get_all_players_in_same_state(sender);
 
-    match state_transition {
+    match *state_transition {
+        StateTransition::PickUnit { remaining } => {
+            pick_unit(remaining, in_game_data, players_in_state)
+        }
         StateTransition::StartCombat => start_combat(in_game_data, players_in_state),
+    }
+}
+
+pub fn pick_unit(
+    remaining: u8,
+    in_game_data: &mut InGameData,
+    players_in_state: Vec<PlayerId>,
+) -> Vec<ServerToClientMessageVariant> {
+    let mut result = Vec::new();
+    for player in players_in_state {
+        let data = PickUnitData {
+            units: create_units(3),
+            remaining_choices: remaining,
+        };
+        in_game_data.insert_state_for_player(player, InGameState::PickUnit(data));
+        result.push(ServerToClientMessageVariant::SendToSender(
+            ServerToClientMessage::ChooseBetweenUnits(),
+        ))
+    }
+
+    result
+}
+
+fn get_unique_unit_id() -> u32 {
+    static UNIT_ID_COUNTER: AtomicU32 = AtomicU32::new(1);
+    UNIT_ID_COUNTER.fetch_add(1, Ordering::Relaxed)
+}
+
+pub fn create_units(amount: u8) -> Vec<UnitDefinition> {
+    (0..amount).map(|_| create_unit()).collect()
+}
+
+pub fn create_unit() -> UnitDefinition {
+    let id = get_unique_unit_id();
+    UnitDefinition {
+        id,
+        owner: 0,
+        name: format!("Unit #{}", id),
+        race: 0,
+        levels: Default::default(),
+        unlocked_skills: vec![],
+        weapon: None,
+        armor: None,
+        accessory: None,
     }
 }
 

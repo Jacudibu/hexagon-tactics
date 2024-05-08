@@ -8,6 +8,7 @@ pub struct CommandInvocationResult {
 
 pub enum StateTransition {
     StartCombat,
+    PickUnit { remaining: u8 },
 }
 
 impl CommandInvocationResult {
@@ -23,7 +24,7 @@ impl CommandInvocationResult {
         self
     }
 
-    pub fn add_state_transition(&mut self, state_transition: StateTransition) -> &Self {
+    pub fn set_state_transition(&mut self, state_transition: StateTransition) -> &Self {
         self.state_transition = Some(state_transition);
         self
     }

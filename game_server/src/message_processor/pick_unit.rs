@@ -29,7 +29,8 @@ pub fn process_message(
         return Err(create_error_response("Invalid unit id!"));
     };
 
-    let unit = pick_unit_data.units.remove(index);
+    let mut unit = pick_unit_data.units.remove(index);
+    unit.owner = sender;
     player_resources
         .get_mut(&sender)
         .unwrap()
@@ -43,10 +44,11 @@ pub fn process_message(
     );
 
     if pick_unit_data.remaining_choices > 0 {
-        // result.add_state_transition(PickMoreUnits);
-        todo!()
+        result.set_state_transition(StateTransition::PickUnit {
+            remaining: pick_unit_data.remaining_choices - 1,
+        });
     } else {
-        result.add_state_transition(StateTransition::StartCombat);
+        result.set_state_transition(StateTransition::StartCombat);
     }
 
     Ok(result)

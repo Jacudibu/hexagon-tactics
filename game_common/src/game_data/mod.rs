@@ -100,7 +100,7 @@ pub struct Level {
 #[derive(Event, Serialize, Deserialize, Debug, Clone)]
 pub struct UnitDefinition {
     pub id: UnitId,
-    pub owner: PlayerId,
+    pub owner: PlayerId, // TODO: Probably should be an enum - None, Player, NPCEnemy
     pub name: String,
 
     pub race: RaceId,

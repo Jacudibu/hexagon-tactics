@@ -26,6 +26,7 @@ pub enum ServerToClientMessage {
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 
+    ChooseBetweenUnits(),
     AddUnit(AddUnit),
 }
 
@@ -93,4 +94,9 @@ pub struct UseSkill {
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct AddUnit {
     pub unit: UnitDefinition,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct ChooseBetweenUnits {
+    pub units: Vec<UnitDefinition>,
 }

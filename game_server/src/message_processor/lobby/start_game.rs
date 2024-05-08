@@ -17,7 +17,7 @@ pub fn start_game(
 
     let messages = state_transitions::handle_transition(
         &sender,
-        &StateTransition::StartCombat,
+        &StateTransition::PickUnit { remaining: 3 },
         &mut in_game_data,
     );
     shared_state.server_state = ServerState::InGame(in_game_data);
