@@ -3,7 +3,7 @@ use game_common::player::{PlayerId, ReadyState};
 use game_common::validation;
 
 use crate::in_game_state::InGameData;
-use crate::message_processor::state_transitions::StateTransition;
+use crate::message_processor::command_invocation_result::StateTransition;
 use crate::message_processor::{state_transitions, ServerToClientMessageVariant};
 use crate::shared_state::{ServerState, SharedState};
 
@@ -17,7 +17,7 @@ pub fn start_game(
 
     let messages = state_transitions::handle_transition(
         &sender,
-        StateTransition::StartCombat,
+        &StateTransition::StartCombat,
         &mut in_game_data,
     );
     shared_state.server_state = ServerState::InGame(in_game_data);

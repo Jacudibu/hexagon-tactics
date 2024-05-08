@@ -3,8 +3,9 @@ use crate::player::PlayerId;
 use crate::unit::UnitId;
 use crate::unit_stats::UnitStats;
 use base_stats::BaseStats;
-use bevy::prelude::Resource;
+use bevy::prelude::{Event, Resource};
 use bevy::utils::HashMap;
+use serde::{Deserialize, Serialize};
 
 pub mod base_stats;
 pub mod skill;
@@ -90,12 +91,13 @@ pub mod test_helpers {
     }
 }
 
+#[derive(Event, Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct Level {
     pub level: u8,
     pub experience: u32,
 }
 
-/// WiP trying to figure out how units would be persisted outside of Combat
+#[derive(Event, Serialize, Deserialize, Debug, Clone)]
 pub struct UnitDefinition {
     pub id: UnitId,
     pub owner: PlayerId,
@@ -107,6 +109,12 @@ pub struct UnitDefinition {
     pub weapon: Option<WeaponId>,
     pub armor: Option<ArmorId>,
     pub accessory: Option<AccessoryId>,
+}
+
+impl PartialEq for UnitDefinition {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
 }
 
 impl UnitDefinition {

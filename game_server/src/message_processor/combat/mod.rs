@@ -1,5 +1,7 @@
 use crate::in_game_state::MatchData;
-use crate::message_processor::state_transitions::StateTransition;
+use crate::message_processor::command_invocation_result::{
+    CommandInvocationResult, StateTransition,
+};
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
@@ -19,7 +21,7 @@ pub fn process_message(
     players: &mut HashMap<PlayerId, Player>,
     game_data: &GameData,
     match_data: &mut MatchData,
-) -> Result<(Option<StateTransition>, Vec<ServerToClientMessageVariant>), ServerToClientMessage> {
+) -> Result<CommandInvocationResult, ServerToClientMessage> {
     let result = match message {
         ClientToServerMessage::FinishedLoading => {
             finish_loading::finish_loading(sender, players, match_data)
@@ -40,5 +42,8 @@ pub fn process_message(
         ))),
     }?;
 
-    Ok((None, result))
+    Ok(CommandInvocationResult {
+        state_transition: None,
+        messages: result,
+    })
 }

@@ -5,6 +5,7 @@ use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
 use crate::game_data::skill::{SkillId, SkillInvocationResult};
+use crate::game_data::UnitDefinition;
 #[cfg(feature = "test_helpers")]
 use enum_as_inner::EnumAsInner;
 
@@ -24,6 +25,8 @@ pub enum ServerToClientMessage {
     UseSkill(UseSkill),
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
+
+    AddUnit(AddUnit),
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
@@ -85,4 +88,9 @@ pub struct UseSkill {
     pub id: SkillId,
     pub target_coordinates: Hex,
     pub hits: Vec<SkillInvocationResult>,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct AddUnit {
+    pub unit: UnitDefinition,
 }

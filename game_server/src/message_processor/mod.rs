@@ -6,6 +6,7 @@ use game_common::network_events::server_to_client::{
 use game_common::player::PlayerId;
 
 mod combat;
+mod command_invocation_result;
 mod lobby;
 mod pick_unit;
 pub mod state_transitions;
@@ -33,7 +34,7 @@ pub fn process_message(
             let players = &mut shared_state.players;
             let game_data = &shared_state.game_data;
             let (player_state, player_resources) = in_game_data.deconstruct_for_processing(&sender);
-            let (state_transition, mut result) = match player_state {
+            let mut result = match player_state {
                 InGameState::StartingGame => {
                     // Technically this should never happen, as this is just the dummy initialization value
                     todo!()
@@ -42,23 +43,23 @@ pub fn process_message(
                     combat::process_message(sender, message, players, game_data, match_data)
                 }
                 InGameState::PickUnit(ref mut pick_unit_data) => pick_unit::process_message(
-                    players,
                     sender,
+                    message,
+                    players,
                     game_data,
                     player_resources,
                     pick_unit_data,
-                    message,
                 ),
             }?;
 
-            if let Some(state_transition) = state_transition {
+            if let Some(state_transition) = &result.state_transition {
                 let mut new_messages =
                     state_transitions::handle_transition(&sender, state_transition, in_game_data);
 
-                result.append(&mut new_messages);
+                result.add_messages(&mut new_messages);
             }
 
-            Ok(result)
+            Ok(result.messages)
         }
     }
 }
