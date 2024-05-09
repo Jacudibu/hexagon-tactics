@@ -19,7 +19,6 @@ pub enum ServerToClientMessage {
 
     LoadMap(LoadMap),
     PlayerIsReady(UpdateReadyStateForPlayer),
-    AddUnitToPlayerStorage(AddUnitToPlayerStorage),
     PlayerTurnToPlaceUnit(PlayerTurnToPlaceUnit),
     PlaceUnit(PlaceUnit),
     StartUnitTurn(StartUnitTurn),
@@ -64,19 +63,13 @@ pub struct ErrorWhenProcessingMessage {
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
-pub struct AddUnitToPlayerStorage {
-    pub unit: Unit,
-}
-
-#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PlayerTurnToPlaceUnit {
     pub player: PlayerId,
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PlaceUnit {
-    pub unit_id: UnitId,
-    pub hex: Hex,
+    pub unit: Unit,
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]

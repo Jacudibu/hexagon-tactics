@@ -1,35 +1,47 @@
 use crate::combat_data::CombatData;
 use crate::combat_turn::CombatTurn;
+use crate::game_data::UnitDefinition;
 use crate::player::PlayerId;
+use crate::player_resources::PlayerResources;
 use crate::unit::{Unit, UnitId};
 use crate::validation::validation_error::ValidationError;
+use std::collections::HashMap;
 
-pub fn validate_player_owns_unit_with_id(
+pub fn validate_player_owns_combat_unit_with_id<'a>(
     player_id: PlayerId,
     unit_id: UnitId,
     combat_data: &CombatData,
-) -> Result<(), ValidationError> {
+) -> Result<&Unit, ValidationError> {
     match &combat_data.current_turn {
         CombatTurn::Undefined => Err(ValidationError::new("Undefined turn behaviour!")),
-        CombatTurn::PlaceUnit(_) => validate_player_owns_unit_option(
-            player_id,
-            combat_data.unit_storage.iter().find(|x| x.id == unit_id),
-        ),
+        CombatTurn::PlaceUnit(_) => Err(ValidationError::new("Undefined turn behaviour!")),
         CombatTurn::UnitTurn(_) => {
             validate_player_owns_unit_option(player_id, combat_data.units.get(&unit_id))
         }
     }
 }
 
+pub fn validate_player_owns_resource_unit_with_id(
+    player_id: PlayerId,
+    unit_id: UnitId,
+    player_resources: &HashMap<PlayerId, PlayerResources>,
+) -> Result<&UnitDefinition, ValidationError> {
+    let units = &player_resources[&player_id].units;
+    match units.iter().find(|x| x.id == unit_id) {
+        None => Err(ValidationError::new("You do not own that unit!")),
+        Some(unit) => Ok(unit),
+    }
+}
+
 fn validate_player_owns_unit_option(
     player_id: PlayerId,
     unit: Option<&Unit>,
-) -> Result<(), ValidationError> {
+) -> Result<&Unit, ValidationError> {
     match unit {
         None => Err(ValidationError::new("Unable to find unit!")),
         Some(unit) => {
             if unit.owner == player_id {
-                Ok(())
+                Ok(unit)
             } else {
                 Err(ValidationError::new("You do not own that unit!"))
             }

@@ -10,6 +10,7 @@ use game_common::game_map::GameMap;
 use game_common::game_map::HEX_LAYOUT;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
+use game_common::player_resources::PlayerResources;
 use game_common::unit::Unit;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
@@ -43,13 +44,13 @@ fn leave_state(mut commands: Commands) {
 }
 
 fn input_listener(
+    player_resources: Res<PlayerResources>,
     mut currently_placed_unit: ResMut<CurrentlyPlacedUnit>,
     action_state: Res<ActionState<CombatAction>>,
-    combat_data: Res<CombatData>,
     cursor: Option<Res<CursorOnTile>>,
     mut client_to_server_events: EventWriter<ClientToServerMessage>,
 ) {
-    let units = &combat_data.unit_storage;
+    let units = &player_resources.units;
     if action_state.just_pressed(&CombatAction::NextUnit) {
         if currently_placed_unit.array_index + 1 >= units.len() {
             currently_placed_unit.array_index = 0;
@@ -86,20 +87,7 @@ fn on_server_placed_unit(
     mut next_state: ResMut<NextState<CombatState>>,
 ) {
     for event in events.read() {
-        let Some(index) = combat_data
-            .unit_storage
-            .iter()
-            .position(|x| x.id == event.unit_id)
-        else {
-            error!(
-                "Was unable to find unit with id {} in unit storage!",
-                event.unit_id
-            );
-            continue;
-        };
-
-        let mut unit = combat_data.unit_storage.remove(index);
-        unit.position = event.hex;
+        let unit = event.unit.clone();
 
         let entity = spawn_unit_entity(
             &mut commands,
@@ -107,12 +95,12 @@ fn on_server_placed_unit(
             &map,
             &mut sprite_params,
             &unit,
-            event.hex,
+            unit.position,
         );
 
         local_combat_data.unit_entities.insert(unit.id, entity);
 
-        combat_data.unit_positions.insert(event.hex, event.unit_id);
+        combat_data.unit_positions.insert(unit.position, unit.id);
         combat_data.units.insert(unit.id, unit);
 
         next_state.set(CombatState::WaitingForServer)

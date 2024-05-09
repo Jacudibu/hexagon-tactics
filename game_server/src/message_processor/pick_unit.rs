@@ -1,4 +1,4 @@
-use crate::in_game_state::PickUnitData;
+use crate::in_game_state::PickUnitStateData;
 use crate::message_processor::command_invocation_result::{
     CommandInvocationResult, StateTransition,
 };
@@ -14,18 +14,18 @@ pub fn process_message(
     sender: PlayerId,
     message: ClientToServerMessage,
     players: &mut HashMap<PlayerId, Player>,
-    game_data: &GameData,
     player_resources: &mut HashMap<PlayerId, PlayerResources>,
-    pick_unit_data: &mut PickUnitData,
+    game_data: &GameData,
+    pick_unit_data: &mut PickUnitStateData,
 ) -> Result<CommandInvocationResult, ServerToClientMessage> {
-    let ClientToServerMessage::PickUnit(pick_unit) = message else {
+    let ClientToServerMessage::PickUnit(message) = message else {
         todo!()
     };
 
     let Some(index) = pick_unit_data
         .units
         .iter()
-        .position(|x| x.id == pick_unit.unit_id)
+        .position(|x| x.id == message.unit_id)
     else {
         return Err(create_error_response("Invalid unit id!"));
     };

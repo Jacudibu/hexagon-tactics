@@ -100,7 +100,7 @@ impl InGameData {
 
 pub enum InGameState {
     StartingGame,
-    PickUnit(PickUnitData),
+    PickUnit(PickUnitStateData),
     Combat(MatchData),
 }
 
@@ -109,7 +109,7 @@ pub struct MatchData {
     pub combat_data: CombatData,
 }
 
-pub struct PickUnitData {
+pub struct PickUnitStateData {
     pub units: Vec<UnitDefinition>,
     pub remaining_choices: u8,
 }

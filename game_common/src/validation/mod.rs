@@ -14,5 +14,6 @@ pub use {
     validate_turn_order::validate_turn_order,
     validate_unit_has_at_least_one_action::validate_unit_has_at_least_one_action,
     validate_unit_has_enough_resources_to_use_skill::validate_unit_has_enough_resources_to_use_skill,
-    validate_unit_ownership::validate_player_owns_unit_with_id,
+    validate_unit_ownership::validate_player_owns_combat_unit_with_id,
+    validate_unit_ownership::validate_player_owns_resource_unit_with_id,
 };

@@ -1,26 +1,28 @@
 use crate::in_game_state::MatchData;
-use crate::message_processor::ServerToClientMessageVariant;
+use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_turn::{CombatTurn, PlaceUnit};
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
 };
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::{Player, PlayerId};
+use game_common::player_resources::PlayerResources;
+use game_common::unit::Unit;
 use game_common::validation;
 use std::collections::HashMap;
-use tracing::error;
 
 pub fn place_unit(
     sender: PlayerId,
     message: client_to_server::PlaceUnit,
     players: &HashMap<PlayerId, Player>,
+    player_resources: &HashMap<PlayerId, PlayerResources>,
     match_data: &mut MatchData,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
-    validation::validate_player_owns_unit_with_id(
+    let unit = validation::validate_player_owns_resource_unit_with_id(
         sender,
         message.unit_id,
-        &match_data.combat_data,
+        player_resources,
     )?;
 
     if !match_data
@@ -34,32 +36,20 @@ pub fn place_unit(
         ));
     }
 
-    let Some(index) = match_data
-        .combat_data
-        .unit_storage
-        .iter()
-        .position(|x| x.id == message.unit_id)
-    else {
-        error!(
-            "Was unable to find unit with id {} in unit storage!",
-            message.unit_id
-        );
-        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
-            ErrorWhenProcessingMessage {
-                message: "Invalid Unit ID!".into(),
-            },
-        ));
-    };
+    if match_data.combat_data.units.contains_key(&unit.id) {
+        return Err(create_error_response("Unit has already been placed!"));
+    }
 
-    let mut unit = match_data.combat_data.unit_storage.remove(index);
+    let mut unit = Unit::from(unit);
     unit.position = message.hex;
     match_data
         .combat_data
         .unit_positions
         .insert(message.hex, message.unit_id);
-    match_data.combat_data.units.insert(unit.id, unit);
+    match_data.combat_data.units.insert(unit.id, unit.clone());
 
-    let next = if match_data.combat_data.unit_storage.is_empty() {
+    // TODO: start combat when X units have been placed by each player instead of doing... this
+    let next = if match_data.combat_data.units.len() >= (3 * players.len()) {
         let unit_id = match_data.combat_data.get_next_unit();
         match_data.combat_data.start_unit_turn(unit_id);
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
@@ -67,23 +57,34 @@ pub fn place_unit(
         ))
     } else {
         // TODO: Better Turn Order
-        let next_player_id = match_data.combat_data.unit_storage[0].owner;
+        fn count_units(match_data: &MatchData, player_id: &PlayerId) -> usize {
+            match_data
+                .combat_data
+                .units
+                .iter()
+                .filter(|(_, unit)| &unit.owner == player_id)
+                .count()
+        }
+
+        let next_player_id = players
+            .keys()
+            .min_by(|player_a, player_b| {
+                count_units(match_data, player_a).cmp(&count_units(match_data, player_b))
+            })
+            .unwrap();
         match_data.combat_data.current_turn = CombatTurn::PlaceUnit(PlaceUnit {
-            player_id: next_player_id,
+            player_id: next_player_id.clone(),
         });
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlayerTurnToPlaceUnit(
             PlayerTurnToPlaceUnit {
-                player: next_player_id,
+                player: next_player_id.clone(),
             },
         ))
     };
 
     Ok(vec![
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::PlaceUnit(
-            server_to_client::PlaceUnit {
-                unit_id: message.unit_id,
-                hex: message.hex,
-            },
+            server_to_client::PlaceUnit { unit },
         )),
         next,
     ])

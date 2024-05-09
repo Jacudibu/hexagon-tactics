@@ -1,9 +1,9 @@
-use crate::in_game_state::{InGameData, InGameState, MatchData, PickUnitData};
+use crate::in_game_state::{InGameData, InGameState, MatchData, PickUnitStateData};
 use crate::message_processor::command_invocation_result::StateTransition;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
-use game_common::game_data::UnitDefinition;
+use game_common::game_data::{UnitDefinition, DEBUG_RACE_ID};
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
     ChooseBetweenUnits, ErrorWhenProcessingMessage, LoadMap, ServerToClientMessage,
@@ -35,7 +35,7 @@ pub fn pick_unit(
 ) -> Vec<ServerToClientMessageVariant> {
     let mut result = Vec::new();
     for player in players_in_state {
-        let data = PickUnitData {
+        let data = PickUnitStateData {
             units: create_units(3),
             remaining_choices: remaining,
         };
@@ -65,7 +65,7 @@ pub fn create_unit() -> UnitDefinition {
         id,
         owner: 0,
         name: format!("Unit #{}", id),
-        race: 0,
+        race: DEBUG_RACE_ID,
         levels: Default::default(),
         unlocked_skills: vec![],
         weapon: None,
@@ -94,7 +94,6 @@ pub fn start_combat(
     let combat_data = CombatData {
         units: Default::default(),
         unit_positions: Default::default(),
-        unit_storage: Default::default(),
         current_turn: CombatTurn::Undefined,
     };
     let match_data = MatchData {

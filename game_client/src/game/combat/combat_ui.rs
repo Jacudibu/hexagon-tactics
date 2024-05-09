@@ -13,6 +13,8 @@ use game_common::combat_turn::CombatTurn;
 use game_common::game_data::skill::{
     DEBUG_AOE_TARGET_ATTACK_ID, DEBUG_AOE_T_SHAPED, DEBUG_SINGLE_TARGET_ATTACK_ID,
 };
+use game_common::game_data::{GameData, UnitDefinition};
+use game_common::player_resources::PlayerResources;
 use game_common::unit::Unit;
 
 pub(crate) struct CombatUiPlugin;
@@ -39,10 +41,11 @@ impl Plugin for CombatUiPlugin {
 fn draw_currently_placed_unit_info(
     egui: EguiContexts,
     currently_placed_unit: Res<CurrentlyPlacedUnit>,
-    combat_data: Res<CombatData>,
+    player_resources: Res<PlayerResources>,
+    game_data: Res<GameData>,
 ) {
-    let Some(unit) = combat_data
-        .unit_storage
+    let Some(unit) = player_resources
+        .units
         .get(currently_placed_unit.array_index)
     else {
         error!(
@@ -52,7 +55,7 @@ fn draw_currently_placed_unit_info(
         return;
     };
 
-    draw_unit_info(egui, unit, Align2::LEFT_CENTER);
+    draw_unit_definition_info(egui, unit, Align2::LEFT_CENTER, &game_data);
 }
 
 fn draw_selected_unit_info(
@@ -77,6 +80,27 @@ fn draw_selected_unit_info(
     };
 
     draw_unit_info(egui, unit, Align2::LEFT_BOTTOM);
+}
+
+fn draw_unit_definition_info(
+    mut egui: EguiContexts,
+    unit: &UnitDefinition,
+    anchor: Align2,
+    game_data: &GameData,
+) {
+    let mut lines = Vec::new();
+    let stats = unit.calculate_stats(game_data);
+    lines.push(format!("HP: {}", "TODO"));
+    lines.push(format!("Move: {} | Jump: {}", stats.movement, stats.jump));
+    lines.push(format!("Speed: {}", stats.speed));
+    let text = lines.join("\n");
+
+    egui::Window::new(&unit.name)
+        .collapsible(false)
+        .resizable(false)
+        .fixed_pos(Pos2::new(5.0, 0.0))
+        .anchor(anchor, egui::Vec2::ZERO)
+        .show(egui.ctx_mut(), |ui| ui.label(text));
 }
 
 fn draw_unit_info(mut egui: EguiContexts, unit: &Unit, anchor: Align2) {

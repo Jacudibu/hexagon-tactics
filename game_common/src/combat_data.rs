@@ -11,7 +11,6 @@ use hexx::Hex;
 pub struct CombatData {
     pub units: HashMap<UnitId, Unit>,
     pub unit_positions: HashMap<Hex, UnitId>,
-    pub unit_storage: Vec<Unit>,
     pub current_turn: CombatTurn,
 }
 
@@ -126,7 +125,6 @@ pub mod test_helpers {
             CombatData {
                 units: HashMap::new(),
                 unit_positions: HashMap::new(),
-                unit_storage: Vec::new(),
                 current_turn: CombatTurn::Undefined,
             }
         }

@@ -1,3 +1,4 @@
+use crate::game_data::UnitDefinition;
 use crate::player::PlayerId;
 use crate::unit_stats::UnitStats;
 use hexx::Hex;
@@ -30,6 +31,12 @@ impl PartialEq<Self> for Unit {
 impl Display for Unit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} [{}]", self.name, self.id)
+    }
+}
+
+impl From<&UnitDefinition> for Unit {
+    fn from(unit: &UnitDefinition) -> Self {
+        Self::create_debug_unit(unit.id, unit.owner)
     }
 }
 

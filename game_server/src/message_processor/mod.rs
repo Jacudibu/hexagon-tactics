@@ -39,15 +39,20 @@ pub fn process_message(
                     // Technically this should never happen, as this is just the dummy initialization value
                     todo!()
                 }
-                InGameState::Combat(ref mut match_data) => {
-                    combat::process_message(sender, message, players, game_data, match_data)
-                }
+                InGameState::Combat(ref mut match_data) => combat::process_message(
+                    sender,
+                    message,
+                    players,
+                    player_resources,
+                    game_data,
+                    match_data,
+                ),
                 InGameState::PickUnit(ref mut pick_unit_data) => pick_unit::process_message(
                     sender,
                     message,
                     players,
-                    game_data,
                     player_resources,
+                    game_data,
                     pick_unit_data,
                 ),
             }?;

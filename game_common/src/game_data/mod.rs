@@ -24,6 +24,30 @@ pub struct BaseDefinition<T> {
 pub type RaceId = u32;
 pub type RaceDefinition = BaseDefinition<RaceId>;
 
+pub const DEBUG_RACE_ID: RaceId = 1;
+impl RaceDefinition {
+    pub(in crate::game_data) fn mock_data() -> HashMap<RaceId, RaceDefinition> {
+        let mut result = HashMap::new();
+
+        result.insert(
+            DEBUG_RACE_ID,
+            Self {
+                id: DEBUG_RACE_ID,
+                name: "DEBUG RACE".into(),
+                extra_skills: Vec::new(),
+                base_stats: BaseStats {
+                    movement: 3,
+                    jump: 3,
+                    strength: 5,
+                    speed: 50,
+                },
+            },
+        );
+
+        result
+    }
+}
+
 pub type ClassId = u32;
 pub struct ClassDefinition {
     pub id: ClassId,
@@ -55,9 +79,9 @@ pub struct GameData {
 impl GameData {
     pub fn load() -> Self {
         GameData {
-            races: Default::default(),
+            races: RaceDefinition::mock_data(),
             classes: Default::default(),
-            skills: SkillDefinition::mock_skills(),
+            skills: SkillDefinition::mock_data(),
             weapons: Default::default(),
             armor: Default::default(),
             accessories: Default::default(),
@@ -85,7 +109,7 @@ pub mod test_helpers {
         }
 
         pub fn with_all_mock_skills(mut self) -> Self {
-            self.skills = SkillDefinition::mock_skills();
+            self.skills = SkillDefinition::mock_data();
             self
         }
     }

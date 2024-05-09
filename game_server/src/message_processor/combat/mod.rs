@@ -5,6 +5,7 @@ use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::player::{Player, PlayerId};
+use game_common::player_resources::PlayerResources;
 use std::collections::HashMap;
 
 pub mod end_turn;
@@ -17,6 +18,7 @@ pub fn process_message(
     sender: PlayerId,
     message: ClientToServerMessage,
     players: &mut HashMap<PlayerId, Player>,
+    player_resources: &HashMap<PlayerId, PlayerResources>,
     game_data: &GameData,
     match_data: &mut MatchData,
 ) -> Result<CommandInvocationResult, ServerToClientMessage> {
@@ -26,7 +28,7 @@ pub fn process_message(
         }
         ClientToServerMessage::EndTurn => end_turn::end_turn(sender, match_data),
         ClientToServerMessage::PlaceUnit(message) => {
-            place_unit::place_unit(sender, message, players, match_data)
+            place_unit::place_unit(sender, message, players, player_resources, match_data)
         }
         ClientToServerMessage::MoveUnit(message) => {
             move_unit::move_unit(sender, message, match_data)

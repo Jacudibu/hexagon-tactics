@@ -9,7 +9,6 @@ use crate::map::{ActiveUnitHighlights, MapState};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 use bevy::app::{App, Plugin, Update};
-use bevy::log::info;
 use bevy::prelude::{
     error, in_state, on_event, Commands, EventReader, EventWriter, IntoSystemConfigs, NextState,
     OnEnter, Reflect, Res, ResMut, States,
@@ -17,9 +16,7 @@ use bevy::prelude::{
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::server_to_client::{
-    AddUnitToPlayerStorage, PlayerTurnToPlaceUnit, StartUnitTurn,
-};
+use game_common::network_events::server_to_client::{PlayerTurnToPlaceUnit, StartUnitTurn};
 
 pub struct CombatPlugin;
 
@@ -39,7 +36,6 @@ impl Plugin for CombatPlugin {
         app.add_systems(
             Update,
             (
-                on_add_unit_to_player_storage.run_if(on_event::<AddUnitToPlayerStorage>()),
                 on_player_turn_to_place_unit.run_if(on_event::<PlayerTurnToPlaceUnit>()),
                 on_start_unit_turn.run_if(on_event::<StartUnitTurn>()),
             )
@@ -65,22 +61,11 @@ pub fn on_map_loaded(
     commands.insert_resource(CombatData {
         units: Default::default(),
         unit_positions: Default::default(),
-        unit_storage: vec![],
         current_turn: CombatTurn::Undefined,
     });
     commands.insert_resource(LocalCombatData {
         unit_entities: Default::default(),
     });
-}
-
-pub fn on_add_unit_to_player_storage(
-    mut add_unit_to_player_event: EventReader<AddUnitToPlayerStorage>,
-    mut combat_data: ResMut<CombatData>,
-) {
-    for x in add_unit_to_player_event.read() {
-        combat_data.unit_storage.push(x.unit.clone());
-        info!("Received unit: {:?}", x)
-    }
 }
 
 pub fn on_player_turn_to_place_unit(

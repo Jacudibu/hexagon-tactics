@@ -78,7 +78,7 @@ impl SkillDefinition {
         tile.height > 0
     }
 
-    pub(in crate::game_data) fn mock_skills() -> HashMap<SkillId, SkillDefinition> {
+    pub(in crate::game_data) fn mock_data() -> HashMap<SkillId, SkillDefinition> {
         let mut result = HashMap::new();
 
         result.insert(
