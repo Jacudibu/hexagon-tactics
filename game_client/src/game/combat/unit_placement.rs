@@ -3,9 +3,12 @@ use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::load::CharacterSprites;
 use crate::map::{CursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::networking::LocalPlayerId;
 use bevy::prelude::*;
+use bevy::render::render_resource::encase::private::RuntimeSizedArray;
 use bevy_sprite3d::{Sprite3d, Sprite3dParams};
 use game_common::combat_data::CombatData;
+use game_common::game_data::UnitDefinition;
 use game_common::game_map::GameMap;
 use game_common::game_map::HEX_LAYOUT;
 use game_common::network_events::client_to_server::ClientToServerMessage;
@@ -35,16 +38,86 @@ pub struct CurrentlyPlacedUnit {
     pub array_index: usize,
 }
 
-fn setup_state(mut commands: Commands) {
-    commands.insert_resource(CurrentlyPlacedUnit { array_index: 0 });
+fn setup_state(
+    mut commands: Commands,
+    player_resources: Res<PlayerResources>,
+    combat_data: Res<CombatData>,
+    local_player_id: Res<LocalPlayerId>,
+) {
+    let units = &player_resources.units;
+    assert!(
+        combat_data
+            .units
+            .iter()
+            .filter(|(_, unit)| unit.owner == local_player_id.id)
+            .count()
+            < units.len(),
+        "All units have been placed, yet we just entered SetupState for CombatState::PlaceUnit ?",
+    );
+
+    commands.insert_resource(CurrentlyPlacedUnit {
+        array_index: get_next_unplaced_unit_index(&combat_data, units, units.len()),
+    });
 }
 
 fn leave_state(mut commands: Commands) {
     commands.remove_resource::<CurrentlyPlacedUnit>();
 }
 
+fn get_next_unplaced_unit_index(
+    combat_data: &CombatData,
+    units: &Vec<UnitDefinition>,
+    index: usize,
+) -> usize {
+    fn increase_index(index: usize, unit_count: usize) -> usize {
+        if index + 1 >= unit_count {
+            0
+        } else {
+            index + 1
+        }
+    }
+
+    let mut result = increase_index(index, units.len());
+    while is_unit_already_placed(combat_data, units, result) {
+        result = increase_index(result, units.len());
+    }
+
+    return result;
+}
+
+fn get_previous_unplaced_unit_index(
+    combat_data: &CombatData,
+    units: &Vec<UnitDefinition>,
+    index: usize,
+) -> usize {
+    fn decrease_index(index: usize, unit_count: usize) -> usize {
+        if index == 0 {
+            unit_count - 1
+        } else {
+            index - 1
+        }
+    }
+
+    let mut result = decrease_index(index, units.len());
+    while is_unit_already_placed(combat_data, units, result) {
+        result = decrease_index(result, units.len());
+    }
+
+    return result;
+}
+
+fn is_unit_already_placed(
+    combat_data: &CombatData,
+    units: &Vec<UnitDefinition>,
+    index: usize,
+) -> bool {
+    let unit = &units[index];
+    return combat_data.units.contains_key(&unit.id);
+}
+
 fn input_listener(
     player_resources: Res<PlayerResources>,
+    combat_data: Res<CombatData>,
     mut currently_placed_unit: ResMut<CurrentlyPlacedUnit>,
     action_state: Res<ActionState<CombatAction>>,
     cursor: Option<Res<CursorOnTile>>,
@@ -52,17 +125,14 @@ fn input_listener(
 ) {
     let units = &player_resources.units;
     if action_state.just_pressed(&CombatAction::NextUnit) {
-        if currently_placed_unit.array_index + 1 >= units.len() {
-            currently_placed_unit.array_index = 0;
-        } else {
-            currently_placed_unit.array_index += 1;
-        }
+        currently_placed_unit.array_index =
+            get_next_unplaced_unit_index(&combat_data, units, currently_placed_unit.array_index);
     } else if action_state.just_pressed(&CombatAction::PreviousUnit) {
-        if currently_placed_unit.array_index == 0 {
-            currently_placed_unit.array_index = units.len() - 1;
-        } else {
-            currently_placed_unit.array_index -= 1;
-        }
+        currently_placed_unit.array_index = get_previous_unplaced_unit_index(
+            &combat_data,
+            units,
+            currently_placed_unit.array_index,
+        );
     } else if action_state.just_pressed(&CombatAction::SelectTile) {
         if let Some(cursor) = cursor {
             // TODO: Validation so we can't spam the server
