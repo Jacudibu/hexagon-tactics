@@ -5,7 +5,6 @@ use crate::load::CharacterSprites;
 use crate::map::{CursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use crate::networking::LocalPlayerId;
 use bevy::prelude::*;
-use bevy::render::render_resource::encase::private::RuntimeSizedArray;
 use bevy_sprite3d::{Sprite3d, Sprite3dParams};
 use game_common::combat_data::CombatData;
 use game_common::game_data::UnitDefinition;

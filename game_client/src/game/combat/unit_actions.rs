@@ -22,7 +22,7 @@ use crate::game::combat::combat_input::CombatAction;
 use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::end_turn::EndTurnCommand;
 use crate::game::combat::local_combat_data::LocalCombatData;
-use crate::game::combat::unit_animations::MoveUnitComponent;
+use crate::game::combat::unit_animations::{MoveUnitComponent, UnitAttackAnimationComponent};
 use crate::map::{ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
@@ -291,6 +291,9 @@ pub fn on_move_unit(
 }
 
 pub fn on_use_skill(
+    mut commands: Commands,
+    map: Res<GameMap>,
+    locals: Res<LocalCombatData>,
     mut events: EventReader<server_to_client::UseSkill>,
     mut combat_data: ResMut<CombatData>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
@@ -308,13 +311,19 @@ pub fn on_use_skill(
             }
         }
 
-        // TODO: Animate
-
         let turn = combat_data.current_turn.as_unit_turn_mut().unwrap();
         turn.remaining_actions -= 1;
         let unit_id = turn.unit_id;
 
         let unit = combat_data.units.get(&unit_id).unwrap();
+
+        commands
+            .entity(locals.unit_entities[&unit_id])
+            .insert(UnitAttackAnimationComponent::new(
+                unit,
+                event.target_coordinates,
+                &map,
+            ));
 
         if unit.owner == local_player_id.id {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
