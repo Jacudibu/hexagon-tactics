@@ -97,7 +97,7 @@ pub fn use_skill(
 #[cfg(test)]
 mod tests {
     use crate::in_game_state::MatchData;
-    use crate::message_processor::use_skill::use_skill;
+    use crate::message_processor::combat::use_skill::use_skill;
     use game_common::combat_data::CombatData;
     use game_common::game_data::GameData;
     use game_common::game_map::GameMap;
@@ -127,12 +127,12 @@ mod tests {
             loaded_map: GameMap::new(2),
         };
 
-        let data = client_to_server::UseSkill {
+        let message = client_to_server::UseSkill {
             id: skill_id,
             target_coordinates: target_position,
         };
 
-        let result = use_skill(1, &mut match_data, data, &game_data).unwrap();
+        let result = use_skill(1, message, &mut match_data, &game_data).unwrap();
         assert_eq!(1, result.len());
 
         let result = result[0].as_broadcast().unwrap().as_use_skill().unwrap();

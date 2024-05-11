@@ -41,7 +41,7 @@ pub fn move_unit(
 #[cfg(test)]
 mod tests {
     use crate::in_game_state::MatchData;
-    use crate::message_processor::move_unit::move_unit;
+    use crate::message_processor::combat::move_unit::move_unit;
     use game_common::combat_data::CombatData;
     use game_common::game_map::GameMap;
     use game_common::network_events::client_to_server::MoveUnit;
@@ -64,9 +64,9 @@ mod tests {
         };
 
         let path = vec![unit_start_pos, unit_new_pos];
-        let data = MoveUnit { path: path.clone() };
+        let message = MoveUnit { path: path.clone() };
 
-        let result = move_unit(1, &mut match_data, data).unwrap();
+        let result = move_unit(1, message, &mut match_data).unwrap();
         assert_eq!(1, result.len());
         let result = result[0].as_broadcast().unwrap().as_move_unit().unwrap();
         assert_eq!(path, result.path);

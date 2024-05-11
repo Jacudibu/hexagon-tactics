@@ -81,7 +81,7 @@ pub fn start_combat(
     let mut result = Vec::new();
     let map = match GameMap::load_from_file(TEST_MAP_NAME) {
         Ok(map) => map,
-        Err(e) => {
+        Err(_) => {
             // TODO: Load a "known good" map instead, and send player the correct map id
             result.push(ServerToClientMessageVariant::SendToSender(
                 ServerToClientMessage::ErrorWhenProcessingMessage(ErrorWhenProcessingMessage {

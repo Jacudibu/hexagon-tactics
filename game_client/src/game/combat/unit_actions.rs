@@ -374,9 +374,7 @@ mod tests {
     use game_common::game_map::GameMap;
     use game_common::unit::Unit;
 
-    use crate::combat_data_resource::CombatData;
     use crate::game::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
-    use crate::game_data_resource::GameData;
     use crate::map::RangeHighlights;
     use crate::networking::NetworkPlugin;
 
@@ -386,16 +384,16 @@ mod tests {
         app.add_plugins(UnitActionPlugin);
         app.add_plugins(NetworkPlugin);
         app.insert_resource(GameMap::new(1));
-        app.insert_resource(GameData::new(GameData::create_mock()));
+        app.insert_resource(GameData::create_mock());
 
         let unit_id = 1;
         let unit = Unit::create_mock(unit_id, 1).with_position(Hex::ZERO);
 
-        app.insert_resource(CombatData::new(
+        app.insert_resource(
             CombatData::create_mock()
                 .with_units(vec![unit])
                 .with_unit_turn(unit_id),
-        ));
+        );
         app.insert_resource(ActiveUnitAction::Move);
         app.update();
 

@@ -47,14 +47,9 @@ pub fn process_message(
                     game_data,
                     match_data,
                 ),
-                InGameState::PickUnit(ref mut pick_unit_data) => pick_unit::process_message(
-                    sender,
-                    message,
-                    players,
-                    player_resources,
-                    game_data,
-                    pick_unit_data,
-                ),
+                InGameState::PickUnit(ref mut pick_unit_data) => {
+                    pick_unit::process_message(sender, message, player_resources, pick_unit_data)
+                }
             }?;
 
             if let Some(state_transition) = &result.state_transition {
