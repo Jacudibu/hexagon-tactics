@@ -1,6 +1,5 @@
-use crate::game::combat::unit_placement;
-use crate::game::combat::unit_placement::unit_position_on_hexagon;
 use crate::game::game_plugin::GameState;
+use crate::map::map_utils::unit_position_on_hexagon;
 use crate::ApplicationState;
 use bevy::app::App;
 use bevy::math::Vec3;
@@ -65,10 +64,8 @@ pub fn animate_movement(
                 // (jump or walk)
             } else {
                 commands.entity(entity).remove::<MoveUnitComponent>();
-                transform.translation = unit_placement::unit_position_on_hexagon(
-                    move_data.path.last().unwrap().clone(),
-                    &map,
-                );
+                transform.translation =
+                    unit_position_on_hexagon(move_data.path.last().unwrap().clone(), &map);
                 continue;
             }
         }

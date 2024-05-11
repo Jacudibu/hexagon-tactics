@@ -2,14 +2,13 @@ use crate::game::combat::combat_input::CombatAction;
 use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::load::CharacterSprites;
-use crate::map::{CursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{map_utils, CursorOnTile};
 use crate::networking::LocalPlayerId;
 use bevy::prelude::*;
 use bevy_sprite3d::{Sprite3d, Sprite3dParams};
 use game_common::combat_data::CombatData;
 use game_common::game_data::UnitDefinition;
 use game_common::game_map::GameMap;
-use game_common::game_map::HEX_LAYOUT;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player_resources::PlayerResources;
@@ -198,27 +197,12 @@ fn spawn_unit_entity(
                 unlit: false,
                 double_sided: true, // required for shadows
                 pivot: Some(Vec2::new(0.5, 0.0)),
-                transform: Transform::from_translation(unit_position_on_hexagon(hex, &map)),
+                transform: Transform::from_translation(map_utils::unit_position_on_hexagon(
+                    hex, &map,
+                )),
                 ..default()
             }
             .bundle(&mut sprite_params),
         ))
         .id()
-}
-
-pub fn unit_position_on_hexagon(hex: Hex, map: &GameMap) -> Vec3 {
-    let height = match map.tiles.get(&hex) {
-        None => {
-            error!(
-                "Was unable to find tile for hex when solving unit position: {:?}",
-                hex
-            );
-            0.0
-        }
-        Some(tile_data) => tile_data.height as f32 * METERS_PER_TILE_HEIGHT_UNIT,
-    };
-
-    let hex_pos = HEX_LAYOUT.hex_to_world_pos(hex);
-
-    Vec3::new(hex_pos.x, height, hex_pos.y)
 }

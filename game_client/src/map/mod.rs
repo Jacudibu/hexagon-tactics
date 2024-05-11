@@ -2,6 +2,7 @@ mod highlights;
 mod map_gizmos;
 mod map_plugin;
 mod map_ui;
+pub mod map_utils;
 mod spawning;
 mod tile_cursor;
 mod update_tile;
