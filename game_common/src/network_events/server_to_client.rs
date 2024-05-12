@@ -5,7 +5,7 @@ use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
 use crate::game_data::skill::{SkillId, SkillInvocationResult};
-use crate::game_data::UnitDefinition;
+use crate::game_data::unit_definition::UnitDefinition;
 #[cfg(feature = "test_helpers")]
 use enum_as_inner::EnumAsInner;
 

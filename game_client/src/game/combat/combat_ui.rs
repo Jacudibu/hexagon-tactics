@@ -14,7 +14,8 @@ use game_common::combat_unit::CombatUnit;
 use game_common::game_data::skill::{
     DEBUG_AOE_TARGET_ATTACK_ID, DEBUG_AOE_T_SHAPED, DEBUG_SINGLE_TARGET_ATTACK_ID,
 };
-use game_common::game_data::{GameData, UnitDefinition};
+use game_common::game_data::unit_definition::UnitDefinition;
+use game_common::game_data::GameData;
 use game_common::player_resources::PlayerResources;
 
 pub(crate) struct CombatUiPlugin;

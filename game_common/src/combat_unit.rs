@@ -1,4 +1,5 @@
-use crate::game_data::{AccessoryId, ArmorId, RaceId, UnitDefinition, WeaponId, DEBUG_RACE_ID};
+use crate::game_data::unit_definition::UnitDefinition;
+use crate::game_data::{AccessoryId, ArmorId, RaceId, WeaponId, DEBUG_RACE_ID};
 use crate::player::PlayerId;
 use crate::unit_stats::UnitStats;
 use hexx::Hex;

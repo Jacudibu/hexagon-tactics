@@ -3,7 +3,8 @@ use crate::message_processor::command_invocation_result::StateTransition;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
-use game_common::game_data::{UnitDefinition, DEBUG_RACE_ID};
+use game_common::game_data::unit_definition::UnitDefinition;
+use game_common::game_data::DEBUG_RACE_ID;
 use game_common::game_map::GameMap;
 use game_common::network_events::server_to_client::{
     ChooseBetweenUnits, ErrorWhenProcessingMessage, LoadMap, ServerToClientMessage,

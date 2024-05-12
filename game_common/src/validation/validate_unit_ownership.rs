@@ -1,7 +1,7 @@
 use crate::combat_data::CombatData;
 use crate::combat_turn::CombatTurn;
 use crate::combat_unit::{CombatUnit, UnitId};
-use crate::game_data::UnitDefinition;
+use crate::game_data::unit_definition::UnitDefinition;
 use crate::player::PlayerId;
 use crate::player_resources::PlayerResources;
 use crate::validation::validation_error::ValidationError;

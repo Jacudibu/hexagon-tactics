@@ -1,4 +1,4 @@
-use crate::game_data::UnitDefinition;
+use crate::game_data::unit_definition::UnitDefinition;
 use bevy::prelude::Resource;
 
 /// General Resources available to player, shared between client and server.
