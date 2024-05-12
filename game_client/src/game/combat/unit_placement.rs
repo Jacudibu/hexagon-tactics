@@ -1,13 +1,14 @@
 use crate::game::combat::combat_input::CombatAction;
 use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::local_combat_data::LocalCombatData;
+use crate::game::sprite_builder;
 use crate::load::CharacterSprites;
 use crate::map::{map_utils, CursorOnTile};
 use crate::networking::LocalPlayerId;
 use bevy::prelude::*;
-use bevy_sprite3d::{Sprite3d, Sprite3dParams};
+use bevy_sprite3d::{Sprite3d, Sprite3dBundle, Sprite3dParams};
 use game_common::combat_data::CombatData;
-use game_common::combat_unit::CombatUnit;
+use game_common::combat_unit::{CombatUnit, CombatUnitKind};
 use game_common::game_data::unit_definition::UnitDefinition;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
@@ -163,7 +164,6 @@ fn on_server_placed_unit(
             &map,
             &mut sprite_params,
             &unit,
-            unit.position,
         );
 
         local_combat_data.unit_entities.insert(unit.id, entity);
@@ -182,27 +182,14 @@ fn spawn_unit_entity(
     commands: &mut Commands,
     character_sprites: &CharacterSprites,
     map: &GameMap,
-    mut sprite_params: &mut Sprite3dParams,
+    sprite_params: &mut Sprite3dParams,
     unit: &CombatUnit,
-    hex: Hex,
 ) -> Entity {
     commands
         .spawn((
             Name::new(unit.name.clone()),
             UnitMarker {},
-            Sprite3d {
-                image: character_sprites.test.clone(),
-                pixels_per_metre: 16.0,
-                alpha_mode: AlphaMode::Mask(0.1),
-                unlit: false,
-                double_sided: true, // required for shadows
-                pivot: Some(Vec2::new(0.5, 0.0)),
-                transform: Transform::from_translation(map_utils::unit_position_on_hexagon(
-                    hex, &map,
-                )),
-                ..default()
-            }
-            .bundle(&mut sprite_params),
+            sprite_builder::build_unit_sprite(unit, character_sprites, map, sprite_params),
         ))
         .id()
 }

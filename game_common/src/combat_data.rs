@@ -75,6 +75,11 @@ impl CombatData {
                     continue;
                 }
 
+                if x.owner == 0 {
+                    // TODO: Don't skip poor monsters, and don't hardcode their ID! Evil!
+                    continue;
+                }
+
                 x.turn_counter += x.stats_after_buffs.speed;
                 if x.turn_counter >= highest_counter {
                     if x.turn_counter > highest_counter {

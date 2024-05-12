@@ -27,6 +27,7 @@ use crate::game::combat::end_turn::EndTurnCommand;
 use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::game::combat::unit_animations::{MoveUnitComponent, UnitAttackAnimationComponent};
 use crate::game::combat::unit_placement::UnitMarker;
+use crate::game::sprite_builder;
 use crate::load::CharacterSprites;
 use crate::map::{
     map_utils, ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights,
@@ -307,7 +308,6 @@ pub fn on_use_skill(
     local_player_id: Res<LocalPlayerId>,
     character_sprites: Res<CharacterSprites>,
     mut sprite_params: Sprite3dParams,
-    unit_entities: Query<&Transform, With<UnitMarker>>,
 ) {
     for event in events.read() {
         for x in &event.hits {
@@ -319,20 +319,14 @@ pub fn on_use_skill(
                 target.hp = 0;
 
                 let entity = locals.unit_entities[&target.id];
-                let transform = unit_entities.get(entity).unwrap();
-                commands.entity(entity).insert(
-                    Sprite3d {
-                        image: character_sprites.test_dead.clone(),
-                        pixels_per_metre: 16.0,
-                        alpha_mode: AlphaMode::Mask(0.1),
-                        unlit: false,
-                        double_sided: true, // required for shadows
-                        pivot: Some(Vec2::new(0.5, 0.0)),
-                        transform: transform.clone(),
-                        ..default()
-                    }
-                    .bundle(&mut sprite_params),
-                );
+                commands
+                    .entity(entity)
+                    .insert(sprite_builder::build_dead_unit_sprite(
+                        target,
+                        &character_sprites,
+                        &map,
+                        &mut sprite_params,
+                    ));
             } else {
                 target.hp -= x.physical_damage;
             }

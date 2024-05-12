@@ -1,7 +1,6 @@
 use crate::game_data::unit_definition::UnitDefinition;
 use crate::game_data::{
-    AccessoryId, ArmorId, MonsterDefinition, MonsterId, RaceId, WeaponId, DEBUG_MONSTER_ID,
-    DEBUG_RACE_ID,
+    AccessoryId, ArmorId, MonsterDefinition, MonsterId, RaceId, WeaponId, DEBUG_RACE_ID,
 };
 use crate::player::PlayerId;
 use crate::unit_stats::UnitStats;

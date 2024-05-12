@@ -82,6 +82,8 @@ pub struct HexagonMeshes {
 pub struct CharacterSprites {
     pub test: Handle<Image>,
     pub test_dead: Handle<Image>,
+    pub test_monster: Handle<Image>,
+    pub test_monster_dead: Handle<Image>,
 }
 
 pub fn load_meshes(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
@@ -260,7 +262,14 @@ fn generate_generic_side_mat(
 pub fn load_sprites(mut commands: Commands, asset_server: Res<AssetServer>) {
     let test = asset_server.load("sprites/test_character.png");
     let test_dead = asset_server.load("sprites/test_character_dead.png");
+    let test_monster = asset_server.load("sprites/slime.png");
+    let test_monster_dead = asset_server.load("sprites/slime_dead.png");
 
-    commands.insert_resource(CharacterSprites { test, test_dead });
+    commands.insert_resource(CharacterSprites {
+        test,
+        test_dead,
+        test_monster,
+        test_monster_dead,
+    });
     commands.insert_resource(GameData::load());
 }
