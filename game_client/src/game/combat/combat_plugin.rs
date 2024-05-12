@@ -93,7 +93,7 @@ pub fn on_start_unit_turn(
     local_player_id: Res<LocalPlayerId>,
 ) {
     for event in event.read() {
-        let locally_computed_next = combat_data.get_next_unit();
+        let locally_computed_next = combat_data.get_unit_for_next_turn();
         if locally_computed_next != event.unit_id {
             error!("Turn order seems to be out of sync? Server said to start turn for unit {}, but locally, it would be {}'s turn.",
                 event.unit_id, locally_computed_next

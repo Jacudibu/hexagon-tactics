@@ -50,7 +50,7 @@ pub fn place_unit(
 
     // TODO: start combat when X units have been placed by each player instead of doing... this
     let next = if match_data.combat_data.units.len() >= (3 * players.len()) {
-        let unit_id = match_data.combat_data.get_next_unit();
+        let unit_id = match_data.combat_data.get_unit_for_next_turn();
         match_data.combat_data.start_unit_turn(unit_id);
         ServerToClientMessageVariant::Broadcast(ServerToClientMessage::StartUnitTurn(
             StartUnitTurn { unit_id },

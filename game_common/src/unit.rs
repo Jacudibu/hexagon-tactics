@@ -71,6 +71,10 @@ impl Unit {
         result
     }
 
+    pub fn is_dead(&self) -> bool {
+        return self.hp == 0;
+    }
+
     fn init_tiebreaker(&mut self) {
         self.turn_tiebreaker = self.base_stats.speed * 1000 + self.id;
     }

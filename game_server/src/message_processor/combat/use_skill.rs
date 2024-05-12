@@ -132,6 +132,7 @@ mod tests {
             target_coordinates: target_position,
         };
 
+        let old_hp = match_data.combat_data.units[&target_id].hp;
         let result = use_skill(1, message, &mut match_data, &game_data).unwrap();
         assert_eq!(1, result.len());
 
@@ -146,8 +147,12 @@ mod tests {
             "Default skill should deal some damage"
         );
 
+        assert_eq!(
+            old_hp - result.physical_damage,
+            match_data.combat_data.units[&target_id].hp
+        );
+
         // TODO: check resource consumption
-        // TODO: check health reduction
 
         assert_eq!(
             match_data

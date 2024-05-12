@@ -52,10 +52,14 @@ impl CombatData {
     const COUNTER_NEEDED_FOR_TURN: u32 = 100;
 
     #[must_use]
-    pub fn get_next_unit(&mut self) -> UnitId {
+    pub fn get_unit_for_next_turn(&mut self) -> UnitId {
         let mut ready_units = Vec::new();
         let mut highest_counter = Self::COUNTER_NEEDED_FOR_TURN;
         for x in self.units.values() {
+            if x.is_dead() {
+                continue;
+            }
+
             if x.turn_counter >= highest_counter {
                 if x.turn_counter > highest_counter {
                     ready_units.clear();
@@ -67,6 +71,10 @@ impl CombatData {
 
         while ready_units.is_empty() {
             for x in self.units.values_mut() {
+                if x.is_dead() {
+                    continue;
+                }
+
                 x.turn_counter += x.stats_after_buffs.speed;
                 if x.turn_counter >= highest_counter {
                     if x.turn_counter > highest_counter {
