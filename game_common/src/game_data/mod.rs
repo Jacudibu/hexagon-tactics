@@ -63,7 +63,35 @@ pub type AccessoryId = u32;
 pub type AccessoryDefinition = BaseDefinition<AccessoryId>;
 
 pub type MonsterId = u32;
-pub type MonsterDefinition = BaseDefinition<MonsterId>;
+pub struct MonsterDefinition {
+    pub id: MonsterId,
+    pub name: String,
+    pub stats: BaseStats,
+    pub skills: Vec<SkillId>,
+}
+pub const DEBUG_MONSTER_ID: MonsterId = 1;
+impl MonsterDefinition {
+    pub(in crate::game_data) fn mock_data() -> HashMap<MonsterId, MonsterDefinition> {
+        let mut result = HashMap::new();
+
+        result.insert(
+            DEBUG_MONSTER_ID,
+            Self {
+                id: DEBUG_MONSTER_ID,
+                name: "DEBUG MONSTER".into(),
+                skills: Vec::new(),
+                stats: BaseStats {
+                    movement: 3,
+                    jump: 3,
+                    strength: 5,
+                    speed: 40,
+                },
+            },
+        );
+
+        result
+    }
+}
 
 /// Contains hashmaps of all parseable data
 #[cfg_attr(feature = "ecs", derive(Resource))]
@@ -86,7 +114,7 @@ impl GameData {
             weapons: Default::default(),
             armor: Default::default(),
             accessories: Default::default(),
-            monsters: Default::default(),
+            monsters: MonsterDefinition::mock_data(),
         }
     }
 }
