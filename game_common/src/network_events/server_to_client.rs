@@ -1,5 +1,5 @@
+use crate::combat_unit::{CombatUnit, UnitId};
 use crate::player::{Player, PlayerId, ReadyState};
-use crate::unit::{CombatUnit, UnitId};
 use bevy::prelude::Event;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};

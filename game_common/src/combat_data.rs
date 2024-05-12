@@ -1,6 +1,6 @@
 use crate::combat_turn::CombatTurn;
+use crate::combat_unit::{CombatUnit, UnitId};
 use crate::game_map::GameMap;
-use crate::unit::{CombatUnit, UnitId};
 use bevy::prelude::{error, Resource};
 use bevy::utils::HashMap;
 use hexx::Hex;
@@ -123,7 +123,7 @@ impl TurnOrderElement {
 pub mod test_helpers {
     use crate::combat_data::CombatData;
     use crate::combat_turn::CombatTurn;
-    use crate::unit::{CombatUnit, UnitId};
+    use crate::combat_unit::{CombatUnit, UnitId};
     use bevy::utils::HashMap;
 
     impl CombatData {
@@ -157,7 +157,7 @@ pub mod test_helpers {
 mod tests {
     use crate::combat_data::CombatData;
     use crate::combat_turn::{CombatTurn, UnitTurn};
-    use crate::unit::CombatUnit;
+    use crate::combat_unit::CombatUnit;
     use crate::unit_stats::UnitStats;
 
     #[test]

@@ -10,12 +10,12 @@ use bevy_egui::egui::{Align2, Pos2, Ui};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
+use game_common::combat_unit::CombatUnit;
 use game_common::game_data::skill::{
     DEBUG_AOE_TARGET_ATTACK_ID, DEBUG_AOE_T_SHAPED, DEBUG_SINGLE_TARGET_ATTACK_ID,
 };
 use game_common::game_data::{GameData, UnitDefinition};
 use game_common::player_resources::PlayerResources;
-use game_common::unit::CombatUnit;
 
 pub(crate) struct CombatUiPlugin;
 impl Plugin for CombatUiPlugin {

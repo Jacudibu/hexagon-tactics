@@ -397,9 +397,9 @@ mod tests {
     use hexx::Hex;
 
     use game_common::combat_data::CombatData;
+    use game_common::combat_unit::CombatUnit;
     use game_common::game_data::GameData;
     use game_common::game_map::GameMap;
-    use game_common::unit::CombatUnit;
 
     use crate::game::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
     use crate::map::RangeHighlights;

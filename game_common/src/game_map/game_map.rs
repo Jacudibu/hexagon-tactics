@@ -1,9 +1,9 @@
 use crate::combat_data::CombatData;
+use crate::combat_unit::CombatUnit;
 use crate::game_map::field_of_movement_with_edge_detection::field_of_movement_with_edge_detection;
 use crate::game_map::tile_data::TileData;
 use crate::game_map::tile_surface::TileSurface;
 use crate::game_map::versioned_map_data::VersionedMapData;
-use crate::unit::CombatUnit;
 use bevy::prelude::Resource;
 use bevy::utils::hashbrown::HashMap;
 use hexx::Hex;
@@ -111,8 +111,8 @@ mod tests {
     };
 
     use crate::combat_data::CombatData;
+    use crate::combat_unit::CombatUnit;
     use crate::game_map::game_map::GameMap;
-    use crate::unit::CombatUnit;
     use hexx::Hex;
     use std::fs;
     use tempfile::TempDir;

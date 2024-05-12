@@ -62,8 +62,8 @@ pub fn validate_path_for_current_unit(
 #[cfg(test)]
 mod tests {
     use crate::combat_data::CombatData;
+    use crate::combat_unit::CombatUnit;
     use crate::game_map::GameMap;
-    use crate::unit::CombatUnit;
     use crate::unit_stats::UnitStats;
     use crate::validation::validate_path_for_current_unit;
     use hexx::Hex;

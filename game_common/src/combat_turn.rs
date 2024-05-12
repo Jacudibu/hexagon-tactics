@@ -1,5 +1,5 @@
+use crate::combat_unit::{CombatUnit, UnitId};
 use crate::player::PlayerId;
-use crate::unit::{CombatUnit, UnitId};
 use enum_as_inner::EnumAsInner;
 
 #[derive(Debug, PartialEq, Eq, EnumAsInner)]

@@ -7,8 +7,8 @@ use bevy::prelude::{
     in_state, Commands, Component, Entity, IntoSystemConfigs, Plugin, Query, Res, Time, Transform,
     Update,
 };
+use game_common::combat_unit::CombatUnit;
 use game_common::game_map::GameMap;
-use game_common::unit::CombatUnit;
 use hexx::Hex;
 
 pub struct UnitAnimationPlugin;

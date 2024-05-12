@@ -43,9 +43,9 @@ mod tests {
     use crate::in_game_state::MatchData;
     use crate::message_processor::combat::move_unit::move_unit;
     use game_common::combat_data::CombatData;
+    use game_common::combat_unit::CombatUnit;
     use game_common::game_map::GameMap;
     use game_common::network_events::client_to_server::MoveUnit;
-    use game_common::unit::CombatUnit;
     use game_common::unit_stats::UnitStats;
     use hexx::{EdgeDirection, Hex};
 

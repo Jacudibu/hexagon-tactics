@@ -1,5 +1,5 @@
+use crate::combat_unit::CombatUnit;
 use crate::game_data::skill::SkillDefinition;
-use crate::unit::CombatUnit;
 use crate::validation::validation_error::ValidationError;
 
 pub fn validate_unit_has_enough_resources_to_use_skill(

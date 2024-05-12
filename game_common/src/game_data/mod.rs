@@ -1,6 +1,6 @@
+use crate::combat_unit::UnitId;
 use crate::game_data::skill::{SkillDefinition, SkillId};
 use crate::player::PlayerId;
-use crate::unit::UnitId;
 use crate::unit_stats::UnitStats;
 use base_stats::BaseStats;
 use bevy::prelude::{Event, Resource};

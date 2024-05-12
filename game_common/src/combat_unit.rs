@@ -1,4 +1,4 @@
-use crate::game_data::UnitDefinition;
+use crate::game_data::{AccessoryId, ArmorId, RaceId, UnitDefinition, WeaponId, DEBUG_RACE_ID};
 use crate::player::PlayerId;
 use crate::unit_stats::UnitStats;
 use hexx::Hex;
@@ -7,9 +7,28 @@ use std::fmt::{Display, Formatter};
 
 pub type UnitId = u32;
 
+/// Contains data that's needed for visuals
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum CombatUnitKind {
+    Humanoid(HumanoidData),
+    Monster(MonsterData),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct HumanoidData {
+    pub race: RaceId,
+    pub weapon: Option<WeaponId>,
+    pub armor: Option<ArmorId>,
+    pub accessory: Option<AccessoryId>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MonsterData {}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CombatUnit {
     pub id: UnitId,
+    pub kind: CombatUnitKind,
     pub owner: PlayerId,
     pub name: String,
     pub position: Hex,
@@ -26,7 +45,7 @@ impl PartialEq<Self> for CombatUnit {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
-}R
+}
 
 impl Display for CombatUnit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -47,6 +66,12 @@ impl CombatUnit {
         let mut result = CombatUnit {
             id,
             owner,
+            kind: CombatUnitKind::Humanoid(HumanoidData {
+                race: DEBUG_RACE_ID,
+                weapon: None,
+                accessory: None,
+                armor: None,
+            }),
             name: format!("Unit {id}"),
             position: Hex::ZERO,
             hp: 10,
@@ -82,8 +107,9 @@ impl CombatUnit {
 
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
+    use crate::combat_unit::{CombatUnit, CombatUnitKind, HumanoidData, UnitId};
+    use crate::game_data::DEBUG_RACE_ID;
     use crate::player::PlayerId;
-    use crate::unit::{CombatUnit, UnitId};
     use crate::unit_stats::UnitStats;
     use hexx::Hex;
 
@@ -94,6 +120,12 @@ pub mod test_helpers {
             let mut result = CombatUnit {
                 id,
                 owner,
+                kind: CombatUnitKind::Humanoid(HumanoidData {
+                    race: DEBUG_RACE_ID,
+                    weapon: None,
+                    accessory: None,
+                    armor: None,
+                }),
                 name: format!("Test Unit #{id}"),
                 position: Hex::ZERO,
                 hp: 10,

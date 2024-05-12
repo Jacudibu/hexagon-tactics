@@ -1,13 +1,13 @@
 use crate::in_game_state::MatchData;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_turn::{CombatTurn, PlaceUnit};
+use game_common::combat_unit::CombatUnit;
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
 };
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::{Player, PlayerId};
 use game_common::player_resources::PlayerResources;
-use game_common::unit::CombatUnit;
 use game_common::validation;
 use std::collections::HashMap;
 

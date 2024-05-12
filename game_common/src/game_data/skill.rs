@@ -1,5 +1,5 @@
+use crate::combat_unit::{CombatUnit, UnitId};
 use crate::game_map::GameMap;
-use crate::unit::{CombatUnit, UnitId};
 use bevy::utils::HashMap;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};

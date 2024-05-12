@@ -1,9 +1,9 @@
 use crate::combat_data::CombatData;
 use crate::combat_turn::CombatTurn;
+use crate::combat_unit::{CombatUnit, UnitId};
 use crate::game_data::UnitDefinition;
 use crate::player::PlayerId;
 use crate::player_resources::PlayerResources;
-use crate::unit::{CombatUnit, UnitId};
 use crate::validation::validation_error::ValidationError;
 use std::collections::HashMap;
 

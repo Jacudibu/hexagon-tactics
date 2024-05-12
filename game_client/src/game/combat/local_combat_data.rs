@@ -1,6 +1,6 @@
 use bevy::prelude::{Entity, Resource};
 use bevy::utils::HashMap;
-use game_common::unit::UnitId;
+use game_common::combat_unit::UnitId;
 
 /// Contains all the things which don't need to be synced via network.
 #[derive(Resource)]
