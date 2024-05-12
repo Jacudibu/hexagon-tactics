@@ -7,7 +7,7 @@ use game_common::network_events::server_to_client::{
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::{Player, PlayerId};
 use game_common::player_resources::PlayerResources;
-use game_common::unit::Unit;
+use game_common::unit::CombatUnit;
 use game_common::validation;
 use std::collections::HashMap;
 
@@ -40,7 +40,7 @@ pub fn place_unit(
         return Err(create_error_response("Unit has already been placed!"));
     }
 
-    let mut unit = Unit::from(unit);
+    let mut unit = CombatUnit::from(unit);
     unit.position = message.hex;
     match_data
         .combat_data

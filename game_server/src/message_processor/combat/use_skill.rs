@@ -102,7 +102,7 @@ mod tests {
     use game_common::game_data::GameData;
     use game_common::game_map::GameMap;
     use game_common::network_events::client_to_server;
-    use game_common::unit::Unit;
+    use game_common::unit::CombatUnit;
     use game_common::unit_stats::UnitStats;
     use hexx::{EdgeDirection, Hex};
 
@@ -116,10 +116,10 @@ mod tests {
         let mut match_data = MatchData {
             combat_data: CombatData::create_mock()
                 .with_units(vec![
-                    Unit::create_mock(user_id, 1)
+                    CombatUnit::create_mock(user_id, 1)
                         .with_position(Hex::ZERO)
                         .with_stats(UnitStats::create_mock()),
-                    Unit::create_mock(target_id, 2)
+                    CombatUnit::create_mock(target_id, 2)
                         .with_position(target_position)
                         .with_stats(UnitStats::create_mock()),
                 ])

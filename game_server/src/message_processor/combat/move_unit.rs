@@ -45,7 +45,7 @@ mod tests {
     use game_common::combat_data::CombatData;
     use game_common::game_map::GameMap;
     use game_common::network_events::client_to_server::MoveUnit;
-    use game_common::unit::Unit;
+    use game_common::unit::CombatUnit;
     use game_common::unit_stats::UnitStats;
     use hexx::{EdgeDirection, Hex};
 
@@ -57,7 +57,7 @@ mod tests {
         let unit_new_pos = unit_start_pos.neighbor(EdgeDirection::POINTY_RIGHT);
         let mut match_data = MatchData {
             combat_data: CombatData::create_mock()
-                .with_units(vec![Unit::create_mock(unit_id, 1)
+                .with_units(vec![CombatUnit::create_mock(unit_id, 1)
                     .with_stats(UnitStats::create_mock().with_movement(unit_movement))])
                 .with_unit_turn(unit_id),
             loaded_map: GameMap::new(2),

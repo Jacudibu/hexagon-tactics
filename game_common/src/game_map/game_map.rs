@@ -3,7 +3,7 @@ use crate::game_map::field_of_movement_with_edge_detection::field_of_movement_wi
 use crate::game_map::tile_data::TileData;
 use crate::game_map::tile_surface::TileSurface;
 use crate::game_map::versioned_map_data::VersionedMapData;
-use crate::unit::Unit;
+use crate::unit::CombatUnit;
 use bevy::prelude::Resource;
 use bevy::utils::hashbrown::HashMap;
 use hexx::Hex;
@@ -43,7 +43,7 @@ impl GameMap {
     }
 
     #[must_use]
-    pub fn field_of_movement(&self, unit: &Unit, combat_data: &CombatData) -> Vec<Hex> {
+    pub fn field_of_movement(&self, unit: &CombatUnit, combat_data: &CombatData) -> Vec<Hex> {
         let unit_turn = combat_data.current_turn.as_unit_turn().unwrap();
         let mut result = field_of_movement_with_edge_detection(
             unit.position,
@@ -68,7 +68,7 @@ impl GameMap {
     #[must_use]
     pub(crate) fn calculate_path_costs(
         &self,
-        unit: &Unit,
+        unit: &CombatUnit,
         combat_data: &CombatData,
         from: &Hex,
         to: &Hex,
@@ -112,7 +112,7 @@ mod tests {
 
     use crate::combat_data::CombatData;
     use crate::game_map::game_map::GameMap;
-    use crate::unit::Unit;
+    use crate::unit::CombatUnit;
     use hexx::Hex;
     use std::fs;
     use tempfile::TempDir;
@@ -168,11 +168,11 @@ mod tests {
         map.tiles.get_mut(&too_high_hex).unwrap().height = 3;
 
         let mut combat_data = CombatData::create_mock().with_units(vec![
-            Unit::create_mock(1, 1)
+            CombatUnit::create_mock(1, 1)
                 .with_position(unit_pos)
                 .with_stats(UnitStats::create_mock().with_movement(1).with_jump(1)),
-            Unit::create_mock(2, 1).with_position(friendly_unit_pos),
-            Unit::create_mock(3, 2).with_position(hostile_unit_pos),
+            CombatUnit::create_mock(2, 1).with_position(friendly_unit_pos),
+            CombatUnit::create_mock(3, 2).with_position(hostile_unit_pos),
         ]);
 
         combat_data.start_unit_turn(1);

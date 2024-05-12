@@ -8,7 +8,7 @@ use bevy::prelude::{
     Update,
 };
 use game_common::game_map::GameMap;
-use game_common::unit::Unit;
+use game_common::unit::CombatUnit;
 use hexx::Hex;
 
 pub struct UnitAnimationPlugin;
@@ -88,7 +88,7 @@ pub struct UnitAttackAnimationComponent {
 impl UnitAttackAnimationComponent {
     const ANIMATION_DISTANCE: f32 = 1.0;
 
-    pub fn new(unit: &Unit, target: Hex, map: &GameMap) -> UnitAttackAnimationComponent {
+    pub fn new(unit: &CombatUnit, target: Hex, map: &GameMap) -> UnitAttackAnimationComponent {
         let origin = unit_position_on_hexagon(unit.position, map);
         if unit.position == target {
             return UnitAttackAnimationComponent {

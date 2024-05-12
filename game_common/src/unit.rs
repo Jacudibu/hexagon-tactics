@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 pub type UnitId = u32;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Unit {
+pub struct CombatUnit {
     pub id: UnitId,
     pub owner: PlayerId,
     pub name: String,
@@ -22,29 +22,29 @@ pub struct Unit {
     pub turn_tiebreaker: u32,
 }
 
-impl PartialEq<Self> for Unit {
+impl PartialEq<Self> for CombatUnit {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
-}
+}R
 
-impl Display for Unit {
+impl Display for CombatUnit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} [{}]", self.name, self.id)
     }
 }
 
-impl From<&UnitDefinition> for Unit {
+impl From<&UnitDefinition> for CombatUnit {
     fn from(unit: &UnitDefinition) -> Self {
         Self::create_debug_unit(unit.id, unit.owner)
     }
 }
 
-impl Unit {
+impl CombatUnit {
     pub fn create_debug_unit(id: UnitId, owner: PlayerId) -> Self {
         let movement = 4;
 
-        let mut result = Unit {
+        let mut result = CombatUnit {
             id,
             owner,
             name: format!("Unit {id}"),
@@ -83,15 +83,15 @@ impl Unit {
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
     use crate::player::PlayerId;
-    use crate::unit::{Unit, UnitId};
+    use crate::unit::{CombatUnit, UnitId};
     use crate::unit_stats::UnitStats;
     use hexx::Hex;
 
-    impl Unit {
+    impl CombatUnit {
         /// Create a mock Unit with sensible defaults.
         /// Use `.with_<attribute>` methods to set specific values for tests.
         pub fn create_mock(id: UnitId, owner: PlayerId) -> Self {
-            let mut result = Unit {
+            let mut result = CombatUnit {
                 id,
                 owner,
                 name: format!("Test Unit #{id}"),

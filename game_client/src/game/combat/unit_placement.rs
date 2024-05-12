@@ -12,7 +12,7 @@ use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player_resources::PlayerResources;
-use game_common::unit::Unit;
+use game_common::unit::CombatUnit;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
@@ -183,7 +183,7 @@ fn spawn_unit_entity(
     character_sprites: &CharacterSprites,
     map: &GameMap,
     mut sprite_params: &mut Sprite3dParams,
-    unit: &Unit,
+    unit: &CombatUnit,
     hex: Hex,
 ) -> Entity {
     commands

@@ -1,5 +1,5 @@
 use crate::player::PlayerId;
-use crate::unit::{Unit, UnitId};
+use crate::unit::{CombatUnit, UnitId};
 use enum_as_inner::EnumAsInner;
 
 #[derive(Debug, PartialEq, Eq, EnumAsInner)]
@@ -16,7 +16,7 @@ impl CombatTurn {
     }
 
     #[must_use]
-    pub fn start_unit_turn(unit: &Unit) -> CombatTurn {
+    pub fn start_unit_turn(unit: &CombatUnit) -> CombatTurn {
         CombatTurn::UnitTurn(UnitTurn::start(unit))
     }
 }
@@ -35,7 +35,7 @@ pub struct UnitTurn {
 
 impl UnitTurn {
     #[must_use]
-    fn start(unit: &Unit) -> UnitTurn {
+    fn start(unit: &CombatUnit) -> UnitTurn {
         UnitTurn {
             unit_id: unit.id,
             remaining_movement: unit.stats_after_buffs.movement,

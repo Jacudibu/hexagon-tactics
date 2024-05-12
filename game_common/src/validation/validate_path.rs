@@ -63,7 +63,7 @@ pub fn validate_path_for_current_unit(
 mod tests {
     use crate::combat_data::CombatData;
     use crate::game_map::GameMap;
-    use crate::unit::Unit;
+    use crate::unit::CombatUnit;
     use crate::unit_stats::UnitStats;
     use crate::validation::validate_path_for_current_unit;
     use hexx::Hex;
@@ -74,7 +74,7 @@ mod tests {
         let target_pos = Hex::new(2, 0);
         let map = GameMap::new(2);
         let combat_data = CombatData::create_mock()
-            .with_units(vec![Unit::create_mock(1, 1)
+            .with_units(vec![CombatUnit::create_mock(1, 1)
                 .with_position(unit_pos)
                 .with_stats(UnitStats::create_mock().with_movement(4))])
             .with_unit_turn(1);
@@ -98,7 +98,7 @@ mod tests {
         let target_pos = Hex::new(2, 0);
         let map = GameMap::new(2);
         let combat_data = CombatData::create_mock()
-            .with_units(vec![Unit::create_mock(1, 1)
+            .with_units(vec![CombatUnit::create_mock(1, 1)
                 .with_position(unit_pos)
                 .with_stats(UnitStats::create_mock().with_movement(3))])
             .with_unit_turn(1);

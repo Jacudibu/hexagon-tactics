@@ -15,7 +15,7 @@ use game_common::game_data::skill::{
 };
 use game_common::game_data::{GameData, UnitDefinition};
 use game_common::player_resources::PlayerResources;
-use game_common::unit::Unit;
+use game_common::unit::CombatUnit;
 
 pub(crate) struct CombatUiPlugin;
 impl Plugin for CombatUiPlugin {
@@ -103,7 +103,7 @@ fn draw_unit_definition_info(
         .show(egui.ctx_mut(), |ui| ui.label(text));
 }
 
-fn draw_unit_info(mut egui: EguiContexts, unit: &Unit, anchor: Align2) {
+fn draw_unit_info(mut egui: EguiContexts, unit: &CombatUnit, anchor: Align2) {
     let mut lines = Vec::new();
     lines.push(format!("HP: {}", unit.hp));
     lines.push(format!(

@@ -1,5 +1,5 @@
 use crate::game_map::GameMap;
-use crate::unit::{Unit, UnitId};
+use crate::unit::{CombatUnit, UnitId};
 use bevy::utils::HashMap;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,11 @@ pub struct SkillDefinition {
 }
 
 impl SkillDefinition {
-    pub fn calculate_damage(&self, user: &Unit, target: &Unit) -> SkillInvocationResult {
+    pub fn calculate_damage(
+        &self,
+        user: &CombatUnit,
+        target: &CombatUnit,
+    ) -> SkillInvocationResult {
         SkillInvocationResult {
             physical_damage: user.stats_after_buffs.strength + self.base_power,
             target_unit_id: target.id,

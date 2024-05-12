@@ -3,7 +3,7 @@ use crate::combat_turn::CombatTurn;
 use crate::game_data::UnitDefinition;
 use crate::player::PlayerId;
 use crate::player_resources::PlayerResources;
-use crate::unit::{Unit, UnitId};
+use crate::unit::{CombatUnit, UnitId};
 use crate::validation::validation_error::ValidationError;
 use std::collections::HashMap;
 
@@ -11,7 +11,7 @@ pub fn validate_player_owns_combat_unit_with_id<'a>(
     player_id: PlayerId,
     unit_id: UnitId,
     combat_data: &CombatData,
-) -> Result<&Unit, ValidationError> {
+) -> Result<&CombatUnit, ValidationError> {
     match &combat_data.current_turn {
         CombatTurn::Undefined => Err(ValidationError::new("Undefined turn behaviour!")),
         CombatTurn::PlaceUnit(_) => Err(ValidationError::new("Undefined turn behaviour!")),
@@ -35,8 +35,8 @@ pub fn validate_player_owns_resource_unit_with_id(
 
 fn validate_player_owns_unit_option(
     player_id: PlayerId,
-    unit: Option<&Unit>,
-) -> Result<&Unit, ValidationError> {
+    unit: Option<&CombatUnit>,
+) -> Result<&CombatUnit, ValidationError> {
     match unit {
         None => Err(ValidationError::new("Unable to find unit!")),
         Some(unit) => {

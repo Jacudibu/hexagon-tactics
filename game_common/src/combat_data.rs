@@ -1,6 +1,6 @@
 use crate::combat_turn::CombatTurn;
 use crate::game_map::GameMap;
-use crate::unit::{Unit, UnitId};
+use crate::unit::{CombatUnit, UnitId};
 use bevy::prelude::{error, Resource};
 use bevy::utils::HashMap;
 use hexx::Hex;
@@ -9,7 +9,7 @@ use hexx::Hex;
 #[derive(Debug)]
 #[cfg_attr(feature = "ecs", derive(Resource))]
 pub struct CombatData {
-    pub units: HashMap<UnitId, Unit>,
+    pub units: HashMap<UnitId, CombatUnit>,
     pub unit_positions: HashMap<Hex, UnitId>,
     pub current_turn: CombatTurn,
 }
@@ -24,7 +24,7 @@ impl CombatData {
     /// # Panics
     /// In case turn data is invalid or there is no active unit.
     #[must_use]
-    pub fn current_turn_unit(&self) -> &Unit {
+    pub fn current_turn_unit(&self) -> &CombatUnit {
         &self.units[&self.current_turn.as_unit_turn().unwrap().unit_id]
     }
 
@@ -111,7 +111,7 @@ struct TurnOrderElement {
 
 impl TurnOrderElement {
     #[must_use]
-    fn from(unit: &Unit) -> TurnOrderElement {
+    fn from(unit: &CombatUnit) -> TurnOrderElement {
         TurnOrderElement {
             tiebreaker: unit.turn_tiebreaker,
             unit_id: unit.id,
@@ -123,7 +123,7 @@ impl TurnOrderElement {
 pub mod test_helpers {
     use crate::combat_data::CombatData;
     use crate::combat_turn::CombatTurn;
-    use crate::unit::{Unit, UnitId};
+    use crate::unit::{CombatUnit, UnitId};
     use bevy::utils::HashMap;
 
     impl CombatData {
@@ -137,7 +137,7 @@ pub mod test_helpers {
             }
         }
 
-        pub fn with_units(mut self, units: Vec<Unit>) -> Self {
+        pub fn with_units(mut self, units: Vec<CombatUnit>) -> Self {
             for unit in units {
                 self.unit_positions.insert(unit.position, unit.id);
                 self.units.insert(unit.id, unit);
@@ -157,15 +157,15 @@ pub mod test_helpers {
 mod tests {
     use crate::combat_data::CombatData;
     use crate::combat_turn::{CombatTurn, UnitTurn};
-    use crate::unit::Unit;
+    use crate::unit::CombatUnit;
     use crate::unit_stats::UnitStats;
 
     #[test]
     fn test_start_unit_turn() {
         let mut combat_state = CombatData::create_mock().with_units(vec![
-            Unit::create_mock(1, 1).with_stats(UnitStats::create_mock().with_movement(5)),
-            Unit::create_mock(2, 1).with_stats(UnitStats::create_mock().with_movement(10)),
-            Unit::create_mock(3, 1).with_stats(UnitStats::create_mock().with_movement(15)),
+            CombatUnit::create_mock(1, 1).with_stats(UnitStats::create_mock().with_movement(5)),
+            CombatUnit::create_mock(2, 1).with_stats(UnitStats::create_mock().with_movement(10)),
+            CombatUnit::create_mock(3, 1).with_stats(UnitStats::create_mock().with_movement(15)),
         ]);
 
         combat_state.start_unit_turn(1);

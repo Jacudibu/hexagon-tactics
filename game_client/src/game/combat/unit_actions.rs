@@ -399,7 +399,7 @@ mod tests {
     use game_common::combat_data::CombatData;
     use game_common::game_data::GameData;
     use game_common::game_map::GameMap;
-    use game_common::unit::Unit;
+    use game_common::unit::CombatUnit;
 
     use crate::game::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
     use crate::map::RangeHighlights;
@@ -414,7 +414,7 @@ mod tests {
         app.insert_resource(GameData::create_mock());
 
         let unit_id = 1;
-        let unit = Unit::create_mock(unit_id, 1).with_position(Hex::ZERO);
+        let unit = CombatUnit::create_mock(unit_id, 1).with_position(Hex::ZERO);
 
         app.insert_resource(
             CombatData::create_mock()

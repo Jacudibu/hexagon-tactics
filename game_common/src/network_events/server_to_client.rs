@@ -1,5 +1,5 @@
 use crate::player::{Player, PlayerId, ReadyState};
-use crate::unit::{Unit, UnitId};
+use crate::unit::{CombatUnit, UnitId};
 use bevy::prelude::Event;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
@@ -69,7 +69,7 @@ pub struct PlayerTurnToPlaceUnit {
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PlaceUnit {
-    pub unit: Unit,
+    pub unit: CombatUnit,
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
