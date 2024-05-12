@@ -2,14 +2,8 @@ use std::cmp::PartialEq;
 use std::ops::Deref;
 
 use bevy::app::App;
-use bevy::math::Vec2;
-use bevy::pbr::AlphaMode;
-use bevy::prelude::{
-    default, error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands,
-    Condition, Event, EventReader, EventWriter, IntoSystemConfigs, Material, NextState, Plugin,
-    PreUpdate, Query, Res, ResMut, Resource, Transform, Update, With,
-};
-use bevy_sprite3d::{Sprite3d, Sprite3dBundle, Sprite3dParams};
+use bevy::prelude::*;
+use bevy_sprite3d::Sprite3dParams;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
@@ -26,12 +20,9 @@ use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::end_turn::EndTurnCommand;
 use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::game::combat::unit_animations::{MoveUnitComponent, UnitAttackAnimationComponent};
-use crate::game::combat::unit_placement::UnitMarker;
 use crate::game::sprite_builder;
 use crate::load::CharacterSprites;
-use crate::map::{
-    map_utils, ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights,
-};
+use crate::map::{ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 
@@ -290,7 +281,7 @@ pub fn on_move_unit(
             tile: unit.position,
         });
 
-        if unit.owner == local_player_id.id {
+        if unit.owner == local_player_id.owner {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer);
@@ -346,7 +337,7 @@ pub fn on_use_skill(
                 &map,
             ));
 
-        if unit.owner == local_player_id.id {
+        if unit.owner == local_player_id.owner {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer);

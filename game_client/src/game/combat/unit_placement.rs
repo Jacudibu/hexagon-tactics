@@ -3,18 +3,17 @@ use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::game::sprite_builder;
 use crate::load::CharacterSprites;
-use crate::map::{map_utils, CursorOnTile};
+use crate::map::CursorOnTile;
 use crate::networking::LocalPlayerId;
 use bevy::prelude::*;
-use bevy_sprite3d::{Sprite3d, Sprite3dBundle, Sprite3dParams};
+use bevy_sprite3d::Sprite3dParams;
 use game_common::combat_data::CombatData;
-use game_common::combat_unit::{CombatUnit, CombatUnitKind};
+use game_common::combat_unit::CombatUnit;
 use game_common::game_data::unit_definition::UnitDefinition;
 use game_common::game_map::GameMap;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player_resources::PlayerResources;
-use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
 pub struct UnitPlacementPlugin;
@@ -48,7 +47,7 @@ fn setup_state(
         combat_data
             .units
             .iter()
-            .filter(|(_, unit)| unit.owner == local_player_id.id)
+            .filter(|(_, unit)| unit.owner == local_player_id.owner)
             .count()
             < units.len(),
         "All units have been placed, yet we just entered SetupState for CombatState::PlaceUnit ?",

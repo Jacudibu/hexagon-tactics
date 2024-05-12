@@ -35,11 +35,17 @@ pub struct MonsterData {
     pub monster_id: MonsterId,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
+pub enum Owner {
+    Player(PlayerId),
+    AI,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CombatUnit {
     pub id: UnitId,
     pub kind: CombatUnitKind,
-    pub owner: PlayerId,
+    pub owner: Owner,
     pub name: String,
     pub position: Hex,
     pub hp: u32,
@@ -65,13 +71,13 @@ impl Display for CombatUnit {
 
 impl From<&UnitDefinition> for CombatUnit {
     fn from(unit: &UnitDefinition) -> Self {
-        Self::create_debug_unit(unit.id, unit.owner)
+        Self::create_debug_unit(unit.id, Owner::Player(unit.owner))
     }
 }
 
 impl From<&MonsterDefinition> for CombatUnit {
     fn from(monster: &MonsterDefinition) -> Self {
-        let mut result = Self::create_debug_unit(get_unique_unit_id(), 0);
+        let mut result = Self::create_debug_unit(get_unique_unit_id(), Owner::AI);
         result.kind = CombatUnitKind::Monster(MonsterData {
             monster_id: monster.id,
         });
@@ -80,7 +86,7 @@ impl From<&MonsterDefinition> for CombatUnit {
 }
 
 impl CombatUnit {
-    pub fn create_debug_unit(id: UnitId, owner: PlayerId) -> Self {
+    pub fn create_debug_unit(id: UnitId, owner: Owner) -> Self {
         let movement = 4;
 
         let mut result = CombatUnit {
@@ -127,7 +133,7 @@ impl CombatUnit {
 
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
-    use crate::combat_unit::{CombatUnit, CombatUnitKind, HumanoidData, UnitId};
+    use crate::combat_unit::{CombatUnit, CombatUnitKind, HumanoidData, Owner, UnitId};
     use crate::game_data::DEBUG_RACE_ID;
     use crate::player::PlayerId;
     use crate::unit_stats::UnitStats;
@@ -139,7 +145,7 @@ pub mod test_helpers {
         pub fn create_mock(id: UnitId, owner: PlayerId) -> Self {
             let mut result = CombatUnit {
                 id,
-                owner,
+                owner: Owner::Player(owner),
                 kind: CombatUnitKind::Humanoid(HumanoidData {
                     race: DEBUG_RACE_ID,
                     weapon: None,

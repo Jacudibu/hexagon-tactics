@@ -1,7 +1,7 @@
 use crate::in_game_state::MatchData;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_turn::{CombatTurn, PlaceUnit};
-use game_common::combat_unit::CombatUnit;
+use game_common::combat_unit::{CombatUnit, Owner};
 use game_common::network_events::server_to_client::{
     ErrorWhenProcessingMessage, PlayerTurnToPlaceUnit, ServerToClientMessage, StartUnitTurn,
 };
@@ -57,19 +57,20 @@ pub fn place_unit(
         ))
     } else {
         // TODO: Better Turn Order
-        fn count_units(match_data: &MatchData, player_id: &PlayerId) -> usize {
+        fn count_units(match_data: &MatchData, owner: &Owner) -> usize {
             match_data
                 .combat_data
                 .units
                 .iter()
-                .filter(|(_, unit)| &unit.owner == player_id)
+                .filter(|(_, unit)| &unit.owner == owner)
                 .count()
         }
 
         let next_player_id = players
             .keys()
-            .min_by(|player_a, player_b| {
-                count_units(match_data, player_a).cmp(&count_units(match_data, player_b))
+            .min_by(|&&player_a, &&player_b| {
+                count_units(match_data, &Owner::Player(player_a))
+                    .cmp(&count_units(match_data, &Owner::Player(player_b)))
             })
             .unwrap();
         match_data.combat_data.current_turn = CombatTurn::PlaceUnit(PlaceUnit {

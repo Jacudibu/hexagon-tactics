@@ -105,7 +105,7 @@ pub fn on_start_unit_turn(
             continue;
         };
 
-        if unit.owner == local_player_id.id {
+        if unit.owner == local_player_id.owner {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer)
