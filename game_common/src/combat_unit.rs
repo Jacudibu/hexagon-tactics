@@ -1,12 +1,20 @@
 use crate::game_data::unit_definition::UnitDefinition;
-use crate::game_data::{AccessoryId, ArmorId, RaceId, WeaponId, DEBUG_RACE_ID};
+use crate::game_data::{
+    AccessoryId, ArmorId, MonsterDefinition, MonsterId, RaceId, WeaponId, DEBUG_MONSTER_ID,
+    DEBUG_RACE_ID,
+};
 use crate::player::PlayerId;
 use crate::unit_stats::UnitStats;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use std::sync::atomic::{AtomicU32, Ordering};
 
 pub type UnitId = u32;
+pub fn get_unique_unit_id() -> UnitId {
+    static UNIT_ID_COUNTER: AtomicU32 = AtomicU32::new(1);
+    UNIT_ID_COUNTER.fetch_add(1, Ordering::Relaxed)
+}
 
 /// Contains data that's needed for visuals
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -24,7 +32,9 @@ pub struct HumanoidData {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct MonsterData {}
+pub struct MonsterData {
+    pub monster_id: MonsterId,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CombatUnit {
@@ -57,6 +67,16 @@ impl Display for CombatUnit {
 impl From<&UnitDefinition> for CombatUnit {
     fn from(unit: &UnitDefinition) -> Self {
         Self::create_debug_unit(unit.id, unit.owner)
+    }
+}
+
+impl From<&MonsterDefinition> for CombatUnit {
+    fn from(monster: &MonsterDefinition) -> Self {
+        let mut result = Self::create_debug_unit(get_unique_unit_id(), 0);
+        result.kind = CombatUnitKind::Monster(MonsterData {
+            monster_id: monster.id,
+        });
+        result
     }
 }
 

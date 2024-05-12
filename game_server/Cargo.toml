@@ -14,8 +14,8 @@ bytes.workspace = true
 futures.workspace = true
 tokio.workspace = true
 wtransport.workspace = true
+hexx.workspace = true
 
 [dev-dependencies]
 game-common = { path = "../game_common", features = ["test_helpers"] }
 enum-as-inner.workspace = true
-hexx.workspace = true
