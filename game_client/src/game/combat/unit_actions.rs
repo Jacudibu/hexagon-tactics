@@ -2,11 +2,14 @@ use std::cmp::PartialEq;
 use std::ops::Deref;
 
 use bevy::app::App;
+use bevy::math::Vec2;
+use bevy::pbr::AlphaMode;
 use bevy::prelude::{
-    error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands, Condition,
-    Event, EventReader, EventWriter, IntoSystemConfigs, NextState, Plugin, PreUpdate, Res, ResMut,
-    Resource, Update,
+    default, error, in_state, on_event, resource_changed_or_removed, resource_exists, Commands,
+    Condition, Event, EventReader, EventWriter, IntoSystemConfigs, Material, NextState, Plugin,
+    PreUpdate, Query, Res, ResMut, Resource, Transform, Update, With,
 };
+use bevy_sprite3d::{Sprite3d, Sprite3dBundle, Sprite3dParams};
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
@@ -23,7 +26,11 @@ use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::end_turn::EndTurnCommand;
 use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::game::combat::unit_animations::{MoveUnitComponent, UnitAttackAnimationComponent};
-use crate::map::{ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights};
+use crate::game::combat::unit_placement::UnitMarker;
+use crate::load::CharacterSprites;
+use crate::map::{
+    map_utils, ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights,
+};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 
@@ -298,14 +305,34 @@ pub fn on_use_skill(
     mut combat_data: ResMut<CombatData>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     local_player_id: Res<LocalPlayerId>,
+    character_sprites: Res<CharacterSprites>,
+    mut sprite_params: Sprite3dParams,
+    unit_entities: Query<&Transform, With<UnitMarker>>,
 ) {
     for event in events.read() {
         for x in &event.hits {
             let target = combat_data.units.get_mut(&x.target_unit_id).unwrap();
 
             // TODO: Stat reduction should be extracted into common
+            // TODO: Consider extracting this into a "unit takes damage"-Event
             if target.hp < x.physical_damage {
                 target.hp = 0;
+
+                let entity = locals.unit_entities[&target.id];
+                let transform = unit_entities.get(entity).unwrap();
+                commands.entity(entity).insert(
+                    Sprite3d {
+                        image: character_sprites.test_dead.clone(),
+                        pixels_per_metre: 16.0,
+                        alpha_mode: AlphaMode::Mask(0.1),
+                        unlit: false,
+                        double_sided: true, // required for shadows
+                        pivot: Some(Vec2::new(0.5, 0.0)),
+                        transform: transform.clone(),
+                        ..default()
+                    }
+                    .bundle(&mut sprite_params),
+                );
             } else {
                 target.hp -= x.physical_damage;
             }
