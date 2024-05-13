@@ -9,8 +9,8 @@ use game_common::network_events::server_to_client::{
     PlaceUnit, PlayerTurnToPlaceUnit, ServerToClientMessage, UpdateReadyStateForPlayer,
 };
 use game_common::player::{Player, PlayerId, ReadyState};
+use hashbrown::HashMap;
 use hexx::Hex;
-use std::collections::HashMap;
 
 pub fn finish_loading(
     sender: PlayerId,

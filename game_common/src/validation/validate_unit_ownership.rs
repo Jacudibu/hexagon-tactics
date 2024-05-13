@@ -5,7 +5,7 @@ use crate::game_data::unit_definition::UnitDefinition;
 use crate::player::PlayerId;
 use crate::player_resources::PlayerResources;
 use crate::validation::validation_error::ValidationError;
-use std::collections::HashMap;
+use bevy::utils::hashbrown::HashMap;
 
 pub fn validate_player_owns_combat_unit_with_id<'a>(
     player_id: PlayerId,

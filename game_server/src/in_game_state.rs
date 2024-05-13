@@ -4,7 +4,7 @@ use game_common::game_data::unit_definition::UnitDefinition;
 use game_common::game_map::GameMap;
 use game_common::player::PlayerId;
 use game_common::player_resources::PlayerResources;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 type StateId = u32;
 

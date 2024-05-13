@@ -9,7 +9,7 @@ use game_common::network_events::{client_to_server, server_to_client};
 use game_common::player::{Player, PlayerId};
 use game_common::player_resources::PlayerResources;
 use game_common::validation;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 pub fn place_unit(
     sender: PlayerId,

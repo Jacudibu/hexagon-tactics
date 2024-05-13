@@ -35,7 +35,7 @@ pub struct MonsterData {
     pub monster_id: MonsterId,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Copy, Clone, Eq, PartialEq)]
 pub enum Owner {
     Player(PlayerId),
     AI,

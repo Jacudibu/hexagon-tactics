@@ -7,7 +7,7 @@ use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{AddUnit, ServerToClientMessage};
 use game_common::player::PlayerId;
 use game_common::player_resources::PlayerResources;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 pub fn process_message(
     sender: PlayerId,

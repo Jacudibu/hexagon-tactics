@@ -7,7 +7,7 @@ use game_common::network_events::server_to_client::{
 };
 use game_common::network_events::NetworkMessage;
 use game_common::player::{Player, PlayerId, ReadyState};
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use tokio::sync::mpsc;
 use tracing::error;
 

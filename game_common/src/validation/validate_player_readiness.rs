@@ -1,6 +1,6 @@
 use crate::player::{Player, PlayerId, ReadyState};
 use crate::validation::validation_error::ValidationError;
-use std::collections::HashMap;
+use bevy::utils::hashbrown::HashMap;
 
 pub fn validate_player_readiness(
     players: &HashMap<PlayerId, Player>,
