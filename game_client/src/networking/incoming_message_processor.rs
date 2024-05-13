@@ -20,6 +20,7 @@ impl Plugin for IncomingMessageProcessorPlugin {
             .add_event::<server_to_client::StartGame>()
             .add_event::<server_to_client::ChooseBetweenUnits>()
             .add_event::<server_to_client::AddUnit>()
+            .add_event::<server_to_client::CombatFinished>()
             .add_systems(
                 PreUpdate,
                 receive_updates.run_if(
@@ -45,6 +46,7 @@ fn receive_updates(
     mut start_game: EventWriter<server_to_client::StartGame>,
     mut choose_between_units: EventWriter<server_to_client::ChooseBetweenUnits>,
     mut add_unit: EventWriter<server_to_client::AddUnit>,
+    mut combat_finished: EventWriter<server_to_client::CombatFinished>,
 ) {
     if let Ok(bytes) = connection.message_receiver.try_recv() {
         match ServerToClientMessage::deserialize(&bytes) {
@@ -98,6 +100,9 @@ fn receive_updates(
             }
             ServerToClientMessage::UseSkill(event) => {
                 use_skill.send(event);
+            }
+            ServerToClientMessage::CombatFinished(event) => {
+                combat_finished.send(event);
             }
 
             ServerToClientMessage::StartGame(event) => {

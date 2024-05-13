@@ -92,7 +92,7 @@ impl InGameData {
         sender: &PlayerId,
     ) -> (&mut InGameState, &mut HashMap<PlayerId, PlayerResources>) {
         (
-            self.states.get_mut(&self.player_states[&sender]).unwrap(),
+            self.states.get_mut(&self.player_states[sender]).unwrap(),
             &mut self.player_resources,
         )
     }

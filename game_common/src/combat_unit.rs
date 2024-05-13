@@ -36,7 +36,7 @@ pub struct MonsterData {
 }
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, Eq, PartialEq)]
-pub enum Owner {
+pub enum ActorId {
     Player(PlayerId),
     AI,
 }
@@ -45,7 +45,7 @@ pub enum Owner {
 pub struct CombatUnit {
     pub id: UnitId,
     pub kind: CombatUnitKind,
-    pub owner: Owner,
+    pub owner: ActorId,
     pub name: String,
     pub position: Hex,
     pub hp: u32,
@@ -71,13 +71,13 @@ impl Display for CombatUnit {
 
 impl From<&UnitDefinition> for CombatUnit {
     fn from(unit: &UnitDefinition) -> Self {
-        Self::create_debug_unit(unit.id, Owner::Player(unit.owner))
+        Self::create_debug_unit(unit.id, ActorId::Player(unit.owner))
     }
 }
 
 impl From<&MonsterDefinition> for CombatUnit {
     fn from(monster: &MonsterDefinition) -> Self {
-        let mut result = Self::create_debug_unit(get_unique_unit_id(), Owner::AI);
+        let mut result = Self::create_debug_unit(get_unique_unit_id(), ActorId::AI);
         result.kind = CombatUnitKind::Monster(MonsterData {
             monster_id: monster.id,
         });
@@ -86,7 +86,7 @@ impl From<&MonsterDefinition> for CombatUnit {
 }
 
 impl CombatUnit {
-    pub fn create_debug_unit(id: UnitId, owner: Owner) -> Self {
+    pub fn create_debug_unit(id: UnitId, owner: ActorId) -> Self {
         let movement = 4;
 
         let mut result = CombatUnit {
@@ -133,7 +133,7 @@ impl CombatUnit {
 
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
-    use crate::combat_unit::{CombatUnit, CombatUnitKind, HumanoidData, Owner, UnitId};
+    use crate::combat_unit::{ActorId, CombatUnit, CombatUnitKind, HumanoidData, UnitId};
     use crate::game_data::DEBUG_RACE_ID;
     use crate::player::PlayerId;
     use crate::unit_stats::UnitStats;
@@ -145,7 +145,7 @@ pub mod test_helpers {
         pub fn create_mock(id: UnitId, owner: PlayerId) -> Self {
             let mut result = CombatUnit {
                 id,
-                owner: Owner::Player(owner),
+                owner: ActorId::Player(owner),
                 kind: CombatUnitKind::Humanoid(HumanoidData {
                     race: DEBUG_RACE_ID,
                     weapon: None,

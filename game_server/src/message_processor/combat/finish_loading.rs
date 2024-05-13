@@ -2,7 +2,7 @@ use crate::in_game_state::MatchData;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::combat_turn::CombatTurn;
 use game_common::combat_unit::{
-    get_unique_unit_id, CombatUnit, CombatUnitKind, MonsterData, Owner,
+    get_unique_unit_id, ActorId, CombatUnit, CombatUnitKind, MonsterData,
 };
 use game_common::game_data::DEBUG_MONSTER_ID;
 use game_common::network_events::server_to_client::{
@@ -34,7 +34,7 @@ pub fn finish_loading(
     }
 
     // TODO: Use CombatUnit::from instead
-    let mut monster1 = CombatUnit::create_debug_unit(get_unique_unit_id(), Owner::AI);
+    let mut monster1 = CombatUnit::create_debug_unit(get_unique_unit_id(), ActorId::AI);
     monster1.position = Hex::new(0, -7);
     monster1.kind = CombatUnitKind::Monster(MonsterData {
         monster_id: DEBUG_MONSTER_ID,
@@ -50,7 +50,7 @@ pub fn finish_loading(
     ));
     match_data.combat_data.units.insert(monster1.id, monster1);
 
-    let mut monster2 = CombatUnit::create_debug_unit(get_unique_unit_id(), Owner::AI);
+    let mut monster2 = CombatUnit::create_debug_unit(get_unique_unit_id(), ActorId::AI);
     monster2.position = Hex::new(3, -7);
     monster2.kind = CombatUnitKind::Monster(MonsterData {
         monster_id: DEBUG_MONSTER_ID,

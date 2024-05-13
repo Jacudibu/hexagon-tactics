@@ -1,6 +1,6 @@
 use crate::combat_data::CombatData;
 use crate::combat_turn::CombatTurn;
-use crate::combat_unit::{CombatUnit, Owner, UnitId};
+use crate::combat_unit::{ActorId, CombatUnit, UnitId};
 use crate::game_data::unit_definition::UnitDefinition;
 use crate::player::PlayerId;
 use crate::player_resources::PlayerResources;
@@ -40,7 +40,7 @@ fn validate_player_owns_unit_option(
     match unit {
         None => Err(ValidationError::new("Unable to find unit!")),
         Some(unit) => {
-            if unit.owner == Owner::Player(player_id) {
+            if unit.owner == ActorId::Player(player_id) {
                 Ok(unit)
             } else {
                 Err(ValidationError::new("You do not own that unit!"))

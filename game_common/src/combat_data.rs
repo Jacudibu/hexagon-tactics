@@ -1,5 +1,5 @@
 use crate::combat_turn::CombatTurn;
-use crate::combat_unit::{CombatUnit, Owner, UnitId};
+use crate::combat_unit::{ActorId, CombatUnit, UnitId};
 use crate::game_map::GameMap;
 use bevy::prelude::{error, Resource};
 use bevy::utils::HashMap;
@@ -75,7 +75,7 @@ impl CombatData {
                     continue;
                 }
 
-                if x.owner == Owner::AI {
+                if x.owner == ActorId::AI {
                     // TODO: Don't skip poor monsters. Poor creatures!
                     continue;
                 }

@@ -1,7 +1,7 @@
 use bevy::log::{error, info};
 use bevy::prelude::{Commands, EventReader, NextState, ResMut};
 use bevy::utils::HashMap;
-use game_common::combat_unit::Owner;
+use game_common::combat_unit::ActorId;
 
 use game_common::network_events::server_to_client::{
     OtherPlayerConnected, UpdateReadyStateForPlayer, YouConnected,
@@ -23,7 +23,7 @@ pub fn on_you_connected(
 
         commands.insert_resource(LocalPlayerId {
             id: x.player_id,
-            owner: Owner::Player(x.player_id),
+            owner: ActorId::Player(x.player_id),
         });
         commands.insert_resource(ConnectedPlayers {
             players: all_players,

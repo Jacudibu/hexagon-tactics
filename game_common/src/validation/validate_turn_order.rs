@@ -1,6 +1,6 @@
 use crate::combat_data::CombatData;
 use crate::combat_turn::CombatTurn;
-use crate::combat_unit::Owner;
+use crate::combat_unit::ActorId;
 use crate::player::PlayerId;
 use crate::validation::validation_error::ValidationError;
 
@@ -20,7 +20,7 @@ pub fn validate_turn_order(
         CombatTurn::UnitTurn(turn) => {
             let unit = &combat_data.units[&turn.unit_id];
 
-            if unit.owner == Owner::Player(player_id) {
+            if unit.owner == ActorId::Player(player_id) {
                 Ok(())
             } else {
                 Err(ValidationError::new("It's not your turn!"))

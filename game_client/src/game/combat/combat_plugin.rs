@@ -15,8 +15,11 @@ use bevy::prelude::{
 };
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
+use game_common::combat_unit::ActorId;
 use game_common::network_events::client_to_server::ClientToServerMessage;
-use game_common::network_events::server_to_client::{PlayerTurnToPlaceUnit, StartUnitTurn};
+use game_common::network_events::server_to_client::{
+    CombatFinished, PlayerTurnToPlaceUnit, StartUnitTurn,
+};
 
 pub struct CombatPlugin;
 
@@ -38,6 +41,7 @@ impl Plugin for CombatPlugin {
             (
                 on_player_turn_to_place_unit.run_if(on_event::<PlayerTurnToPlaceUnit>()),
                 on_start_unit_turn.run_if(on_event::<StartUnitTurn>()),
+                on_combat_finished.run_if(on_event::<CombatFinished>()),
             )
                 .run_if(in_state(ApplicationState::InGame)),
         );
@@ -51,6 +55,8 @@ pub enum CombatState {
     WaitingForOtherPlayer,
     PlaceUnit,
     ThisPlayerUnitTurn,
+    Victory,
+    Defeated,
 }
 
 pub fn on_map_loaded(
@@ -115,5 +121,18 @@ pub fn on_start_unit_turn(
             tile: unit.position,
         });
         combat_data.start_unit_turn(event.unit_id);
+    }
+}
+
+pub fn on_combat_finished(
+    mut events: EventReader<CombatFinished>,
+    mut next_combat_state: ResMut<NextState<CombatState>>,
+) {
+    for event in events.read() {
+        if event.winner == ActorId::AI {
+            next_combat_state.set(CombatState::Defeated);
+        } else {
+            next_combat_state.set(CombatState::Victory);
+        }
     }
 }

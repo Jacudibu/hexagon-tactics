@@ -142,6 +142,8 @@ fn draw_state_ui(
         .pivot(Align2::CENTER_TOP)
         .anchor(Align2::CENTER_TOP, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| match combat_state.get() {
+            CombatState::Defeated => build_defeated_state_ui(ui),
+            CombatState::Victory => build_victory_state_ui(ui),
             CombatState::WaitingForServer => build_waiting_for_server_state_ui(ui),
             CombatState::WaitingForOtherPlayer => build_waiting_for_player_ui(ui, &combat_data),
             CombatState::PlaceUnit => build_place_unit_state_ui(ui),
@@ -162,6 +164,14 @@ fn build_waiting_for_server_state_ui(ui: &mut Ui) {
 
 fn build_place_unit_state_ui(ui: &mut Ui) {
     ui.label("Place Unit");
+}
+
+fn build_victory_state_ui(ui: &mut Ui) {
+    ui.label("Victory!");
+}
+
+fn build_defeated_state_ui(ui: &mut Ui) {
+    ui.label("Defeated!");
 }
 
 fn build_waiting_for_player_ui(ui: &mut Ui, combat_data: &CombatData) {

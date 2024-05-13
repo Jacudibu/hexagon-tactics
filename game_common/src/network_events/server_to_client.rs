@@ -1,4 +1,4 @@
-use crate::combat_unit::{CombatUnit, UnitId};
+use crate::combat_unit::{ActorId, CombatUnit, UnitId};
 use crate::player::{Player, PlayerId, ReadyState};
 use bevy::prelude::Event;
 use hexx::Hex;
@@ -24,6 +24,7 @@ pub enum ServerToClientMessage {
     StartUnitTurn(StartUnitTurn),
     MoveUnit(MoveUnit),
     UseSkill(UseSkill),
+    CombatFinished(CombatFinished),
 
     ErrorWhenProcessingMessage(ErrorWhenProcessingMessage),
 
@@ -87,6 +88,11 @@ pub struct UseSkill {
     pub id: SkillId,
     pub target_coordinates: Hex,
     pub hits: Vec<SkillInvocationResult>,
+}
+
+#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+pub struct CombatFinished {
+    pub winner: ActorId,
 }
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
