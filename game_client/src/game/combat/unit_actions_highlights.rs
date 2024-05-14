@@ -155,6 +155,7 @@ mod tests {
     use bevy::app::App;
     use hexx::Hex;
 
+    use crate::ApplicationState;
     use game_common::combat_data::CombatData;
     use game_common::combat_unit::CombatUnit;
     use game_common::game_data::GameData;
@@ -169,6 +170,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugins(UnitActionPlugin);
         app.add_plugins(NetworkPlugin);
+        app.insert_state(ApplicationState::InGame);
         app.insert_resource(GameMap::new(1));
         app.insert_resource(GameData::create_mock());
 
