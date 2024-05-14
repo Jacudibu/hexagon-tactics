@@ -1,5 +1,6 @@
 use crate::MouseCursorOverUiState;
 use bevy::prelude::*;
+use bevy::render::camera::ScalingMode::WindowSize;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
 use leafwing_input_manager::buttonlike::MouseWheelDirection;
@@ -20,6 +21,9 @@ const ZOOM_OUT_LIMIT: f32 = 1.25;
 pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
+        app.insert_resource(CameraSettings {
+            use_perspective_camera: false,
+        });
         app.add_plugins(InputManagerPlugin::<CameraAction>::default())
             .add_systems(Startup, spawn_main_camera)
             .add_systems(
@@ -91,7 +95,12 @@ impl CameraAction {
     }
 }
 
-fn spawn_main_camera(mut commands: Commands) {
+#[derive(Resource)]
+pub struct CameraSettings {
+    pub use_perspective_camera: bool,
+}
+
+fn spawn_main_camera(mut commands: Commands, camera_settings: Res<CameraSettings>) {
     let main_camera = commands
         .spawn((
             Name::new("Main Camera"),
@@ -101,6 +110,14 @@ fn spawn_main_camera(mut commands: Commands) {
                     translation: Vec3::new(0.0, 40.0, 40.0),
                     rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_4),
                     ..default()
+                },
+                projection: if camera_settings.use_perspective_camera {
+                    Projection::default()
+                } else {
+                    Projection::Orthographic(OrthographicProjection {
+                        scaling_mode: WindowSize(20.0),
+                        ..Default::default()
+                    })
                 },
                 ..default()
             },

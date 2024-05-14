@@ -1,3 +1,4 @@
+use crate::camera::CameraSettings;
 use crate::map::map_plugin::MapState;
 use crate::map::{CursorOnTile, METERS_PER_TILE_HEIGHT_UNIT};
 use bevy::app::{App, Plugin, Startup, Update};
@@ -122,14 +123,23 @@ fn vertex_coordinates_3d(layout: &HexLayout, vertex: GridVertex, height: f32) ->
     }
 }
 
-fn setup_gizmo_config(mut config_store: ResMut<GizmoConfigStore>) {
+fn setup_gizmo_config(
+    mut config_store: ResMut<GizmoConfigStore>,
+    camera_settings: Res<CameraSettings>,
+) {
+    let line_width = if camera_settings.use_perspective_camera {
+        20.0
+    } else {
+        0.5
+    };
+
     let (config, _) = config_store.config_mut::<HexagonOutlineGizmos>();
     config.depth_bias = -0.00001;
-    config.line_width = 20.0;
-    config.line_perspective = true;
+    config.line_width = line_width;
+    config.line_perspective = camera_settings.use_perspective_camera;
 
     let (config, _) = config_store.config_mut::<CursorGizmos>();
     config.depth_bias = -0.00001;
-    config.line_width = 20.0;
-    config.line_perspective = true;
+    config.line_width = line_width;
+    config.line_perspective = camera_settings.use_perspective_camera;
 }
