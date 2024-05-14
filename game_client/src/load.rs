@@ -68,6 +68,7 @@ impl HexagonMaterialsForFluid {
 pub struct HighlightMaterials {
     pub cursor: Handle<StandardMaterial>,
     pub range: Handle<StandardMaterial>,
+    pub path_dot: Handle<StandardMaterial>,
     pub attack: Handle<StandardMaterial>,
     pub active_unit: Handle<StandardMaterial>,
 }
@@ -211,6 +212,13 @@ pub fn load_materials(
         active_unit: materials.add(StandardMaterial {
             base_color: Color::rgba(0.0, 0.0, 1.0, 1.0),
             base_color_texture: Some(asset_server.load("textures/tile_cursor_active_unit.png")),
+            unlit: true,
+            alpha_mode: AlphaMode::Blend,
+            ..default()
+        }),
+        path_dot: materials.add(StandardMaterial {
+            base_color: Color::rgba(0.0, 0.0, 1.0, 1.0),
+            base_color_texture: Some(asset_server.load("textures/tile_cursor_path_dot.png")),
             unlit: true,
             alpha_mode: AlphaMode::Blend,
             ..default()

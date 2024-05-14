@@ -57,7 +57,11 @@ impl GameMap {
     }
 
     #[must_use]
-    pub fn calculate_path(&self, combat_data: &CombatData, coordinate: Hex) -> Option<Vec<Hex>> {
+    pub fn calculate_path_for_active_unit(
+        &self,
+        combat_data: &CombatData,
+        coordinate: Hex,
+    ) -> Option<Vec<Hex>> {
         let unit_turn = combat_data.current_turn.as_unit_turn().unwrap();
         let unit = combat_data.units.get(&unit_turn.unit_id).unwrap();
         hexx::algorithms::a_star(unit.position, coordinate, |from, to| {

@@ -22,7 +22,9 @@ use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::game::combat::unit_animations::{MoveUnitComponent, UnitAttackAnimationComponent};
 use crate::game::sprite_builder;
 use crate::load::CharacterSprites;
-use crate::map::{ActiveUnitHighlights, AttackHighlights, CursorOnTile, RangeHighlights};
+use crate::map::{
+    ActiveUnitHighlights, AttackHighlights, CursorOnTile, PathHighlights, RangeHighlights,
+};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 
@@ -51,7 +53,7 @@ impl Plugin for UnitActionPlugin {
                     .run_if(resource_exists::<ActiveUnitAction>),
                 on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
                 on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
-                update_attack_highlights
+                (update_path_preview, update_attack_highlights)
                     .run_if(in_state(ApplicationState::InGame))
                     .run_if(
                         resource_changed_or_removed::<ActiveUnitAction>()
@@ -71,6 +73,36 @@ pub enum ActiveUnitAction {
 #[derive(Event)]
 pub struct SetOrToggleActiveUnitActionEvent {
     pub action: ActiveUnitAction,
+}
+
+pub fn update_path_preview(
+    mut commands: Commands,
+    combat_data: Res<CombatData>,
+    active_unit_action: Option<Res<ActiveUnitAction>>,
+    cursor: Option<Res<CursorOnTile>>,
+    map: Res<GameMap>,
+) {
+    let Some(cursor) = cursor else {
+        commands.remove_resource::<PathHighlights>();
+        return;
+    };
+
+    let Some(active_unit_action) = active_unit_action else {
+        commands.remove_resource::<PathHighlights>();
+        return;
+    };
+
+    if active_unit_action.deref() != &ActiveUnitAction::Move {
+        commands.remove_resource::<PathHighlights>();
+        return;
+    }
+
+    let path = map.calculate_path_for_active_unit(&combat_data, cursor.hex);
+    if let Some(path) = path {
+        commands.insert_resource(PathHighlights { tiles: path })
+    } else {
+        commands.remove_resource::<PathHighlights>()
+    }
 }
 
 pub fn on_set_or_toggle_action(
@@ -201,7 +233,9 @@ pub fn execute_action_on_click(
             }
 
             // TODO: Path should already exist somewhere for highlighting/preview
-            let Some(path) = map.calculate_path(&combat_data, selected_tile.clone()) else {
+            let Some(path) =
+                map.calculate_path_for_active_unit(&combat_data, selected_tile.clone())
+            else {
                 error!(
                     "Unable to calculate unit path for {:?} to {:?}",
                     combat_data.current_turn.as_unit_turn(),

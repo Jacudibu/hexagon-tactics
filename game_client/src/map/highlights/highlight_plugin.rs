@@ -4,9 +4,12 @@ use crate::map::highlights::active_unit_highlights::{
 };
 use crate::map::highlights::attack_highlights::{AttackHighlightMarker, AttackHighlights};
 use crate::map::highlights::cursor_highlights::CursorHighlightMarker;
+use crate::map::highlights::path_highlights::PathHighlightMarker;
 use crate::map::highlights::range_highlights::{RangeHighlightMarker, RangeHighlights};
 use crate::map::highlights::HighlightedTiles;
-use crate::map::{CursorOnTile, MapState, TileChangeEvent, METERS_PER_TILE_HEIGHT_UNIT};
+use crate::map::{
+    CursorOnTile, MapState, PathHighlights, TileChangeEvent, METERS_PER_TILE_HEIGHT_UNIT,
+};
 use bevy::app::{App, Update};
 use bevy::core::Name;
 use bevy::log::error;
@@ -27,6 +30,8 @@ impl Plugin for HighlightPlugin {
             (
                 on_highlight_change::<RangeHighlightMarker, RangeHighlights>
                     .run_if(resource_changed_or_removed::<RangeHighlights>()),
+                on_highlight_change::<PathHighlightMarker, PathHighlights>
+                    .run_if(resource_changed_or_removed::<PathHighlights>()),
                 on_highlight_change::<AttackHighlightMarker, AttackHighlights>
                     .run_if(resource_changed_or_removed::<AttackHighlights>()),
                 on_highlight_change::<ActiveUnitHighlightMarker, ActiveUnitHighlights>

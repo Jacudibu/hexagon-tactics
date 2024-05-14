@@ -2,6 +2,7 @@ pub mod active_unit_highlights;
 pub mod attack_highlights;
 mod cursor_highlights;
 pub mod highlight_plugin;
+pub mod path_highlights;
 pub mod range_highlights;
 
 use crate::load::HighlightMaterials;
