@@ -4,6 +4,7 @@ mod combat_ui;
 mod end_turn;
 mod local_combat_data;
 mod unit_actions;
+mod unit_actions_highlights;
 mod unit_animations;
 mod unit_placement;
 

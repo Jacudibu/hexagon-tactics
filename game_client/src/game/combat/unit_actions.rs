@@ -4,7 +4,6 @@ use std::ops::Deref;
 use bevy::app::App;
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dParams;
-use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
 use game_common::combat_data::CombatData;
@@ -19,18 +18,18 @@ use crate::game::combat::combat_input::CombatAction;
 use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::end_turn::EndTurnCommand;
 use crate::game::combat::local_combat_data::LocalCombatData;
+use crate::game::combat::unit_actions_highlights::UnitActionHighlightPlugin;
 use crate::game::combat::unit_animations::{MoveUnitComponent, UnitAttackAnimationComponent};
 use crate::game::sprite_builder;
 use crate::load::CharacterSprites;
-use crate::map::{
-    ActiveUnitHighlights, AttackHighlights, CursorOnTile, PathHighlights, RangeHighlights,
-};
+use crate::map::{ActiveUnitHighlights, CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 
 pub struct UnitActionPlugin;
 impl Plugin for UnitActionPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(UnitActionHighlightPlugin);
         app.add_event::<SetOrToggleActiveUnitActionEvent>();
         app.add_systems(
             PreUpdate,
@@ -45,20 +44,12 @@ impl Plugin for UnitActionPlugin {
         app.add_systems(
             Update,
             (
-                on_active_unit_action_changed
-                    .run_if(resource_changed_or_removed::<ActiveUnitAction>()),
                 execute_action_on_click
                     .run_if(in_state(ApplicationState::InGame))
                     .run_if(in_state(CombatState::ThisPlayerUnitTurn))
                     .run_if(resource_exists::<ActiveUnitAction>),
                 on_move_unit.run_if(on_event::<server_to_client::MoveUnit>()),
                 on_use_skill.run_if(on_event::<server_to_client::UseSkill>()),
-                (update_path_preview, update_attack_highlights)
-                    .run_if(in_state(ApplicationState::InGame))
-                    .run_if(
-                        resource_changed_or_removed::<ActiveUnitAction>()
-                            .or_else(resource_changed_or_removed::<CursorOnTile>()),
-                    ),
             ),
         );
     }
@@ -73,36 +64,6 @@ pub enum ActiveUnitAction {
 #[derive(Event)]
 pub struct SetOrToggleActiveUnitActionEvent {
     pub action: ActiveUnitAction,
-}
-
-pub fn update_path_preview(
-    mut commands: Commands,
-    combat_data: Res<CombatData>,
-    active_unit_action: Option<Res<ActiveUnitAction>>,
-    cursor: Option<Res<CursorOnTile>>,
-    map: Res<GameMap>,
-) {
-    let Some(cursor) = cursor else {
-        commands.remove_resource::<PathHighlights>();
-        return;
-    };
-
-    let Some(active_unit_action) = active_unit_action else {
-        commands.remove_resource::<PathHighlights>();
-        return;
-    };
-
-    if active_unit_action.deref() != &ActiveUnitAction::Move {
-        commands.remove_resource::<PathHighlights>();
-        return;
-    }
-
-    let path = map.calculate_path_for_active_unit(&combat_data, cursor.hex);
-    if let Some(path) = path {
-        commands.insert_resource(PathHighlights { tiles: path })
-    } else {
-        commands.remove_resource::<PathHighlights>()
-    }
 }
 
 pub fn on_set_or_toggle_action(
@@ -137,67 +98,6 @@ pub fn change_action_on_input(
         });
     } else if action_state.just_pressed(&CombatAction::EndTurn) {
         end_turn_events.send(EndTurnCommand {});
-    }
-}
-
-pub fn on_active_unit_action_changed(
-    mut commands: Commands,
-    combat_data: Res<CombatData>,
-    game_data: Res<GameData>,
-    map: Res<GameMap>,
-    active_unit_action: Option<Res<ActiveUnitAction>>,
-) {
-    let Some(active_unit_action) = active_unit_action else {
-        commands.remove_resource::<RangeHighlights>();
-        return;
-    };
-
-    match active_unit_action.deref() {
-        ActiveUnitAction::Move => {
-            show_movement_range_preview(commands, &combat_data, &map);
-        }
-        ActiveUnitAction::UseSkill(id) => {
-            show_skill_range_preview(id, commands, &combat_data, &map, &game_data);
-        }
-    }
-}
-
-pub fn show_movement_range_preview(
-    mut commands: Commands,
-    combat_data: &CombatData,
-    map: &GameMap,
-) {
-    let unit = combat_data.current_turn_unit();
-    let range = map.field_of_movement(unit, combat_data);
-
-    commands.insert_resource(RangeHighlights { tiles: range })
-}
-
-pub fn show_skill_range_preview(
-    skill_id: &SkillId,
-    mut commands: Commands,
-    combat_data: &CombatData,
-    map: &GameMap,
-    data: &GameData,
-) {
-    let unit = combat_data.current_turn_unit();
-    let skill = &data.skills[skill_id];
-
-    match &skill.targeting {
-        SkillTargeting::UserPosition => {
-            commands.remove_resource::<RangeHighlights>();
-            return;
-        }
-        SkillTargeting::MouseCursor(range) => {
-            let tiles: Vec<Hex> = hexx::algorithms::range_fov(unit.position, range.max, |hex| {
-                !map.tiles.contains_key(&hex)
-            })
-            .into_iter()
-            .filter(|x| x.unsigned_distance_to(unit.position) >= range.min)
-            .collect();
-
-            commands.insert_resource(RangeHighlights { tiles })
-        }
     }
 }
 
@@ -376,84 +276,5 @@ pub fn on_use_skill(
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer);
         }
-    }
-}
-
-pub fn update_attack_highlights(
-    mut commands: Commands,
-    active_unit_action: Option<Res<ActiveUnitAction>>,
-    mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
-    map: Res<GameMap>,
-    combat_data: Res<CombatData>,
-    game_data: Res<GameData>,
-) {
-    let Some(active_unit_action) = active_unit_action else {
-        commands.remove_resource::<AttackHighlights>();
-        return;
-    };
-
-    let Some(mouse_cursor_on_tile) = mouse_cursor_on_tile else {
-        commands.remove_resource::<AttackHighlights>();
-        return;
-    };
-
-    let user_pos = combat_data.current_turn_unit().position;
-
-    match active_unit_action.deref() {
-        ActiveUnitAction::Move => commands.remove_resource::<AttackHighlights>(),
-        ActiveUnitAction::UseSkill(skill_id) => {
-            let skill = &game_data.skills[skill_id];
-            commands.insert_resource(AttackHighlights {
-                tiles: skill.get_valid_target_hexagons(mouse_cursor_on_tile.hex, user_pos, &map),
-            });
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use bevy::app::App;
-    use hexx::Hex;
-
-    use game_common::combat_data::CombatData;
-    use game_common::combat_unit::CombatUnit;
-    use game_common::game_data::GameData;
-    use game_common::game_map::GameMap;
-
-    use crate::game::combat::unit_actions::{ActiveUnitAction, UnitActionPlugin};
-    use crate::map::RangeHighlights;
-    use crate::networking::NetworkPlugin;
-
-    #[test]
-    fn should_create_and_remove_highlights() {
-        let mut app = App::new();
-        app.add_plugins(UnitActionPlugin);
-        app.add_plugins(NetworkPlugin);
-        app.insert_resource(GameMap::new(1));
-        app.insert_resource(GameData::create_mock());
-
-        let unit_id = 1;
-        let unit = CombatUnit::create_mock(unit_id, 1).with_position(Hex::ZERO);
-
-        app.insert_resource(
-            CombatData::create_mock()
-                .with_units(vec![unit])
-                .with_unit_turn(unit_id),
-        );
-        app.insert_resource(ActiveUnitAction::Move);
-        app.update();
-
-        assert!(
-            app.world.get_resource::<RangeHighlights>().is_some(),
-            "HighlightedTiles should have been created!"
-        );
-
-        app.world.remove_resource::<ActiveUnitAction>();
-        app.update();
-
-        assert!(
-            app.world.get_resource::<RangeHighlights>().is_none(),
-            "HighlightedTiles should have been removed!"
-        );
     }
 }
