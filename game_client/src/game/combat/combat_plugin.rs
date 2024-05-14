@@ -1,6 +1,7 @@
 use crate::game::combat::combat_input::CombatInputPlugin;
 use crate::game::combat::combat_ui::CombatUiPlugin;
 use crate::game::combat::end_turn::EndTurnPlugin;
+use crate::game::combat::leave_combat::LeaveCombatPlugin;
 use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::game::combat::unit_actions::UnitActionPlugin;
 use crate::game::combat::unit_animations::UnitAnimationPlugin;
@@ -31,6 +32,7 @@ impl Plugin for CombatPlugin {
         app.add_plugins(UnitActionPlugin);
         app.add_plugins(UnitAnimationPlugin);
         app.add_plugins(EndTurnPlugin);
+        app.add_plugins(LeaveCombatPlugin);
         app.init_state::<CombatState>();
         app.add_systems(
             OnEnter(MapState::Loaded),

@@ -1,5 +1,6 @@
 use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::end_turn::EndTurnCommand;
+use crate::game::combat::leave_combat::LeaveCombatCommand;
 use crate::game::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionEvent};
 use crate::game::combat::unit_placement::CurrentlyPlacedUnit;
 use crate::map::{CursorOnTile, MapState};
@@ -133,6 +134,7 @@ fn draw_state_ui(
     combat_data: Res<CombatData>,
     end_turn_event: EventWriter<EndTurnCommand>,
     change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionEvent>,
+    leave_combat_event: EventWriter<LeaveCombatCommand>,
 ) {
     egui::Window::new("State Display Window")
         .collapsible(false)
@@ -143,7 +145,7 @@ fn draw_state_ui(
         .anchor(Align2::CENTER_TOP, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| match combat_state.get() {
             CombatState::Defeated => build_defeated_state_ui(ui),
-            CombatState::Victory => build_victory_state_ui(ui),
+            CombatState::Victory => build_victory_state_ui(ui, leave_combat_event),
             CombatState::WaitingForServer => build_waiting_for_server_state_ui(ui),
             CombatState::WaitingForOtherPlayer => build_waiting_for_player_ui(ui, &combat_data),
             CombatState::PlaceUnit => build_place_unit_state_ui(ui),
@@ -166,8 +168,11 @@ fn build_place_unit_state_ui(ui: &mut Ui) {
     ui.label("Place Unit");
 }
 
-fn build_victory_state_ui(ui: &mut Ui) {
+fn build_victory_state_ui(ui: &mut Ui, mut leave_combat_event: EventWriter<LeaveCombatCommand>) {
     ui.label("Victory!");
+    if ui.button("Continue").clicked() {
+        leave_combat_event.send(LeaveCombatCommand {});
+    }
 }
 
 fn build_defeated_state_ui(ui: &mut Ui) {

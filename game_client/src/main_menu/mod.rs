@@ -1,6 +1,5 @@
-use crate::networking::Network;
-use crate::networking::NetworkState;
-use crate::ApplicationState;
+use std::process::Child;
+
 use bevy::app::{App, AppExit, Plugin};
 use bevy::prelude::{
     error, in_state, info, on_event, resource_exists, warn, Commands, Event, EventReader,
@@ -9,16 +8,19 @@ use bevy::prelude::{
 };
 use bevy_egui::egui::Align2;
 use bevy_egui::{egui, EguiContexts};
+
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client;
-use std::process::Child;
+
+use crate::networking::{Network, NetworkState};
+use crate::ApplicationState;
 
 pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<MenuState>();
         app.add_event::<HostLocalServerCommand>();
-        app.add_systems(OnEnter(ApplicationState::MainMenu), setup);
+        app.add_systems(OnEnter(ApplicationState::MainMenu), on_enter);
         app.add_systems(
             Update,
             (
@@ -45,8 +47,23 @@ impl Plugin for MainMenuPlugin {
     }
 }
 
-fn setup(mut menu_state: ResMut<NextState<MenuState>>) {
+fn on_enter(
+    mut commands: Commands,
+    mut menu_state: ResMut<NextState<MenuState>>,
+    network: Option<ResMut<Network>>,
+    local_host: Option<ResMut<LocalHost>>,
+) {
     menu_state.set(MenuState::MainMenu);
+
+    if let Some(mut network) = network {
+        network.disconnect();
+    }
+
+    if let Some(mut local_host) = local_host {
+        warn!("Shutting down locally hosted Server.");
+        let _ = local_host.child.kill(); // TODO: Shut down a little more... gracefully.
+        commands.remove_resource::<LocalHost>();
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
