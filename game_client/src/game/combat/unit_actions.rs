@@ -22,7 +22,7 @@ use crate::game::combat::unit_actions_highlights::UnitActionHighlightPlugin;
 use crate::game::combat::unit_animations::{MoveUnitComponent, UnitAttackAnimationComponent};
 use crate::game::sprite_builder;
 use crate::load::CharacterSprites;
-use crate::map::{ActiveUnitHighlights, CursorOnTile, RangeHighlights};
+use crate::map::{ActiveUnitHighlights, CursorOnTile, PathHighlights, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use crate::ApplicationState;
 
@@ -103,11 +103,10 @@ pub fn change_action_on_input(
 
 pub fn execute_action_on_click(
     mut commands: Commands,
-    combat_data: Res<CombatData>,
-    map: Res<GameMap>,
     action_state: Res<ActionState<CombatAction>>,
     active_unit_action: Res<ActiveUnitAction>,
     range_highlights: Option<Res<RangeHighlights>>,
+    path_highlights: Option<Res<PathHighlights>>,
     mouse_cursor_on_tile: Option<Res<CursorOnTile>>,
     mut event_writer: EventWriter<ClientToServerMessage>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
@@ -125,6 +124,7 @@ pub fn execute_action_on_click(
     match active_unit_action.deref() {
         ActiveUnitAction::Move => {
             let Some(range_highlights) = range_highlights else {
+                error!("Range Highlights didn't exist?");
                 return;
             };
 
@@ -132,25 +132,22 @@ pub fn execute_action_on_click(
                 return;
             }
 
-            // TODO: Path should already exist somewhere for highlighting/preview
-            let Some(path) =
-                map.calculate_path_for_active_unit(&combat_data, selected_tile.clone())
-            else {
-                error!(
-                    "Unable to calculate unit path for {:?} to {:?}",
-                    combat_data.current_turn.as_unit_turn(),
-                    selected_tile
-                );
+            let Some(path_highlights) = path_highlights else {
+                error!("Path Highlights didn't exist?");
                 return;
             };
+
             event_writer.send(ClientToServerMessage::MoveUnit(
-                client_to_server::MoveUnit { path },
+                client_to_server::MoveUnit {
+                    path: path_highlights.tiles.clone(),
+                },
             ));
         }
         ActiveUnitAction::UseSkill(id) => {
             let skill = &game_data.skills[id];
             if skill.targeting != SkillTargeting::UserPosition {
                 let Some(range_highlights) = range_highlights else {
+                    error!("Range Highlights didn't exist?");
                     return;
                 };
 
