@@ -208,7 +208,7 @@ fn rotate_camera(
 
     let mut delta = time.delta_seconds() * ROTATION_SPEED;
     if delta > remaining_rotation.abs() {
-        delta = remaining_rotation;
+        delta = remaining_rotation.abs();
     }
 
     delta = if remaining_rotation < 0.0 {
