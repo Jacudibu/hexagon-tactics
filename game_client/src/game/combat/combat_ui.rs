@@ -3,6 +3,7 @@ use crate::game::combat::end_turn::EndTurnCommand;
 use crate::game::combat::leave_combat::LeaveCombatCommand;
 use crate::game::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionEvent};
 use crate::game::combat::unit_placement::{CurrentlyPlacedUnit, SwitchToNextUnitEvent};
+use crate::game::ui_utils;
 use crate::map::{CursorOnTile, MapState};
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
@@ -15,7 +16,6 @@ use game_common::combat_unit::CombatUnit;
 use game_common::game_data::skill::{
     DEBUG_AOE_TARGET_ATTACK_ID, DEBUG_AOE_T_SHAPED, DEBUG_SINGLE_TARGET_ATTACK_ID,
 };
-use game_common::game_data::unit_definition::UnitDefinition;
 use game_common::game_data::GameData;
 use game_common::player_resources::PlayerResources;
 
@@ -64,7 +64,7 @@ fn draw_currently_placed_unit_info(
         .fixed_pos(Pos2::new(5.0, 0.0))
         .anchor(Align2::LEFT_CENTER, egui::Vec2::ZERO)
         .show(egui.ctx_mut(), |ui| {
-            print_unit_definition_info(ui, unit, &game_data);
+            ui_utils::print_unit_definition_info(ui, unit, &game_data);
             ui.horizontal(|ui| {
                 if ui.button("<<").clicked() {
                     switch_to_next_unit_events.send(SwitchToNextUnitEvent::Previous);
@@ -74,15 +74,6 @@ fn draw_currently_placed_unit_info(
                 }
             });
         });
-}
-
-fn print_unit_definition_info(ui: &mut Ui, unit: &UnitDefinition, game_data: &GameData) {
-    let mut lines = Vec::new();
-    let stats = unit.calculate_stats(game_data);
-    lines.push(format!("HP: {}", "TODO"));
-    lines.push(format!("Move: {} | Jump: {}", stats.movement, stats.jump));
-    lines.push(format!("Speed: {}", stats.speed));
-    ui.label(lines.join("\n"));
 }
 
 fn draw_selected_unit_info(

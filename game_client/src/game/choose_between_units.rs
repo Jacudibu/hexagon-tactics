@@ -1,13 +1,15 @@
 use crate::game::game_plugin::GameState;
+use crate::game::ui_utils;
 use crate::networking::NetworkState;
 use bevy::app::{App, Plugin};
 use bevy::prelude::{
     in_state, on_event, Commands, Event, EventReader, EventWriter, IntoSystemConfigs, NextState,
     Res, ResMut, Resource, Update,
 };
-use bevy_egui::egui::{Align2, Pos2};
+use bevy_egui::egui::{Align2, Pos2, RichText, TextStyle};
 use bevy_egui::{egui, EguiContexts};
 use game_common::game_data::unit_definition::UnitDefinition;
+use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::{ClientToServerMessage, PickUnit};
 use game_common::network_events::server_to_client;
 
@@ -62,6 +64,7 @@ fn on_choose_unit(
 fn choose_between_units_ui(
     mut egui: EguiContexts,
     units: Res<ChooseBetweenUnitsResource>,
+    game_data: Res<GameData>,
     mut on_button_press: EventWriter<ChooseUnitButtonPress>,
 ) {
     egui::Window::new("Pick a Unit")
@@ -74,7 +77,10 @@ fn choose_between_units_ui(
             ui.horizontal(|ui| {
                 for unit in &units.units {
                     ui.vertical(|ui| {
-                        ui.label(format!("Name: {}", unit.name));
+                        ui.label(
+                            RichText::new(format!("{}", unit.name)).text_style(TextStyle::Heading),
+                        );
+                        ui_utils::print_unit_definition_info(ui, unit, &game_data);
                         if ui.button("Pick This").clicked() {
                             on_button_press.send(ChooseUnitButtonPress { unit_id: unit.id });
                         }
