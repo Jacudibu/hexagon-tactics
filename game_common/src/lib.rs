@@ -4,6 +4,7 @@ pub mod combat_unit;
 pub mod game_data;
 pub mod game_map;
 pub mod network_events;
+pub mod network_helpers;
 pub mod player;
 pub mod player_resources;
 pub mod turn_resources;

@@ -4,6 +4,7 @@ use crate::shared_state::SharedState;
 use bytes::{Bytes, BytesMut};
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::NetworkMessage;
+use game_common::network_helpers;
 use std::error::Error;
 use std::sync::Arc;
 use tokio::io::AsyncReadExt;
@@ -27,7 +28,7 @@ async fn handle_connection_impl(
     incoming_session: IncomingSession,
     state: Arc<Mutex<SharedState>>,
 ) -> Result<(), Box<dyn Error>> {
-    let mut buffer = BytesMut::with_capacity(1024);
+    let mut buffer = network_helpers::create_buffer();
 
     let session_request = incoming_session.await?;
 
@@ -66,6 +67,7 @@ async fn handle_connection_impl(
                         break;
                     }
                     process_message_from_client(Arc::clone(&state), client.id, buffer.split().freeze()).await;
+                    network_helpers::reclaim_buffer_capacity_if_necessary(&mut buffer);
                 }
                 Err(e) => {
                     error!(

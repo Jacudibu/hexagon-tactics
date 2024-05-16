@@ -3,6 +3,7 @@ use bevy::log::{error, warn};
 use bevy::prelude::Resource;
 use bytes::BytesMut;
 use game_common::network_events::NETWORK_IDLE_TIMEOUT;
+use game_common::network_helpers;
 use tokio::io::AsyncReadExt;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc;
@@ -52,7 +53,7 @@ impl Network {
                 .await
             {
                 Ok(connection) => {
-                    let mut buffer = BytesMut::with_capacity(1024);
+                    let mut buffer = network_helpers::create_buffer();
                     match connection.open_bi().await.unwrap().await {
                         Ok((mut send_stream, mut receive_stream)) => {
                             let (tx_rx, rx_rx) = mpsc::unbounded_channel();
@@ -83,6 +84,7 @@ impl Network {
                                                 break;
                                             }
                                             let _ = tx_rx.send(buffer.split().freeze());
+                                            network_helpers::reclaim_buffer_capacity_if_necessary(&mut buffer);
                                         }
                                         Err(e) => {
                                             error!("Error when receiving data from server: {:?}", e);
