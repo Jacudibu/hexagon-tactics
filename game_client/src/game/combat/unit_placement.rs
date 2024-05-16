@@ -19,11 +19,13 @@ use leafwing_input_manager::action_state::ActionState;
 pub struct UnitPlacementPlugin;
 impl Plugin for UnitPlacementPlugin {
     fn build(&self, app: &mut App) {
+        app.add_event::<SwitchToNextUnitEvent>();
         app.add_systems(OnEnter(CombatState::PlaceUnit), setup_state);
         app.add_systems(OnExit(CombatState::PlaceUnit), leave_state);
         app.add_systems(
             Update,
             (
+                on_switch_to_next_unit.run_if(on_event::<SwitchToNextUnitEvent>()),
                 on_server_placed_unit.run_if(on_event::<server_to_client::PlaceUnit>()),
                 input_listener.run_if(in_state(CombatState::PlaceUnit)),
             ),
@@ -113,24 +115,51 @@ fn is_unit_already_placed(
     return combat_data.units.contains_key(&unit.id);
 }
 
+#[derive(Event)]
+pub enum SwitchToNextUnitEvent {
+    Previous,
+    Next,
+}
+
+fn on_switch_to_next_unit(
+    combat_data: Res<CombatData>,
+    player_resources: Res<PlayerResources>,
+    mut events: EventReader<SwitchToNextUnitEvent>,
+    mut currently_placed_unit: ResMut<CurrentlyPlacedUnit>,
+) {
+    for event in events.read() {
+        match event {
+            SwitchToNextUnitEvent::Previous => {
+                currently_placed_unit.array_index = get_previous_unplaced_unit_index(
+                    &combat_data,
+                    &player_resources.units,
+                    currently_placed_unit.array_index,
+                );
+            }
+            SwitchToNextUnitEvent::Next => {
+                currently_placed_unit.array_index = get_next_unplaced_unit_index(
+                    &combat_data,
+                    &player_resources.units,
+                    currently_placed_unit.array_index,
+                );
+            }
+        }
+    }
+}
+
 fn input_listener(
     player_resources: Res<PlayerResources>,
-    combat_data: Res<CombatData>,
-    mut currently_placed_unit: ResMut<CurrentlyPlacedUnit>,
     action_state: Res<ActionState<CombatAction>>,
     cursor: Option<Res<CursorOnTile>>,
+    currently_placed_unit: Res<CurrentlyPlacedUnit>,
+    mut switch_unit_events: EventWriter<SwitchToNextUnitEvent>,
     mut client_to_server_events: EventWriter<ClientToServerMessage>,
 ) {
     let units = &player_resources.units;
     if action_state.just_pressed(&CombatAction::NextUnit) {
-        currently_placed_unit.array_index =
-            get_next_unplaced_unit_index(&combat_data, units, currently_placed_unit.array_index);
+        switch_unit_events.send(SwitchToNextUnitEvent::Next);
     } else if action_state.just_pressed(&CombatAction::PreviousUnit) {
-        currently_placed_unit.array_index = get_previous_unplaced_unit_index(
-            &combat_data,
-            units,
-            currently_placed_unit.array_index,
-        );
+        switch_unit_events.send(SwitchToNextUnitEvent::Previous);
     } else if action_state.just_pressed(&CombatAction::SelectTile) {
         if let Some(cursor) = cursor {
             // TODO: Validation so we can't spam the server

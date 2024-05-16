@@ -2,7 +2,7 @@ use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::end_turn::EndTurnCommand;
 use crate::game::combat::leave_combat::LeaveCombatCommand;
 use crate::game::combat::unit_actions::{ActiveUnitAction, SetOrToggleActiveUnitActionEvent};
-use crate::game::combat::unit_placement::CurrentlyPlacedUnit;
+use crate::game::combat::unit_placement::{CurrentlyPlacedUnit, SwitchToNextUnitEvent};
 use crate::map::{CursorOnTile, MapState};
 use crate::{ApplicationState, MouseCursorOverUiState};
 use bevy::app::{App, Plugin, Update};
@@ -41,10 +41,11 @@ impl Plugin for CombatUiPlugin {
 }
 
 fn draw_currently_placed_unit_info(
-    egui: EguiContexts,
+    mut egui: EguiContexts,
     currently_placed_unit: Res<CurrentlyPlacedUnit>,
     player_resources: Res<PlayerResources>,
     game_data: Res<GameData>,
+    mut switch_to_next_unit_events: EventWriter<SwitchToNextUnitEvent>,
 ) {
     let Some(unit) = player_resources
         .units
@@ -57,7 +58,31 @@ fn draw_currently_placed_unit_info(
         return;
     };
 
-    draw_unit_definition_info(egui, unit, Align2::LEFT_CENTER, &game_data);
+    egui::Window::new(&unit.name)
+        .collapsible(false)
+        .resizable(false)
+        .fixed_pos(Pos2::new(5.0, 0.0))
+        .anchor(Align2::LEFT_CENTER, egui::Vec2::ZERO)
+        .show(egui.ctx_mut(), |ui| {
+            print_unit_definition_info(ui, unit, &game_data);
+            ui.horizontal(|ui| {
+                if ui.button("<<").clicked() {
+                    switch_to_next_unit_events.send(SwitchToNextUnitEvent::Previous);
+                }
+                if ui.button(">>").clicked() {
+                    switch_to_next_unit_events.send(SwitchToNextUnitEvent::Next);
+                }
+            });
+        });
+}
+
+fn print_unit_definition_info(ui: &mut Ui, unit: &UnitDefinition, game_data: &GameData) {
+    let mut lines = Vec::new();
+    let stats = unit.calculate_stats(game_data);
+    lines.push(format!("HP: {}", "TODO"));
+    lines.push(format!("Move: {} | Jump: {}", stats.movement, stats.jump));
+    lines.push(format!("Speed: {}", stats.speed));
+    ui.label(lines.join("\n"));
 }
 
 fn draw_selected_unit_info(
@@ -82,27 +107,6 @@ fn draw_selected_unit_info(
     };
 
     draw_unit_info(egui, unit, Align2::LEFT_BOTTOM);
-}
-
-fn draw_unit_definition_info(
-    mut egui: EguiContexts,
-    unit: &UnitDefinition,
-    anchor: Align2,
-    game_data: &GameData,
-) {
-    let mut lines = Vec::new();
-    let stats = unit.calculate_stats(game_data);
-    lines.push(format!("HP: {}", "TODO"));
-    lines.push(format!("Move: {} | Jump: {}", stats.movement, stats.jump));
-    lines.push(format!("Speed: {}", stats.speed));
-    let text = lines.join("\n");
-
-    egui::Window::new(&unit.name)
-        .collapsible(false)
-        .resizable(false)
-        .fixed_pos(Pos2::new(5.0, 0.0))
-        .anchor(anchor, egui::Vec2::ZERO)
-        .show(egui.ctx_mut(), |ui| ui.label(text));
 }
 
 fn draw_unit_info(mut egui: EguiContexts, unit: &CombatUnit, anchor: Align2) {

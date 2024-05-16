@@ -1,7 +1,6 @@
 use crate::networking::network_plugin::{ServerConnection, ServerConnectionUpdate};
 use bevy::log::{error, warn};
 use bevy::prelude::Resource;
-use bytes::BytesMut;
 use game_common::network_events::NETWORK_IDLE_TIMEOUT;
 use game_common::network_helpers;
 use tokio::io::AsyncReadExt;
