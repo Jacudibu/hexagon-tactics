@@ -1,4 +1,4 @@
-use crate::message_processor::states::combat::CombatState;
+use crate::in_game::states::combat::CombatState;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::combat_turn::CombatTurn;
 use game_common::combat_unit::{

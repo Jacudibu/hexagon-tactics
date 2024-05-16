@@ -1,4 +1,4 @@
-use crate::message_processor::states::StateTransitionKind;
+use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::ServerToClientMessageVariant;
 
 #[derive(Default)]

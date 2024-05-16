@@ -1,8 +1,8 @@
-use crate::in_game_data::InGameData;
-use crate::message_processor::command_invocation_result::CommandInvocationResult;
-use crate::message_processor::states::pick_unit::PickUnitStateTransition;
-use crate::message_processor::states::InGameState;
-use crate::message_processor::states::StateTransitionKind;
+use crate::in_game::command_invocation_result::CommandInvocationResult;
+use crate::in_game::in_game_data::InGameData;
+use crate::in_game::states::pick_unit::PickUnitStateTransition;
+use crate::in_game::states::InGameState;
+use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::ServerToClientMessage;

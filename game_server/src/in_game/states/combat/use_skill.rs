@@ -1,4 +1,4 @@
-use crate::message_processor::states::combat::CombatState;
+use crate::in_game::states::combat::CombatState;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::game_data::GameData;
 use game_common::network_events::server_to_client::{
@@ -96,8 +96,8 @@ pub fn use_skill(
 
 #[cfg(test)]
 mod tests {
-    use crate::message_processor::combat::use_skill::use_skill;
-    use crate::message_processor::states::cbt::CombatState;
+    use crate::combat::use_skill::use_skill;
+    use crate::in_game::states::cbt::CombatState;
     use game_common::combat_data::CombatData;
     use game_common::combat_unit::CombatUnit;
     use game_common::game_data::GameData;

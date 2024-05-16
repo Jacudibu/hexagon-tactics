@@ -2,11 +2,9 @@ pub mod combat;
 pub mod combat_finished;
 pub mod pick_unit;
 
-use crate::message_processor::states::combat::{CombatState, CombatStateTransition};
-use crate::message_processor::states::combat_finished::{
-    CombatFinishedState, CombatFinishedTransition,
-};
-use crate::message_processor::states::pick_unit::{PickUnitState, PickUnitStateTransition};
+use crate::in_game::states::combat::{CombatState, CombatStateTransition};
+use crate::in_game::states::combat_finished::{CombatFinishedState, CombatFinishedTransition};
+use crate::in_game::states::pick_unit::{PickUnitState, PickUnitStateTransition};
 
 pub enum StateTransitionKind {
     Combat(CombatStateTransition),

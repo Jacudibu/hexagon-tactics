@@ -1,8 +1,8 @@
-use crate::in_game_data::InGameData;
-use crate::message_processor::command_invocation_result::CommandInvocationResult;
-use crate::message_processor::states::combat_finished::CombatFinishedTransition;
-use crate::message_processor::states::InGameState;
-use crate::message_processor::states::StateTransitionKind;
+use crate::in_game::command_invocation_result::CommandInvocationResult;
+use crate::in_game::in_game_data::InGameData;
+use crate::in_game::states::combat_finished::CombatFinishedTransition;
+use crate::in_game::states::InGameState;
+use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;

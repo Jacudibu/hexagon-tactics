@@ -2,10 +2,11 @@ use game_common::network_events::server_to_client::{ServerToClientMessage, Start
 use game_common::player::{PlayerId, ReadyState};
 use game_common::validation;
 
-use crate::in_game_data::InGameData;
-use crate::message_processor::states::pick_unit::PickUnitStateTransition;
-use crate::message_processor::states::StateTransitionKind;
-use crate::message_processor::{state_transitions, ServerToClientMessageVariant};
+use crate::in_game::in_game_data::InGameData;
+use crate::in_game::state_transitions;
+use crate::in_game::states::pick_unit::PickUnitStateTransition;
+use crate::in_game::states::StateTransitionKind;
+use crate::message_processor::ServerToClientMessageVariant;
 use crate::shared_state::{ServerState, SharedState};
 
 pub fn start_game(

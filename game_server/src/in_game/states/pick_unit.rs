@@ -1,8 +1,8 @@
-use crate::in_game_data::InGameData;
-use crate::message_processor::command_invocation_result::CommandInvocationResult;
-use crate::message_processor::states::combat::CombatStateTransition;
-use crate::message_processor::states::InGameState;
-use crate::message_processor::states::StateTransitionKind;
+use crate::in_game::command_invocation_result::CommandInvocationResult;
+use crate::in_game::in_game_data::InGameData;
+use crate::in_game::states::combat::CombatStateTransition;
+use crate::in_game::states::InGameState;
+use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_unit::get_unique_unit_id;
 use game_common::game_data::unit_definition::UnitDefinition;

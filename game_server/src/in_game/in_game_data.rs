@@ -1,4 +1,4 @@
-use crate::message_processor::states::InGameState;
+use crate::in_game::states::InGameState;
 use crate::shared_state::SharedState;
 use game_common::player::PlayerId;
 use game_common::player_resources::PlayerResources;

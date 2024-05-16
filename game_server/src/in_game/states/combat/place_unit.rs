@@ -1,4 +1,4 @@
-use crate::message_processor::states::combat::CombatState;
+use crate::in_game::states::combat::CombatState;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_turn::{CombatTurn, PlaceUnit};
 use game_common::combat_unit::{ActorId, CombatUnit};
