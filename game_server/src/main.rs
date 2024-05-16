@@ -8,9 +8,10 @@ use tracing_subscriber::EnvFilter;
 use wtransport::{Endpoint, Identity, ServerConfig};
 
 mod connection_handler;
-pub mod in_game;
+mod in_game;
 mod lobby;
 mod message_processor;
+mod server_state;
 mod shared_state;
 
 #[tokio::main]

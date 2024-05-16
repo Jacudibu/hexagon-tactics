@@ -110,11 +110,6 @@ async fn process_message_from_client(
                                 ServerToClientMessageVariant::SendToSender(message) => {
                                     state.send_to(&connection_id, message);
                                 }
-                                ServerToClientMessageVariant::SendToEveryoneExceptSender(
-                                    message,
-                                ) => {
-                                    state.send_to_everyone_except_one(&connection_id, message);
-                                }
                                 ServerToClientMessageVariant::Broadcast(message) => {
                                     state.broadcast(message);
                                 }

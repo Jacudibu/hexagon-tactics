@@ -3,11 +3,11 @@ use game_common::player::{PlayerId, ReadyState};
 use game_common::validation;
 
 use crate::in_game::in_game_data::InGameData;
-use crate::in_game::state_transitions;
 use crate::in_game::states::pick_unit::PickUnitStateTransition;
 use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::ServerToClientMessageVariant;
-use crate::shared_state::{ServerState, SharedState};
+use crate::server_state::ServerState;
+use crate::shared_state::SharedState;
 
 pub fn start_game(
     shared_state: &mut SharedState,
@@ -21,11 +21,8 @@ pub fn start_game(
     ));
 
     let mut in_game_data = InGameData::new(&shared_state);
-    messages.append(&mut state_transitions::on_state_enter(
-        &sender,
-        &StateTransitionKind::PickUnit(PickUnitStateTransition { remaining: 3 }),
-        &mut in_game_data,
-    ));
+    let start_state = StateTransitionKind::PickUnit(PickUnitStateTransition { remaining: 3 });
+    messages.append(&mut start_state.on_state_enter(&sender, &mut in_game_data));
 
     shared_state.server_state = ServerState::InGame(in_game_data);
     Ok(messages)

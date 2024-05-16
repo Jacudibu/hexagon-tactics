@@ -1,5 +1,5 @@
 use crate::connection_handler::ConnectionId;
-use crate::in_game::in_game_data::InGameData;
+use crate::server_state::ServerState;
 use bytes::Bytes;
 use game_common::game_data::GameData;
 use game_common::network_events::server_to_client::{
@@ -10,13 +10,6 @@ use game_common::player::{Player, PlayerId, ReadyState};
 use hashbrown::HashMap;
 use tokio::sync::mpsc;
 use tracing::error;
-
-#[derive(Default)]
-pub enum ServerState {
-    #[default]
-    Lobby,
-    InGame(InGameData),
-}
 
 pub struct SharedState {
     pub connections: HashMap<ConnectionId, mpsc::UnboundedSender<Bytes>>,
@@ -125,18 +118,4 @@ impl SharedState {
         );
         player_id
     }
-}
-
-/// One Client can seat multiple players. While Connections might get replaced due to disconnects,
-/// ConnectedPlayer will persist throughout the game, and their assigned client_id might change.
-pub struct NetworkPlayer {
-    client_id: ConnectionId,
-    player_id: PlayerId,
-    sender: mpsc::UnboundedSender<Bytes>,
-    connection_state: ConnectionState,
-}
-
-enum ConnectionState {
-    Connected,
-    Disconnected,
 }
