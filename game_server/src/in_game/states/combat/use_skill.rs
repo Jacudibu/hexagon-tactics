@@ -96,8 +96,8 @@ pub fn use_skill(
 
 #[cfg(test)]
 mod tests {
-    use crate::combat::use_skill::use_skill;
-    use crate::in_game::states::cbt::CombatState;
+    use crate::in_game::states::combat::use_skill::use_skill;
+    use crate::in_game::states::combat::CombatState;
     use game_common::combat_data::CombatData;
     use game_common::combat_unit::CombatUnit;
     use game_common::game_data::GameData;

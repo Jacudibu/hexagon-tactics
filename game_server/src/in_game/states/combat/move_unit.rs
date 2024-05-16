@@ -40,8 +40,8 @@ pub fn move_unit(
 
 #[cfg(test)]
 mod tests {
-    use crate::combat::move_unit::move_unit;
-    use crate::in_game::states::cbt::CombatState;
+    use crate::in_game::states::combat::move_unit::move_unit;
+    use crate::in_game::states::combat::CombatState;
     use game_common::combat_data::CombatData;
     use game_common::combat_unit::CombatUnit;
     use game_common::game_map::GameMap;
