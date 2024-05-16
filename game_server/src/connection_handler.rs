@@ -1,7 +1,7 @@
 use crate::message_processor;
 use crate::message_processor::ServerToClientMessageVariant;
 use crate::shared_state::SharedState;
-use bytes::{Bytes, BytesMut};
+use bytes::Bytes;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::NetworkMessage;
 use game_common::network_helpers;

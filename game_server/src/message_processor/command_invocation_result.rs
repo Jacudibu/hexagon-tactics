@@ -1,20 +1,15 @@
+use crate::message_processor::states::StateTransitionKind;
 use crate::message_processor::ServerToClientMessageVariant;
 
 #[derive(Default)]
 pub struct CommandInvocationResult {
-    pub state_transition: Option<StateTransition>,
+    pub state_transition: Option<StateTransitionKind>,
     pub messages: Vec<ServerToClientMessageVariant>,
-}
-
-pub enum StateTransition {
-    StartCombat,
-    CombatFinished,
-    PickUnit { remaining: u8 },
 }
 
 impl CommandInvocationResult {
     #[must_use]
-    pub fn with_state_transition(mut self, state_transition: StateTransition) -> Self {
+    pub fn with_state_transition(mut self, state_transition: StateTransitionKind) -> Self {
         self.state_transition = Some(state_transition);
         self
     }
@@ -25,7 +20,7 @@ impl CommandInvocationResult {
         self
     }
 
-    pub fn set_state_transition(&mut self, state_transition: StateTransition) -> &Self {
+    pub fn set_state_transition(&mut self, state_transition: StateTransitionKind) -> &Self {
         self.state_transition = Some(state_transition);
         self
     }

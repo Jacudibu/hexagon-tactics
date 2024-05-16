@@ -5,14 +5,13 @@ use game_common::network_events::server_to_client::{
 };
 use game_common::player::PlayerId;
 
-mod combat;
-mod combat_finished;
 mod command_invocation_result;
 mod lobby;
-mod pick_unit;
 pub mod state_transitions;
+pub mod states;
 
-use crate::in_game_state::InGameState;
+use states::InGameState;
+
 #[cfg(test)]
 use enum_as_inner::EnumAsInner;
 
@@ -40,17 +39,14 @@ pub fn process_message(
                     // Technically this should never happen, as this is just the dummy initialization value
                     todo!()
                 }
-                InGameState::Combat(ref mut match_data) => combat::process_message(
-                    sender,
-                    message,
-                    players,
-                    player_resources,
-                    game_data,
-                    match_data,
-                ),
-                InGameState::CombatFinished => combat_finished::process_message(sender, message),
-                InGameState::PickUnit(ref mut pick_unit_data) => {
-                    pick_unit::process_message(sender, message, player_resources, pick_unit_data)
+                InGameState::Combat(ref mut state) => {
+                    state.on_message(sender, message, players, player_resources, game_data)
+                }
+                InGameState::CombatFinished(ref mut state) => {
+                    state.on_message(sender, message, player_resources)
+                }
+                InGameState::PickUnit(ref mut state) => {
+                    state.on_message(sender, message, player_resources)
                 }
             }?;
 

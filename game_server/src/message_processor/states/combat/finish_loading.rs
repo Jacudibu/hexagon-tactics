@@ -1,4 +1,4 @@
-use crate::in_game_state::MatchData;
+use crate::message_processor::states::combat::CombatState;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::combat_turn::CombatTurn;
 use game_common::combat_unit::{
@@ -15,7 +15,7 @@ use hexx::Hex;
 pub fn finish_loading(
     sender: PlayerId,
     players: &mut HashMap<PlayerId, Player>,
-    match_data: &mut MatchData,
+    match_data: &mut CombatState,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     players.get_mut(&sender).unwrap().ready_state = ReadyState::LoadedInGame;
 

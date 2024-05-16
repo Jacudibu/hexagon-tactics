@@ -1,5 +1,5 @@
 use crate::connection_handler::ConnectionId;
-use crate::in_game_state::InGameData;
+use crate::in_game_data::InGameData;
 use bytes::Bytes;
 use game_common::game_data::GameData;
 use game_common::network_events::server_to_client::{

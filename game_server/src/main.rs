@@ -8,7 +8,7 @@ use tracing_subscriber::EnvFilter;
 use wtransport::{Endpoint, Identity, ServerConfig};
 
 mod connection_handler;
-mod in_game_state;
+mod in_game_data;
 mod message_processor;
 mod shared_state;
 

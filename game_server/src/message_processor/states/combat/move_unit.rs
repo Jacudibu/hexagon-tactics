@@ -1,4 +1,4 @@
-use crate::in_game_state::MatchData;
+use crate::message_processor::states::combat::CombatState;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::network_events::{client_to_server, server_to_client};
@@ -8,7 +8,7 @@ use game_common::validation;
 pub fn move_unit(
     sender: PlayerId,
     message: client_to_server::MoveUnit,
-    match_data: &mut MatchData,
+    match_data: &mut CombatState,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
     validation::validate_path_for_current_unit(
@@ -40,8 +40,8 @@ pub fn move_unit(
 
 #[cfg(test)]
 mod tests {
-    use crate::in_game_state::MatchData;
     use crate::message_processor::combat::move_unit::move_unit;
+    use crate::message_processor::states::cbt::CombatState;
     use game_common::combat_data::CombatData;
     use game_common::combat_unit::CombatUnit;
     use game_common::game_map::GameMap;
@@ -55,7 +55,7 @@ mod tests {
         let unit_movement = 3;
         let unit_start_pos = Hex::ZERO;
         let unit_new_pos = unit_start_pos.neighbor(EdgeDirection::POINTY_RIGHT);
-        let mut match_data = MatchData {
+        let mut match_data = CombatState {
             combat_data: CombatData::create_mock()
                 .with_units(vec![CombatUnit::create_mock(unit_id, 1)
                     .with_stats(UnitStats::create_mock().with_movement(unit_movement))])

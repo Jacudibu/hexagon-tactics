@@ -1,4 +1,4 @@
-use crate::in_game_state::MatchData;
+use crate::message_processor::states::combat::CombatState;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::network_events::server_to_client::{ServerToClientMessage, StartUnitTurn};
 use game_common::player::PlayerId;
@@ -6,7 +6,7 @@ use game_common::validation;
 
 pub fn end_turn(
     sender: PlayerId,
-    match_data: &mut MatchData,
+    match_data: &mut CombatState,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
     // TODO: Test

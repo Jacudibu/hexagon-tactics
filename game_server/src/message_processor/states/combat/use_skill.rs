@@ -1,4 +1,4 @@
-use crate::in_game_state::MatchData;
+use crate::message_processor::states::combat::CombatState;
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::game_data::GameData;
 use game_common::network_events::server_to_client::{
@@ -11,7 +11,7 @@ use game_common::validation;
 pub fn use_skill(
     sender: PlayerId,
     message: client_to_server::UseSkill,
-    match_data: &mut MatchData,
+    match_data: &mut CombatState,
     game_data: &GameData,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
@@ -96,8 +96,8 @@ pub fn use_skill(
 
 #[cfg(test)]
 mod tests {
-    use crate::in_game_state::MatchData;
     use crate::message_processor::combat::use_skill::use_skill;
+    use crate::message_processor::states::cbt::CombatState;
     use game_common::combat_data::CombatData;
     use game_common::combat_unit::CombatUnit;
     use game_common::game_data::GameData;
@@ -113,7 +113,7 @@ mod tests {
         let target_position = Hex::ZERO.neighbor(EdgeDirection::POINTY_RIGHT);
         let skill_id = 1;
         let game_data = GameData::create_mock().with_all_mock_skills();
-        let mut match_data = MatchData {
+        let mut match_data = CombatState {
             combat_data: CombatData::create_mock()
                 .with_units(vec![
                     CombatUnit::create_mock(user_id, 1)

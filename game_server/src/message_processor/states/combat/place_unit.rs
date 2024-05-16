@@ -1,4 +1,4 @@
-use crate::in_game_state::MatchData;
+use crate::message_processor::states::combat::CombatState;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_turn::{CombatTurn, PlaceUnit};
 use game_common::combat_unit::{ActorId, CombatUnit};
@@ -16,7 +16,7 @@ pub fn place_unit(
     message: client_to_server::PlaceUnit,
     players: &HashMap<PlayerId, Player>,
     player_resources: &HashMap<PlayerId, PlayerResources>,
-    match_data: &mut MatchData,
+    match_data: &mut CombatState,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
     validation::validate_turn_order(sender, &match_data.combat_data)?;
     let unit = validation::validate_player_owns_resource_unit_with_id(
@@ -57,7 +57,7 @@ pub fn place_unit(
         ))
     } else {
         // TODO: Better Turn Order
-        fn count_units(match_data: &MatchData, owner: &ActorId) -> usize {
+        fn count_units(match_data: &CombatState, owner: &ActorId) -> usize {
             match_data
                 .combat_data
                 .units

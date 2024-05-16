@@ -1,124 +1,23 @@
-use crate::in_game_state::{InGameData, InGameState, MatchData, PickUnitStateData};
-use crate::message_processor::command_invocation_result::StateTransition;
+use crate::in_game_data::InGameData;
+use crate::message_processor::states::StateTransitionKind;
 use crate::message_processor::ServerToClientMessageVariant;
-use game_common::combat_data::CombatData;
-use game_common::combat_turn::CombatTurn;
-use game_common::combat_unit::get_unique_unit_id;
-use game_common::game_data::unit_definition::UnitDefinition;
-use game_common::game_data::DEBUG_RACE_ID;
-use game_common::game_map::GameMap;
-use game_common::network_events::server_to_client::{
-    ChooseBetweenUnits, ErrorWhenProcessingMessage, LoadMap, ServerToClientMessage,
-};
 use game_common::player::PlayerId;
-use game_common::TEST_MAP_NAME;
 
 #[must_use]
 pub fn on_state_enter(
     sender: &PlayerId,
-    state_transition: &StateTransition,
+    state_transition: &StateTransitionKind,
     in_game_data: &mut InGameData,
 ) -> Vec<ServerToClientMessageVariant> {
     let players_in_state = in_game_data.get_all_players_in_same_state(sender);
 
-    match *state_transition {
-        StateTransition::PickUnit { remaining } => {
-            pick_unit(remaining, in_game_data, players_in_state)
+    match state_transition {
+        StateTransitionKind::PickUnit(state) => {
+            state.on_state_enter(in_game_data, players_in_state)
         }
-        StateTransition::StartCombat => start_combat(in_game_data, players_in_state),
-        StateTransition::CombatFinished => combat_finished(in_game_data, players_in_state),
-    }
-}
-
-pub fn combat_finished(
-    in_game_data: &mut InGameData,
-    players_in_state: Vec<PlayerId>,
-) -> Vec<ServerToClientMessageVariant> {
-    for player in players_in_state {
-        in_game_data.insert_state_for_player(player, InGameState::CombatFinished)
-    }
-
-    Vec::new()
-}
-
-pub fn pick_unit(
-    remaining: u8,
-    in_game_data: &mut InGameData,
-    players_in_state: Vec<PlayerId>,
-) -> Vec<ServerToClientMessageVariant> {
-    let mut result = Vec::new();
-    for player in players_in_state {
-        let data = PickUnitStateData {
-            units: create_units(3),
-            remaining_choices: remaining,
-        };
-        result.push(ServerToClientMessageVariant::SendToSender(
-            ServerToClientMessage::ChooseBetweenUnits(ChooseBetweenUnits {
-                units: data.units.clone(),
-            }),
-        ));
-        in_game_data.insert_state_for_player(player, InGameState::PickUnit(data));
-    }
-
-    result
-}
-
-pub fn create_units(amount: u8) -> Vec<UnitDefinition> {
-    (0..amount).map(|_| create_unit()).collect()
-}
-
-pub fn create_unit() -> UnitDefinition {
-    let id = get_unique_unit_id();
-    UnitDefinition {
-        id,
-        owner: 0,
-        name: format!("Unit #{}", id),
-        race: DEBUG_RACE_ID,
-        levels: Default::default(),
-        unlocked_skills: vec![],
-        weapon: None,
-        armor: None,
-        accessory: None,
-    }
-}
-
-pub fn start_combat(
-    in_game_data: &mut InGameData,
-    players_in_state: Vec<PlayerId>,
-) -> Vec<ServerToClientMessageVariant> {
-    let mut result = Vec::new();
-    let map = match GameMap::load_from_file(TEST_MAP_NAME) {
-        Ok(map) => map,
-        Err(_) => {
-            // TODO: Load a "known good" map instead, and send player the correct map id
-            result.push(ServerToClientMessageVariant::SendToSender(
-                ServerToClientMessage::ErrorWhenProcessingMessage(ErrorWhenProcessingMessage {
-                    message: "Server failed to load map!".into(),
-                }),
-            ));
-            GameMap::new(2)
+        StateTransitionKind::Combat(state) => state.on_state_enter(in_game_data, players_in_state),
+        StateTransitionKind::CombatFinished(state) => {
+            state.on_state_enter(in_game_data, players_in_state)
         }
-    };
-    let combat_data = CombatData {
-        units: Default::default(),
-        unit_positions: Default::default(),
-        current_turn: CombatTurn::Undefined,
-    };
-    let match_data = MatchData {
-        combat_data,
-        loaded_map: map,
-    };
-
-    in_game_data.insert_state_for_player(players_in_state[0], InGameState::Combat(match_data));
-    for player_id in 1..players_in_state.len() {
-        in_game_data.add_player_to_other_player_state(&players_in_state[0], player_id.clone());
     }
-
-    result.push(ServerToClientMessageVariant::Broadcast(
-        ServerToClientMessage::LoadMap(LoadMap {
-            path: TEST_MAP_NAME.into(),
-        }),
-    ));
-
-    result
 }
