@@ -1,5 +1,6 @@
 use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::local_combat_data::LocalCombatData;
+use crate::game::combat::unit_placement::UnitMarker;
 use crate::game::game_plugin::GameState;
 use crate::map::DespawnMapCommand;
 use crate::ApplicationState;
@@ -15,6 +16,10 @@ impl Plugin for LeaveCombatPlugin {
         app.add_systems(
             Update,
             on_leave_combat.run_if(on_event::<LeaveCombatCommand>()),
+        );
+        app.add_systems(
+            PostUpdate,
+            unload_units.run_if(on_event::<DespawnMapCommand>()),
         );
     }
 }
@@ -67,5 +72,11 @@ pub fn on_leave_combat(
                 client_to_server_messages.send(ClientToServerMessage::Proceed);
             }
         }
+    }
+}
+
+pub fn unload_units(mut commands: Commands, units: Query<Entity, With<UnitMarker>>) {
+    for x in units.iter() {
+        commands.entity(x).despawn_recursive();
     }
 }

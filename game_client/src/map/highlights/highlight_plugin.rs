@@ -90,6 +90,8 @@ fn clean_up(
     cursor: Query<Entity, With<CursorHighlightMarker>>,
     range: Query<Entity, With<RangeHighlightMarker>>,
     attack: Query<Entity, With<AttackHighlightMarker>>,
+    active: Query<Entity, With<ActiveUnitHighlightMarker>>,
+    path: Query<Entity, With<PathHighlightMarker>>,
 ) {
     for x in cursor.iter() {
         commands.entity(x).despawn();
@@ -98,6 +100,12 @@ fn clean_up(
         commands.entity(x).despawn();
     }
     for x in attack.iter() {
+        commands.entity(x).despawn();
+    }
+    for x in active.iter() {
+        commands.entity(x).despawn();
+    }
+    for x in path.iter() {
         commands.entity(x).despawn();
     }
 }
