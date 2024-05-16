@@ -6,6 +6,7 @@ use crate::ApplicationState;
 use bevy::app::App;
 use bevy::prelude::*;
 use game_common::combat_data::CombatData;
+use game_common::network_events::client_to_server::ClientToServerMessage;
 
 pub struct LeaveCombatPlugin;
 impl Plugin for LeaveCombatPlugin {
@@ -19,7 +20,28 @@ impl Plugin for LeaveCombatPlugin {
 }
 
 #[derive(Event)]
-pub struct LeaveCombatCommand; // TODO: Should probably contain information on where to go next
+pub struct LeaveCombatCommand {
+    how: LeaveCombatAction,
+}
+
+impl LeaveCombatCommand {
+    pub fn proceed() -> Self {
+        LeaveCombatCommand {
+            how: LeaveCombatAction::ProceedAfterVictory,
+        }
+    }
+
+    pub fn quit() -> Self {
+        LeaveCombatCommand {
+            how: LeaveCombatAction::BackToMainMenu,
+        }
+    }
+}
+
+enum LeaveCombatAction {
+    BackToMainMenu,
+    ProceedAfterVictory,
+}
 
 pub fn on_leave_combat(
     mut commands: Commands,
@@ -28,13 +50,22 @@ pub fn on_leave_combat(
     mut next_combat_state: ResMut<NextState<CombatState>>,
     mut next_game_state: ResMut<NextState<GameState>>,
     mut next_application_state: ResMut<NextState<ApplicationState>>,
+    mut client_to_server_messages: EventWriter<ClientToServerMessage>,
 ) {
-    for _event in event_reader.read() {
+    for event in event_reader.read() {
         commands.remove_resource::<CombatData>();
         commands.remove_resource::<LocalCombatData>();
         despawn_map_command.send(DespawnMapCommand {});
         next_combat_state.set(CombatState::WaitingForServer);
         next_game_state.set(GameState::Inactive);
-        next_application_state.set(ApplicationState::MainMenu);
+
+        match event.how {
+            LeaveCombatAction::BackToMainMenu => {
+                next_application_state.set(ApplicationState::MainMenu);
+            }
+            LeaveCombatAction::ProceedAfterVictory => {
+                client_to_server_messages.send(ClientToServerMessage::Proceed);
+            }
+        }
     }
 }

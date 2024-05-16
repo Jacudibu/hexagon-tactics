@@ -19,7 +19,7 @@ pub fn start_game(
     ));
 
     let mut in_game_data = InGameData::new(&shared_state);
-    messages.append(&mut state_transitions::handle_transition(
+    messages.append(&mut state_transitions::on_state_enter(
         &sender,
         &StateTransition::PickUnit { remaining: 3 },
         &mut in_game_data,

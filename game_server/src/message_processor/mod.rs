@@ -6,6 +6,7 @@ use game_common::network_events::server_to_client::{
 use game_common::player::PlayerId;
 
 mod combat;
+mod combat_finished;
 mod command_invocation_result;
 mod lobby;
 mod pick_unit;
@@ -47,6 +48,7 @@ pub fn process_message(
                     game_data,
                     match_data,
                 ),
+                InGameState::CombatFinished => combat_finished::process_message(sender, message),
                 InGameState::PickUnit(ref mut pick_unit_data) => {
                     pick_unit::process_message(sender, message, player_resources, pick_unit_data)
                 }
@@ -54,7 +56,7 @@ pub fn process_message(
 
             if let Some(state_transition) = &result.state_transition {
                 let mut new_messages =
-                    state_transitions::handle_transition(&sender, state_transition, in_game_data);
+                    state_transitions::on_state_enter(&sender, state_transition, in_game_data);
 
                 result.add_messages(&mut new_messages);
             }

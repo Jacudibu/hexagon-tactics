@@ -14,7 +14,7 @@ use game_common::player::PlayerId;
 use game_common::TEST_MAP_NAME;
 
 #[must_use]
-pub fn handle_transition(
+pub fn on_state_enter(
     sender: &PlayerId,
     state_transition: &StateTransition,
     in_game_data: &mut InGameData,
@@ -26,7 +26,19 @@ pub fn handle_transition(
             pick_unit(remaining, in_game_data, players_in_state)
         }
         StateTransition::StartCombat => start_combat(in_game_data, players_in_state),
+        StateTransition::CombatFinished => combat_finished(in_game_data, players_in_state),
     }
+}
+
+pub fn combat_finished(
+    in_game_data: &mut InGameData,
+    players_in_state: Vec<PlayerId>,
+) -> Vec<ServerToClientMessageVariant> {
+    for player in players_in_state {
+        in_game_data.insert_state_for_player(player, InGameState::CombatFinished)
+    }
+
+    Vec::new()
 }
 
 pub fn pick_unit(

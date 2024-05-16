@@ -1,5 +1,7 @@
 use crate::in_game_state::MatchData;
-use crate::message_processor::command_invocation_result::CommandInvocationResult;
+use crate::message_processor::command_invocation_result::{
+    CommandInvocationResult, StateTransition,
+};
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_unit::{ActorId, CombatUnit, UnitId};
 use game_common::game_data::GameData;
@@ -46,27 +48,28 @@ pub fn process_message(
         ))),
     }?;
 
+    let mut state_transition = None;
     if check_win_conditions {
         let (player_units, ai_units) = count_alive_units(&match_data.combat_data.units);
         if player_units == 0 {
+            state_transition = Some(StateTransition::CombatFinished);
             messages.push(ServerToClientMessageVariant::Broadcast(
                 ServerToClientMessage::CombatFinished(CombatFinished {
                     winner: ActorId::AI,
                 }),
-            ))
-            // TODO: Transition
+            ));
         } else if ai_units == 0 {
+            state_transition = Some(StateTransition::CombatFinished);
             messages.push(ServerToClientMessageVariant::Broadcast(
                 ServerToClientMessage::CombatFinished(CombatFinished {
                     winner: ActorId::Player(sender), // TODO: Sender might still be losing if this is pvp
                 }),
-            ))
-            // TODO: Transition
+            ));
         }
     }
 
     Ok(CommandInvocationResult {
-        state_transition: None,
+        state_transition,
         messages,
     })
 }

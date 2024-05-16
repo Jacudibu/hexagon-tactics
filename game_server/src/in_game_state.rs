@@ -102,6 +102,7 @@ pub enum InGameState {
     StartingGame,
     PickUnit(PickUnitStateData),
     Combat(MatchData),
+    CombatFinished,
 }
 
 pub struct MatchData {

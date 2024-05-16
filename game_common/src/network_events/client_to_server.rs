@@ -4,7 +4,8 @@ use bevy::prelude::Event;
 use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
-#[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[cfg_attr(feature = "ecs", derive(Event))]
 pub enum ClientToServerMessage {
     // Lobby
     StartGame,
@@ -15,6 +16,7 @@ pub enum ClientToServerMessage {
     PlaceUnit(PlaceUnit),
     MoveUnit(MoveUnit),
     UseSkill(UseSkill),
+    Proceed,
 
     // Events
     PickUnit(PickUnit),

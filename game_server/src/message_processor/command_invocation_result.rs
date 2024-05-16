@@ -8,6 +8,7 @@ pub struct CommandInvocationResult {
 
 pub enum StateTransition {
     StartCombat,
+    CombatFinished,
     PickUnit { remaining: u8 },
 }
 
