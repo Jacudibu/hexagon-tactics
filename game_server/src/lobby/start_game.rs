@@ -21,8 +21,20 @@ pub fn start_game(
     ));
 
     let mut in_game_data = InGameData::new(&shared_state);
-    let start_state = StateTransitionKind::PickUnit(PickUnitStateTransition { remaining: 3 });
-    messages.append(&mut start_state.on_state_enter(&sender, &mut in_game_data));
+    for (id, _) in &shared_state.players {
+        let start_state = StateTransitionKind::PickUnit(PickUnitStateTransition { remaining: 3 });
+        // for message in start_state
+        //     .on_state_enter(id, &mut in_game_data)
+        //     .into_iter()
+        // {
+        //     if let ServerToClientMessageVariant::SendToSender(message) = message {
+        //         messages.push(ServerToClientMessageVariant::SendTo((id.clone(), message)))
+        //     } else {
+        //         messages.push(message);
+        //     }
+        // }
+        messages.append(&mut start_state.on_state_enter(id, &mut in_game_data))
+    }
 
     shared_state.server_state = ServerState::InGame(in_game_data);
     Ok(messages)

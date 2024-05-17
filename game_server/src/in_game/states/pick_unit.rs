@@ -1,6 +1,7 @@
 use crate::in_game::command_invocation_result::CommandInvocationResult;
-use crate::in_game::in_game_data::InGameData;
+use crate::in_game::in_game_data::{InGameData, StateData};
 use crate::in_game::states::combat::CombatStateTransition;
+use crate::in_game::states::waiting_for_others::WaitingForOthersTransition;
 use crate::in_game::states::InGameState;
 use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
@@ -12,8 +13,6 @@ use game_common::network_events::server_to_client::{
     AddUnit, ChooseBetweenUnits, ServerToClientMessage,
 };
 use game_common::player::PlayerId;
-use game_common::player_resources::PlayerResources;
-use hashbrown::HashMap;
 
 pub struct PickUnitStateTransition {
     pub remaining: u8,
@@ -37,11 +36,12 @@ impl PickUnitStateTransition {
                 units: create_units(3),
                 remaining_choices: self.remaining,
             };
-            result.push(ServerToClientMessageVariant::SendToSender(
+            result.push(ServerToClientMessageVariant::SendTo((
+                player,
                 ServerToClientMessage::ChooseBetweenUnits(ChooseBetweenUnits {
                     units: state.units.clone(),
                 }),
-            ));
+            )));
             in_game_data.insert_state_for_player(player, InGameState::PickUnit(state));
         }
 
@@ -54,7 +54,7 @@ impl PickUnitState {
         &mut self,
         sender: PlayerId,
         message: ClientToServerMessage,
-        player_resources: &mut HashMap<PlayerId, PlayerResources>,
+        state_data: &mut StateData,
     ) -> Result<CommandInvocationResult, ServerToClientMessage> {
         let ClientToServerMessage::PickUnit(message) = message else {
             todo!()
@@ -66,7 +66,8 @@ impl PickUnitState {
 
         let mut unit = self.units.remove(index);
         unit.owner = sender;
-        player_resources
+        state_data
+            .player_resources
             .get_mut(&sender)
             .unwrap()
             .units
@@ -83,7 +84,13 @@ impl PickUnitState {
                 remaining: self.remaining_choices - 1,
             }));
         } else {
-            result.set_state_transition(StateTransitionKind::Combat(CombatStateTransition {}));
+            if state_data.are_all_other_players_ready() {
+                result.set_state_transition(StateTransitionKind::Combat(CombatStateTransition {}));
+            } else {
+                result.set_state_transition(StateTransitionKind::WaitingForOthers(
+                    WaitingForOthersTransition {},
+                ));
+            }
         }
 
         Ok(result)

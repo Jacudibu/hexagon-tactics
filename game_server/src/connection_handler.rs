@@ -110,6 +110,10 @@ async fn process_message_from_client(
                                 ServerToClientMessageVariant::SendToSender(message) => {
                                     state.send_to(&connection_id, message);
                                 }
+                                ServerToClientMessageVariant::SendTo((player_id, message)) => {
+                                    let connection_id = state.player_to_connection_map[&player_id];
+                                    state.send_to(&connection_id, message);
+                                }
                                 ServerToClientMessageVariant::Broadcast(message) => {
                                     state.broadcast(message);
                                 }

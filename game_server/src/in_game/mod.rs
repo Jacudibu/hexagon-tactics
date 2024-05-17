@@ -17,15 +17,17 @@ pub fn process_message(
     players: &mut HashMap<PlayerId, Player>,
     in_game_data: &mut InGameData,
 ) -> Result<Vec<ServerToClientMessageVariant>, ServerToClientMessage> {
-    let (player_state, player_resources) = in_game_data.deconstruct_for_processing(&sender);
-    let mut result =
-        player_state.process_message(sender, message, players, player_resources, game_data)?;
+    let (state, mut state_data) = in_game_data.deconstruct_for_processing(&sender);
+    let mut result = state.process_message(sender, message, players, &mut state_data, game_data)?;
+
+    drop(state_data);
 
     if let Some(state_transition) = &result.state_transition {
         let mut new_messages = state_transition.on_state_enter(&sender, in_game_data);
-
         result.add_messages(&mut new_messages);
     }
 
-    Ok(result.messages)
+    let result = Ok(result.messages);
+
+    result
 }

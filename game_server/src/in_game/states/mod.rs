@@ -1,21 +1,23 @@
 pub mod combat;
 pub mod combat_finished;
 pub mod pick_unit;
+mod waiting_for_others;
 
 use crate::in_game::command_invocation_result::CommandInvocationResult;
-use crate::in_game::in_game_data::InGameData;
+use crate::in_game::in_game_data::{InGameData, StateData};
 use crate::in_game::states::combat::{CombatState, CombatStateTransition};
 use crate::in_game::states::combat_finished::{CombatFinishedState, CombatFinishedTransition};
 use crate::in_game::states::pick_unit::{PickUnitState, PickUnitStateTransition};
+use crate::in_game::states::waiting_for_others::{WaitingForOthers, WaitingForOthersTransition};
 use crate::message_processor::ServerToClientMessageVariant;
 use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::ServerToClientMessage;
 use game_common::player::{Player, PlayerId};
-use game_common::player_resources::PlayerResources;
 use hashbrown::HashMap;
 
 pub enum StateTransitionKind {
+    WaitingForOthers(WaitingForOthersTransition),
     Combat(CombatStateTransition),
     CombatFinished(CombatFinishedTransition),
     PickUnit(PickUnitStateTransition),
@@ -31,14 +33,17 @@ impl StateTransitionKind {
         let players_in_state = in_game_data.get_all_players_in_same_state(sender);
 
         match self {
-            StateTransitionKind::PickUnit(state) => {
-                state.on_state_enter(in_game_data, players_in_state)
+            StateTransitionKind::PickUnit(transition) => {
+                transition.on_state_enter(in_game_data, players_in_state)
             }
-            StateTransitionKind::Combat(state) => {
-                state.on_state_enter(in_game_data, players_in_state)
+            StateTransitionKind::Combat(transition) => {
+                transition.on_state_enter(in_game_data, players_in_state)
             }
-            StateTransitionKind::CombatFinished(state) => {
-                state.on_state_enter(in_game_data, players_in_state)
+            StateTransitionKind::CombatFinished(transition) => {
+                transition.on_state_enter(in_game_data, players_in_state)
+            }
+            StateTransitionKind::WaitingForOthers(transition) => {
+                transition.on_state_enter(in_game_data, players_in_state)
             }
         }
     }
@@ -46,6 +51,7 @@ impl StateTransitionKind {
 
 pub enum InGameState {
     StartingGame,
+    WaitingForOthers(WaitingForOthers),
     PickUnit(PickUnitState),
     Combat(CombatState),
     CombatFinished(CombatFinishedState),
@@ -57,7 +63,7 @@ impl InGameState {
         sender: PlayerId,
         message: ClientToServerMessage,
         players: &mut HashMap<PlayerId, Player>,
-        player_resources: &mut HashMap<PlayerId, PlayerResources>,
+        state_data: &mut StateData,
         game_data: &GameData,
     ) -> Result<CommandInvocationResult, ServerToClientMessage> {
         match self {
@@ -65,14 +71,19 @@ impl InGameState {
                 // Technically this should never happen, as this is just the dummy initialization value
                 todo!()
             }
-            InGameState::Combat(ref mut state) => {
-                state.on_message(sender, message, players, player_resources, game_data)
-            }
+            InGameState::Combat(ref mut state) => state.on_message(
+                sender,
+                message,
+                players,
+                state_data.player_resources,
+                game_data,
+            ),
             InGameState::CombatFinished(ref mut state) => {
-                state.on_message(sender, message, player_resources)
+                state.on_message(sender, message, state_data.player_resources)
             }
-            InGameState::PickUnit(ref mut state) => {
-                state.on_message(sender, message, player_resources)
+            InGameState::PickUnit(ref mut state) => state.on_message(sender, message, state_data),
+            InGameState::WaitingForOthers(ref mut state) => {
+                todo!()
             }
         }
     }

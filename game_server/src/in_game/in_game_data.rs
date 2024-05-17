@@ -88,10 +88,45 @@ impl InGameData {
     pub fn deconstruct_for_processing(
         &mut self,
         sender: &PlayerId,
-    ) -> (&mut InGameState, &mut HashMap<PlayerId, PlayerResources>) {
-        (
-            self.states.get_mut(&self.player_states[sender]).unwrap(),
-            &mut self.player_resources,
-        )
+    ) -> (&mut InGameState, StateData) {
+        let state_id = self.player_states[sender];
+
+        let mut this_state = None;
+        let mut other_states = HashMap::new();
+        for x in self.states.iter_mut() {
+            if x.0 == &state_id {
+                this_state = Some(x.1);
+            } else {
+                other_states.insert(x.0, x.1);
+            }
+        }
+
+        let data = StateData {
+            state_id,
+            other_states,
+            other_player_states: &self.player_states,
+            player_resources: &mut self.player_resources,
+        };
+
+        (this_state.expect("State for player should exist!"), data)
+    }
+}
+
+pub struct StateData<'a> {
+    state_id: StateId,
+    other_states: HashMap<&'a StateId, &'a mut InGameState>,
+    other_player_states: &'a HashMap<PlayerId, StateId>,
+    pub player_resources: &'a mut HashMap<PlayerId, PlayerResources>,
+}
+
+impl<'a> StateData<'a> {
+    pub fn are_all_other_players_ready(&self) -> bool {
+        self.other_states.iter().all(|(_, state)| {
+            if let InGameState::WaitingForOthers(_) = state {
+                true
+            } else {
+                false
+            }
+        })
     }
 }

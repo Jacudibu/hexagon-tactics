@@ -14,6 +14,7 @@ use enum_as_inner::EnumAsInner;
 #[cfg_attr(test, derive(EnumAsInner))]
 pub enum ServerToClientMessageVariant {
     SendToSender(ServerToClientMessage),
+    SendTo((PlayerId, ServerToClientMessage)),
     Broadcast(ServerToClientMessage),
 }
 
