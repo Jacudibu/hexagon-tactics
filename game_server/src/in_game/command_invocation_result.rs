@@ -1,16 +1,31 @@
 use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::ServerToClientMessageVariant;
+use game_common::player::PlayerId;
 
 #[derive(Default)]
 pub struct CommandInvocationResult {
-    pub state_transition: Option<StateTransitionKind>,
+    pub state_transitions: Vec<StateTransition>,
     pub messages: Vec<ServerToClientMessageVariant>,
+}
+
+pub struct StateTransition {
+    pub players: Vec<PlayerId>,
+    pub kind: StateTransitionKind,
+}
+
+impl StateTransition {
+    pub fn new(player: PlayerId, kind: StateTransitionKind) -> Self {
+        Self {
+            players: vec![player],
+            kind,
+        }
+    }
 }
 
 impl CommandInvocationResult {
     #[must_use]
-    pub fn with_state_transition(mut self, state_transition: StateTransitionKind) -> Self {
-        self.state_transition = Some(state_transition);
+    pub fn with_state_transition(mut self, state_transition: StateTransition) -> Self {
+        self.state_transitions.push(state_transition);
         self
     }
 
@@ -20,8 +35,8 @@ impl CommandInvocationResult {
         self
     }
 
-    pub fn set_state_transition(&mut self, state_transition: StateTransitionKind) -> &Self {
-        self.state_transition = Some(state_transition);
+    pub fn add_state_transition(&mut self, state_transition: StateTransition) -> &Self {
+        self.state_transitions.push(state_transition);
         self
     }
 

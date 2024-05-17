@@ -49,8 +49,8 @@ impl InGameData {
     }
 
     pub fn add_player_to_other_player_state(&mut self, player: &PlayerId, player_to_add: PlayerId) {
-        let state = self.player_states[player];
-        self.assign_player_state(player_to_add, state);
+        let state_id = self.player_states[player];
+        self.assign_player_state(player_to_add, state_id);
     }
 
     pub fn get_all_players_in_same_state(&self, player_id: &PlayerId) -> Vec<PlayerId> {
@@ -128,5 +128,12 @@ impl<'a> StateData<'a> {
                 false
             }
         })
+    }
+
+    pub fn all_player_ids(&self) -> Vec<PlayerId> {
+        self.player_resources
+            .keys()
+            .cloned()
+            .collect::<Vec<PlayerId>>()
     }
 }

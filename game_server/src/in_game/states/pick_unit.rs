@@ -1,4 +1,4 @@
-use crate::in_game::command_invocation_result::CommandInvocationResult;
+use crate::in_game::command_invocation_result::{CommandInvocationResult, StateTransition};
 use crate::in_game::in_game_data::{InGameData, StateData};
 use crate::in_game::states::combat::CombatStateTransition;
 use crate::in_game::states::waiting_for_others::WaitingForOthersTransition;
@@ -25,25 +25,30 @@ pub struct PickUnitState {
 
 impl PickUnitStateTransition {
     #[must_use]
-    pub fn on_state_enter(
+    pub fn execute(
         &self,
         in_game_data: &mut InGameData,
-        players_in_state: Vec<PlayerId>,
+        affected_players: Vec<PlayerId>,
     ) -> Vec<ServerToClientMessageVariant> {
+        assert_eq!(
+            1,
+            affected_players.len(),
+            "Pick unit states should always be unique for every player!"
+        );
+        let player = affected_players[0];
+
         let mut result = Vec::new();
-        for player in players_in_state {
-            let state = PickUnitState {
-                units: create_units(3),
-                remaining_choices: self.remaining,
-            };
-            result.push(ServerToClientMessageVariant::SendTo((
-                player,
-                ServerToClientMessage::ChooseBetweenUnits(ChooseBetweenUnits {
-                    units: state.units.clone(),
-                }),
-            )));
-            in_game_data.insert_state_for_player(player, InGameState::PickUnit(state));
-        }
+        let state = PickUnitState {
+            units: create_units(3),
+            remaining_choices: self.remaining,
+        };
+        result.push(ServerToClientMessageVariant::SendTo((
+            player,
+            ServerToClientMessage::ChooseBetweenUnits(ChooseBetweenUnits {
+                units: state.units.clone(),
+            }),
+        )));
+        in_game_data.insert_state_for_player(player, InGameState::PickUnit(state));
 
         result
     }
@@ -80,17 +85,25 @@ impl PickUnitState {
         );
 
         if self.remaining_choices > 1 {
-            result.set_state_transition(StateTransitionKind::PickUnit(PickUnitStateTransition {
-                remaining: self.remaining_choices - 1,
-            }));
+            result.add_state_transition(StateTransition::new(
+                sender,
+                StateTransitionKind::PickUnit(PickUnitStateTransition {
+                    remaining: self.remaining_choices - 1,
+                }),
+            ));
         } else {
-            if state_data.are_all_other_players_ready() {
-                result.set_state_transition(StateTransitionKind::Combat(CombatStateTransition {}));
+            let transition = if state_data.are_all_other_players_ready() {
+                StateTransition {
+                    players: state_data.all_player_ids(),
+                    kind: StateTransitionKind::Combat(CombatStateTransition {}),
+                }
             } else {
-                result.set_state_transition(StateTransitionKind::WaitingForOthers(
-                    WaitingForOthersTransition {},
-                ));
-            }
+                StateTransition::new(
+                    sender,
+                    StateTransitionKind::WaitingForOthers(WaitingForOthersTransition {}),
+                )
+            };
+            result.add_state_transition(transition);
         }
 
         Ok(result)

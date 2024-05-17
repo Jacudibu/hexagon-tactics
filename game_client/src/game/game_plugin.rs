@@ -36,14 +36,14 @@ fn load_map_listener(
     mut commands: Commands,
     mut incoming_events: EventReader<server_to_client::LoadMap>,
     mut outgoing_events: EventWriter<SpawnMapCommand>,
-    mut next_application_state: ResMut<NextState<GameState>>,
+    mut next_game_state: ResMut<NextState<GameState>>,
 ) {
     for event in incoming_events.read() {
         match GameMap::load_from_file(&event.path) {
             Ok(map) => {
                 commands.insert_resource(map);
                 outgoing_events.send(SpawnMapCommand {});
-                next_application_state.set(GameState::Combat);
+                next_game_state.set(GameState::Combat);
             }
             Err(e) => {
                 error!("Failed to load map {} - error: {:?}", event.path, e)

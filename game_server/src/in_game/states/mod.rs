@@ -27,23 +27,21 @@ impl StateTransitionKind {
     #[must_use]
     pub fn on_state_enter(
         &self,
-        sender: &PlayerId,
         in_game_data: &mut InGameData,
+        affected_players: Vec<PlayerId>,
     ) -> Vec<ServerToClientMessageVariant> {
-        let players_in_state = in_game_data.get_all_players_in_same_state(sender);
-
         match self {
             StateTransitionKind::PickUnit(transition) => {
-                transition.on_state_enter(in_game_data, players_in_state)
+                transition.execute(in_game_data, affected_players)
             }
             StateTransitionKind::Combat(transition) => {
-                transition.on_state_enter(in_game_data, players_in_state)
+                transition.execute(in_game_data, affected_players)
             }
             StateTransitionKind::CombatFinished(transition) => {
-                transition.on_state_enter(in_game_data, players_in_state)
+                transition.execute(in_game_data, affected_players)
             }
             StateTransitionKind::WaitingForOthers(transition) => {
-                transition.on_state_enter(in_game_data, players_in_state)
+                transition.execute(in_game_data, affected_players)
             }
         }
     }
@@ -71,6 +69,10 @@ impl InGameState {
                 // Technically this should never happen, as this is just the dummy initialization value
                 todo!()
             }
+            InGameState::WaitingForOthers(ref mut _state) => {
+                // Until we have some kind of "stop waiting" command, this shouldn't be reachable
+                todo!()
+            }
             InGameState::Combat(ref mut state) => state.on_message(
                 sender,
                 message,
@@ -82,9 +84,6 @@ impl InGameState {
                 state.on_message(sender, message, state_data.player_resources)
             }
             InGameState::PickUnit(ref mut state) => state.on_message(sender, message, state_data),
-            InGameState::WaitingForOthers(ref mut state) => {
-                todo!()
-            }
         }
     }
 }

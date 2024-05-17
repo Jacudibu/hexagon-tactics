@@ -1,4 +1,4 @@
-use crate::in_game::command_invocation_result::CommandInvocationResult;
+use crate::in_game::command_invocation_result::{CommandInvocationResult, StateTransition};
 use crate::in_game::in_game_data::InGameData;
 use crate::in_game::states::combat_finished::CombatFinishedTransition;
 use crate::in_game::states::InGameState;
@@ -32,10 +32,10 @@ pub struct CombatState {
 
 impl CombatStateTransition {
     #[must_use]
-    pub fn on_state_enter(
+    pub fn execute(
         &self,
         in_game_data: &mut InGameData,
-        players_in_state: Vec<PlayerId>,
+        affected_players: Vec<PlayerId>,
     ) -> Vec<ServerToClientMessageVariant> {
         let mut result = Vec::new();
         let map = match GameMap::load_from_file(TEST_MAP_NAME) {
@@ -60,16 +60,20 @@ impl CombatStateTransition {
             loaded_map: map,
         };
 
-        in_game_data.insert_state_for_player(players_in_state[0], InGameState::Combat(match_data));
-        for player_id in 1..players_in_state.len() {
-            in_game_data.add_player_to_other_player_state(&players_in_state[0], player_id.clone());
+        in_game_data.insert_state_for_player(affected_players[0], InGameState::Combat(match_data));
+        for x in 1..affected_players.len() {
+            in_game_data
+                .add_player_to_other_player_state(&affected_players[0], affected_players[x]);
         }
 
-        result.push(ServerToClientMessageVariant::Broadcast(
-            ServerToClientMessage::LoadMap(LoadMap {
-                path: TEST_MAP_NAME.into(),
-            }),
-        ));
+        for player in affected_players {
+            result.push(ServerToClientMessageVariant::SendTo((
+                player,
+                ServerToClientMessage::LoadMap(LoadMap {
+                    path: TEST_MAP_NAME.into(),
+                }),
+            )));
+        }
 
         result
     }
@@ -105,22 +109,24 @@ impl CombatState {
             ))),
         }?;
 
-        let mut state_transition = None;
+        let mut state_transitions = Vec::new();
         if check_win_conditions {
             let (player_units, ai_units) = count_alive_units(&self.combat_data.units);
             if player_units == 0 {
-                state_transition = Some(StateTransitionKind::CombatFinished(
-                    CombatFinishedTransition {},
-                ));
+                state_transitions.push(StateTransition {
+                    players: players.keys().cloned().collect(),
+                    kind: StateTransitionKind::CombatFinished(CombatFinishedTransition {}),
+                });
                 messages.push(ServerToClientMessageVariant::Broadcast(
                     ServerToClientMessage::CombatFinished(CombatFinished {
                         winner: ActorId::AI,
                     }),
                 ));
             } else if ai_units == 0 {
-                state_transition = Some(StateTransitionKind::CombatFinished(
-                    CombatFinishedTransition {},
-                ));
+                state_transitions.push(StateTransition {
+                    players: players.keys().cloned().collect(),
+                    kind: StateTransitionKind::CombatFinished(CombatFinishedTransition {}),
+                });
                 messages.push(ServerToClientMessageVariant::Broadcast(
                     ServerToClientMessage::CombatFinished(CombatFinished {
                         winner: ActorId::Player(sender), // TODO: Sender might still be losing if this is pvp
@@ -130,7 +136,7 @@ impl CombatState {
         }
 
         Ok(CommandInvocationResult {
-            state_transition,
+            state_transitions,
             messages,
         })
     }

@@ -8,16 +8,19 @@ pub struct WaitingForOthers {}
 
 impl WaitingForOthersTransition {
     #[must_use]
-    pub fn on_state_enter(
+    pub fn execute(
         &self,
         in_game_data: &mut InGameData,
-        players_in_state: Vec<PlayerId>,
+        affected_players: Vec<PlayerId>,
     ) -> Vec<ServerToClientMessageVariant> {
-        for player in players_in_state {
-            in_game_data
-                .insert_state_for_player(player, InGameState::WaitingForOthers(WaitingForOthers {}))
+        let messages = Vec::new();
+        for player in affected_players {
+            in_game_data.insert_state_for_player(
+                player,
+                InGameState::WaitingForOthers(WaitingForOthers {}),
+            );
         }
 
-        Vec::new()
+        messages
     }
 }
