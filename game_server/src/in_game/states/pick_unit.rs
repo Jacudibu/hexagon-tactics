@@ -122,26 +122,26 @@ fn create_unit(game_data: &GameData) -> UnitDefinition {
     let mut rng = rand::thread_rng();
 
     let race = {
-        let index = rng.gen_range(0..game_data.races.len());
+        let index = rng.gen_range(1..=game_data.races.len());
         game_data.races.get(&index).unwrap().id
     };
 
     let weapon = if rng.gen_bool(0.5) {
-        let index = rng.gen_range(0..game_data.weapons.len());
+        let index = rng.gen_range(1..=game_data.weapons.len());
         game_data.weapons.get(&index).map(|x| x.id)
     } else {
         None
     };
 
     let armor = if rng.gen_bool(0.5) {
-        let index = rng.gen_range(0..game_data.armor.len());
+        let index = rng.gen_range(1..=game_data.armor.len());
         game_data.armor.get(&index).map(|x| x.id)
     } else {
         None
     };
 
     let accessory = if rng.gen_bool(0.5) {
-        let index = rng.gen_range(0..game_data.accessories.len());
+        let index = rng.gen_range(1..=game_data.accessories.len());
         game_data.accessories.get(&index).map(|x| x.id)
     } else {
         None

@@ -74,6 +74,7 @@ fn choose_between_units_ui(
         .anchor(Align2::CENTER_CENTER, egui::Vec2::new(0.0, 0.0))
         .fixed_pos(Pos2::new(0.0, 0.0))
         .show(egui.ctx_mut(), |ui| {
+            ui.set_max_width(1920.0);
             ui.horizontal(|ui| {
                 for unit in &units.units {
                     ui.vertical(|ui| {
