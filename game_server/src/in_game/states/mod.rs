@@ -27,12 +27,13 @@ impl StateTransitionKind {
     #[must_use]
     pub fn on_state_enter(
         &self,
+        game_data: &GameData,
         in_game_data: &mut InGameData,
         affected_players: Vec<PlayerId>,
     ) -> Vec<ServerToClientMessageVariant> {
         match self {
             StateTransitionKind::PickUnit(transition) => {
-                transition.execute(in_game_data, affected_players)
+                transition.execute(game_data, in_game_data, affected_players)
             }
             StateTransitionKind::Combat(transition) => {
                 transition.execute(in_game_data, affected_players)

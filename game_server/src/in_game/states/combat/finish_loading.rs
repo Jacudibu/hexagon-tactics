@@ -4,7 +4,7 @@ use game_common::combat_turn::CombatTurn;
 use game_common::combat_unit::{
     get_unique_unit_id, ActorId, CombatUnit, CombatUnitKind, MonsterData,
 };
-use game_common::game_data::DEBUG_MONSTER_ID;
+use game_common::game_data::monster::DEBUG_MONSTER_ID;
 use game_common::network_events::server_to_client::{
     PlaceUnit, PlayerTurnToPlaceUnit, ServerToClientMessage, UpdateReadyStateForPlayer,
 };

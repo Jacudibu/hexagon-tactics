@@ -1,6 +1,9 @@
 use crate::combat_unit::UnitId;
+use crate::game_data::class::ClassId;
+use crate::game_data::equipment::WeaponId;
+use crate::game_data::race::RaceId;
 use crate::game_data::skill::SkillId;
-use crate::game_data::{AccessoryId, ArmorId, ClassId, GameData, RaceId, WeaponId};
+use crate::game_data::{AccessoryId, ArmorId, GameData};
 use crate::player::PlayerId;
 use crate::unit_stats::UnitStats;
 use bevy::prelude::Event;
@@ -21,7 +24,7 @@ pub struct UnitDefinition {
 
     pub race: RaceId,
     pub levels: HashMap<ClassId, Level>,
-    pub unlocked_skills: Vec<SkillId>,
+    pub permanently_unlocked_skills: Vec<SkillId>,
     pub weapon: Option<WeaponId>,
     pub armor: Option<ArmorId>,
     pub accessory: Option<AccessoryId>,
@@ -42,28 +45,28 @@ impl UnitDefinition {
             }
         }
         if let Some(weapon) = &self.weapon {
-            result += data.weapons[weapon].base_stats;
+            result += data.weapons[weapon].stats;
         }
         if let Some(armor) = &self.armor {
-            result += data.armor[armor].base_stats;
+            result += data.armor[armor].stats;
         }
         if let Some(accessory) = &self.accessory {
-            result += data.accessories[accessory].base_stats;
+            result += data.accessories[accessory].stats;
         }
 
         result.into()
     }
 
     pub fn all_available_skills(&self, data: &GameData) -> Vec<SkillId> {
-        let mut result = self.unlocked_skills.clone();
+        let mut result = self.permanently_unlocked_skills.clone();
         if let Some(weapon) = &self.weapon {
-            result.extend(data.weapons[weapon].extra_skills.clone());
+            result.extend(&data.weapons[weapon].skills);
         }
         if let Some(armor) = &self.armor {
-            result.extend(data.armor[armor].extra_skills.clone());
+            result.extend(&data.armor[armor].skills);
         }
         if let Some(accessory) = &self.accessory {
-            result.extend(data.accessories[accessory].extra_skills.clone());
+            result.extend(&data.accessories[accessory].skills);
         }
 
         result

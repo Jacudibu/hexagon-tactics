@@ -7,12 +7,13 @@ use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_unit::get_unique_unit_id;
 use game_common::game_data::unit_definition::UnitDefinition;
-use game_common::game_data::DEBUG_RACE_ID;
+use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     AddUnit, ChooseBetweenUnits, ServerToClientMessage,
 };
 use game_common::player::PlayerId;
+use rand::Rng;
 
 pub struct PickUnitStateTransition {
     pub remaining: u8,
@@ -27,6 +28,7 @@ impl PickUnitStateTransition {
     #[must_use]
     pub fn execute(
         &self,
+        game_data: &GameData,
         in_game_data: &mut InGameData,
         affected_players: Vec<PlayerId>,
     ) -> Vec<ServerToClientMessageVariant> {
@@ -39,7 +41,7 @@ impl PickUnitStateTransition {
 
         let mut result = Vec::new();
         let state = PickUnitState {
-            units: create_units(3),
+            units: create_units(3, game_data),
             remaining_choices: self.remaining,
         };
         result.push(ServerToClientMessageVariant::SendTo((
@@ -110,21 +112,50 @@ impl PickUnitState {
     }
 }
 
-fn create_units(amount: u8) -> Vec<UnitDefinition> {
-    (0..amount).map(|_| create_unit()).collect()
+fn create_units(amount: u8, game_data: &GameData) -> Vec<UnitDefinition> {
+    (0..amount).map(|_| create_unit(game_data)).collect()
 }
 
-fn create_unit() -> UnitDefinition {
+fn create_unit(game_data: &GameData) -> UnitDefinition {
     let id = get_unique_unit_id();
+
+    let mut rng = rand::thread_rng();
+
+    let race = {
+        let index = rng.gen_range(0..game_data.races.len());
+        game_data.races.get(&index).unwrap().id
+    };
+
+    let weapon = if rng.gen_bool(0.5) {
+        let index = rng.gen_range(0..game_data.weapons.len());
+        game_data.weapons.get(&index).map(|x| x.id)
+    } else {
+        None
+    };
+
+    let armor = if rng.gen_bool(0.5) {
+        let index = rng.gen_range(0..game_data.armor.len());
+        game_data.armor.get(&index).map(|x| x.id)
+    } else {
+        None
+    };
+
+    let accessory = if rng.gen_bool(0.5) {
+        let index = rng.gen_range(0..game_data.accessories.len());
+        game_data.accessories.get(&index).map(|x| x.id)
+    } else {
+        None
+    };
+
     UnitDefinition {
         id,
         owner: 0,
         name: format!("Unit #{}", id),
-        race: DEBUG_RACE_ID,
         levels: Default::default(),
-        unlocked_skills: vec![],
-        weapon: None,
-        armor: None,
-        accessory: None,
+        permanently_unlocked_skills: vec![],
+        race,
+        weapon,
+        armor,
+        accessory,
     }
 }

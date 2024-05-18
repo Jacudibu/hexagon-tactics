@@ -2303,6 +2303,7 @@ dependencies = [
  "game-common",
  "hashbrown",
  "hexx",
+ "rand",
  "tokio",
  "tracing",
  "tracing-subscriber",

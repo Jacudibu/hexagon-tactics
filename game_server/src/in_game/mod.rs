@@ -23,20 +23,27 @@ pub fn process_message(
 
     drop(state_data);
 
-    let result = process_state_transitions(in_game_data, result.messages, result.state_transitions);
+    let result = process_state_transitions(
+        game_data,
+        in_game_data,
+        result.messages,
+        result.state_transitions,
+    );
 
     Ok(result)
 }
 
 fn process_state_transitions(
+    game_data: &GameData,
     in_game_data: &mut InGameData,
     mut messages: Vec<ServerToClientMessageVariant>,
     state_transitions: Vec<StateTransition>,
 ) -> Vec<ServerToClientMessageVariant> {
     for state_transition in state_transitions {
-        let mut new_messages = state_transition
-            .kind
-            .on_state_enter(in_game_data, state_transition.players);
+        let mut new_messages =
+            state_transition
+                .kind
+                .on_state_enter(game_data, in_game_data, state_transition.players);
 
         messages.append(&mut new_messages);
     }

@@ -1,7 +1,8 @@
+use crate::game_data::equipment::WeaponId;
+use crate::game_data::equipment::{AccessoryId, ArmorId};
+use crate::game_data::monster::{MonsterDefinition, MonsterId};
+use crate::game_data::race::{RaceId, DEBUG_RACE_ID};
 use crate::game_data::unit_definition::UnitDefinition;
-use crate::game_data::{
-    AccessoryId, ArmorId, MonsterDefinition, MonsterId, RaceId, WeaponId, DEBUG_RACE_ID,
-};
 use crate::player::PlayerId;
 use crate::unit_stats::UnitStats;
 use hexx::Hex;
@@ -134,7 +135,7 @@ impl CombatUnit {
 #[cfg(feature = "test_helpers")]
 pub mod test_helpers {
     use crate::combat_unit::{ActorId, CombatUnit, CombatUnitKind, HumanoidData, UnitId};
-    use crate::game_data::DEBUG_RACE_ID;
+    use crate::game_data::race::DEBUG_RACE_ID;
     use crate::player::PlayerId;
     use crate::unit_stats::UnitStats;
     use hexx::Hex;

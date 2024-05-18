@@ -16,6 +16,7 @@ futures.workspace = true
 tokio.workspace = true
 wtransport.workspace = true
 hexx.workspace = true
+rand = "0.8.5"
 
 [dev-dependencies]
 game-common = { path = "../game_common", features = ["test_helpers"] }
