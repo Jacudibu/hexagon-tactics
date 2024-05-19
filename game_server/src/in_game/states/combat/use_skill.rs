@@ -24,19 +24,12 @@ pub fn use_skill(
         .unwrap()
         .unit_id;
 
-    let Some(used_skill) = game_data.skills.get(&message.id) else {
-        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
-            ErrorWhenProcessingMessage {
-                message: format!("Invalid Skill Id: {}", message.id),
-            },
-        ));
-    };
-    let user = &match_data.combat_data.units[&unit_id];
-
-    validation::validate_unit_has_enough_resources_to_use_skill(user, used_skill)?;
+    let unit = &match_data.combat_data.units[&unit_id];
+    let used_skill = validation::validate_unit_knows_skill(unit, message.id, game_data)?;
+    validation::validate_unit_has_enough_resources_to_use_skill(unit, used_skill)?;
     validation::validate_skill_target_is_in_range(
         &used_skill,
-        user.position,
+        unit.position,
         message.target_coordinates,
     )?;
 
@@ -44,7 +37,7 @@ pub fn use_skill(
     let targets = used_skill
         .get_valid_target_hexagons(
             message.target_coordinates,
-            user.position,
+            unit.position,
             &match_data.loaded_map,
         )
         .into_iter()
@@ -57,7 +50,7 @@ pub fn use_skill(
 
     for unit_id in targets {
         let target = &match_data.combat_data.units[unit_id];
-        let hit = used_skill.calculate_damage(user, target);
+        let hit = used_skill.calculate_damage(unit, target);
         hits.push(hit);
     }
 

@@ -24,6 +24,8 @@ impl MonsterDefinition {
                 name: "DEBUG MONSTER".into(),
                 skills: Vec::new(),
                 stats: BaseStats {
+                    hp: 5,
+                    mp: 5,
                     movement: 3,
                     jump: 3,
                     strength: 5,

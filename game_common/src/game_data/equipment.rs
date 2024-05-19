@@ -26,11 +26,13 @@ impl AccessoryDefinition {
 
         result.insert(
             DEBUG_ACCESSORY_GARLIC_ID,
-            WeaponDefinition {
+            AccessoryDefinition {
                 id: DEBUG_ACCESSORY_GARLIC_ID,
                 name: "Debug Accessory: Garlic".into(),
                 description: "It's quite stinky!".into(),
                 stats: BaseStats {
+                    hp: 2,
+                    mp: 4,
                     movement: 0,
                     jump: 0,
                     strength: 0,
@@ -51,11 +53,13 @@ impl ArmorDefinition {
 
         result.insert(
             DEBUG_ARMOR_ID,
-            WeaponDefinition {
+            ArmorDefinition {
                 id: DEBUG_ARMOR_ID,
                 name: "Debug Armor".into(),
                 description: "Important Plot Armor!".into(),
                 stats: BaseStats {
+                    hp: 10,
+                    mp: 0,
                     movement: 0,
                     jump: 0,
                     strength: 0,
@@ -82,6 +86,8 @@ impl WeaponDefinition {
                 name: "Debug Sword".into(),
                 description: "Hit them with the pointy end!".into(),
                 stats: BaseStats {
+                    hp: 0,
+                    mp: 0,
                     movement: 0,
                     jump: 0,
                     strength: 5,
@@ -97,6 +103,8 @@ impl WeaponDefinition {
                 name: "Debug Staff".into(),
                 description: "Staff goes bonk!".into(),
                 stats: BaseStats {
+                    hp: 0,
+                    mp: 20,
                     movement: 0,
                     jump: 0,
                     strength: 0,

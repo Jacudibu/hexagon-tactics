@@ -97,7 +97,7 @@ impl CombatState {
             ClientToServerMessage::EndTurn => end_turn::end_turn(sender, self),
             ClientToServerMessage::PlaceUnit(message) => {
                 check_win_conditions = false;
-                place_unit::place_unit(sender, message, players, player_resources, self)
+                place_unit::place_unit(sender, message, players, player_resources, self, game_data)
             }
             ClientToServerMessage::MoveUnit(message) => move_unit::move_unit(sender, message, self),
             ClientToServerMessage::UseSkill(message) => {

@@ -24,6 +24,8 @@ impl RaceDefinition {
                 name: "DEBUG RACE".into(),
                 extra_skills: Vec::new(),
                 base_stats: BaseStats {
+                    hp: 10,
+                    mp: 10,
                     movement: 3,
                     jump: 3,
                     strength: 5,

@@ -98,7 +98,7 @@ impl SkillDefinition {
     fn debug_attack_single_target() -> SkillDefinition {
         SkillDefinition {
             id: DEBUG_SINGLE_TARGET_ATTACK_ID,
-            name: "Debug Attack".into(),
+            name: "Single Target Debug Attack".into(),
             base_power: 5,
             mp_costs: 0,
             targeting: SkillTargeting::MouseCursor(SkillRange { min: 1, max: 1 }),
@@ -109,7 +109,7 @@ impl SkillDefinition {
     fn debug_attack_aoe() -> SkillDefinition {
         SkillDefinition {
             id: DEBUG_AOE_TARGET_ATTACK_ID,
-            name: "Debug Attack".into(),
+            name: "Circular AoE Debug Attack".into(),
             base_power: 5,
             mp_costs: 0,
             targeting: SkillTargeting::MouseCursor(SkillRange { min: 2, max: 5 }),
@@ -120,7 +120,7 @@ impl SkillDefinition {
     fn debug_attack_t_shaped() -> SkillDefinition {
         SkillDefinition {
             id: DEBUG_AOE_T_SHAPED,
-            name: "Debug Attack".into(),
+            name: "T-Shaped AoE Debug Attack".into(),
             base_power: 5,
             mp_costs: 0,
             targeting: SkillTargeting::UserPosition,

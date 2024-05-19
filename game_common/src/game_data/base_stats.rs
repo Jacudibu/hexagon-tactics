@@ -2,6 +2,8 @@ use crate::unit_stats::UnitStats;
 
 #[derive(Copy, Clone)]
 pub struct BaseStats {
+    pub hp: i32,
+    pub mp: i32,
     pub movement: i8,
     pub jump: i8,
     pub strength: i32,
@@ -20,6 +22,8 @@ impl std::ops::AddAssign for BaseStats {
 impl Into<UnitStats> for BaseStats {
     fn into(self) -> UnitStats {
         UnitStats {
+            max_health: Self::clamp_u32(self.hp),
+            max_mana: Self::clamp_u32(self.mp),
             movement: Self::clamp_u8(self.movement),
             jump: Self::clamp_u8(self.jump),
             strength: Self::clamp_u32(self.strength),

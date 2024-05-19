@@ -13,9 +13,6 @@ use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
 use game_common::combat_unit::CombatUnit;
-use game_common::game_data::skill::{
-    DEBUG_AOE_TARGET_ATTACK_ID, DEBUG_AOE_T_SHAPED, DEBUG_SINGLE_TARGET_ATTACK_ID,
-};
 use game_common::game_data::GameData;
 use game_common::player_resources::PlayerResources;
 
@@ -127,6 +124,7 @@ fn draw_state_ui(
     mut egui: EguiContexts,
     combat_state: Res<State<CombatState>>,
     combat_data: Res<CombatData>,
+    game_data: Res<GameData>,
     end_turn_event: EventWriter<EndTurnCommand>,
     change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionEvent>,
     leave_combat_event: EventWriter<LeaveCombatCommand>,
@@ -148,6 +146,7 @@ fn draw_state_ui(
                 build_this_player_unit_turn_ui(
                     ui,
                     &combat_data,
+                    &game_data,
                     change_unit_action_event,
                     end_turn_event,
                 );
@@ -193,6 +192,7 @@ fn build_waiting_for_player_ui(ui: &mut Ui, combat_data: &CombatData) {
 fn build_this_player_unit_turn_ui(
     ui: &mut Ui,
     combat_data: &CombatData,
+    game_data: &GameData,
     mut change_unit_action_event: EventWriter<SetOrToggleActiveUnitActionEvent>,
     mut end_turn_event: EventWriter<EndTurnCommand>,
 ) {
@@ -208,20 +208,13 @@ fn build_this_player_unit_turn_ui(
             }
         });
         ui.add_enabled_ui(turn.remaining_actions > 0, |ui| {
-            if ui.button("Attack").clicked() {
-                change_unit_action_event.send(SetOrToggleActiveUnitActionEvent {
-                    action: ActiveUnitAction::UseSkill(DEBUG_SINGLE_TARGET_ATTACK_ID),
-                });
-            }
-            if ui.button("Aoe Attack").clicked() {
-                change_unit_action_event.send(SetOrToggleActiveUnitActionEvent {
-                    action: ActiveUnitAction::UseSkill(DEBUG_AOE_TARGET_ATTACK_ID),
-                });
-            }
-            if ui.button("T Attack").clicked() {
-                change_unit_action_event.send(SetOrToggleActiveUnitActionEvent {
-                    action: ActiveUnitAction::UseSkill(DEBUG_AOE_T_SHAPED),
-                });
+            for skill in unit.all_available_skills(game_data) {
+                let skill = &game_data.skills[&skill];
+                if ui.button(skill.name.clone()).clicked() {
+                    change_unit_action_event.send(SetOrToggleActiveUnitActionEvent {
+                        action: ActiveUnitAction::UseSkill(skill.id),
+                    });
+                }
             }
         });
         if ui.button("End Turn").clicked() {

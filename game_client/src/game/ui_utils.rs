@@ -5,7 +5,8 @@ use game_common::game_data::GameData;
 pub fn print_unit_definition_info(ui: &mut Ui, unit: &UnitDefinition, game_data: &GameData) {
     let mut lines = Vec::new();
     let stats = unit.calculate_stats(game_data);
-    lines.push(format!("HP: {}", "TODO"));
+    lines.push(format!("HP: {}", stats.max_health));
+    lines.push(format!("MP: {}", stats.max_mana));
     lines.push(format!("Move: {} | Jump: {}", stats.movement, stats.jump));
     lines.push(format!("Speed: {}", stats.speed));
     ui.label(lines.join("\n"));
@@ -28,5 +29,11 @@ pub fn print_unit_definition_info(ui: &mut Ui, unit: &UnitDefinition, game_data:
         ui.label(format!("Weapon: {}", item.name));
     } else {
         ui.label("Weapon: None".to_string());
+    }
+
+    ui.label(RichText::new("Skills").heading());
+    for skill in unit.all_available_skills(game_data) {
+        let skill = &game_data.skills[&skill];
+        ui.label(skill.name.clone());
     }
 }
