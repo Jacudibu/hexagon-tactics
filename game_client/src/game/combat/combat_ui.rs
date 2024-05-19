@@ -100,6 +100,7 @@ fn draw_selected_unit_info(
 fn draw_unit_info(mut egui: EguiContexts, unit: &CombatUnit, anchor: Align2) {
     let mut lines = Vec::new();
     lines.push(format!("HP: {}", unit.hp));
+    lines.push(format!("MP: {}", unit.mp));
     lines.push(format!(
         "Move: {} | Jump: {}",
         unit.stats_after_buffs.movement, unit.stats_after_buffs.jump

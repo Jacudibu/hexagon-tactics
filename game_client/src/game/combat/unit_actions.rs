@@ -237,7 +237,7 @@ pub fn on_use_skill(
 
             // TODO: Stat reduction should be extracted into common
             // TODO: Consider extracting this into a "unit takes damage"-Event
-            if target.hp < x.physical_damage {
+            if target.hp <= x.physical_damage {
                 target.hp = 0;
 
                 let entity = locals.unit_entities[&target.id];
