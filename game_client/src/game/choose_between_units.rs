@@ -77,7 +77,7 @@ fn choose_between_units_ui(
             ui.horizontal(|ui| {
                 for unit in &units.units {
                     ui.vertical(|ui| {
-                        ui.set_min_width(250.0);
+                        ui.set_min_width(200.0);
                         ui.label(
                             RichText::new(format!("{}", unit.name)).text_style(TextStyle::Heading),
                         );

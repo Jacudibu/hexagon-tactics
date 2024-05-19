@@ -21,7 +21,7 @@ impl MonsterDefinition {
             DEBUG_MONSTER_ID,
             Self {
                 id: DEBUG_MONSTER_ID,
-                name: "DEBUG MONSTER".into(),
+                name: "Slime".into(),
                 skills: Vec::new(),
                 stats: BaseStats {
                     hp: 5,

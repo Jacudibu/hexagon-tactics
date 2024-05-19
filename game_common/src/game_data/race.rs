@@ -21,7 +21,7 @@ impl RaceDefinition {
             DEBUG_RACE_ID,
             Self {
                 id: DEBUG_RACE_ID,
-                name: "DEBUG RACE".into(),
+                name: "Hooman".into(),
                 extra_skills: Vec::new(),
                 base_stats: BaseStats {
                     hp: 10,
