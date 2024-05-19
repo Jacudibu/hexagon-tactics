@@ -6,13 +6,15 @@ use crate::in_game::states::InGameState;
 use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_unit::get_unique_unit_id;
-use game_common::game_data::unit_definition::UnitDefinition;
+use game_common::game_data::class::ClassId;
+use game_common::game_data::unit_definition::{Level, UnitDefinition};
 use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     AddUnit, ChooseBetweenUnits, ServerToClientMessage,
 };
 use game_common::player::PlayerId;
+use hashbrown::HashMap;
 use rand::Rng;
 
 pub struct PickUnitStateTransition {
@@ -121,6 +123,12 @@ fn create_unit(game_data: &GameData) -> UnitDefinition {
 
     let mut rng = rand::thread_rng();
 
+    let class = {
+        let index = rng.gen_range(1..=game_data.classes.len());
+        game_data.classes.get(&index).unwrap().id
+    };
+    let levels = HashMap::from([(class, Level::default())]);
+
     let race = {
         let index = rng.gen_range(1..=game_data.races.len());
         game_data.races.get(&index).unwrap().id
@@ -151,7 +159,7 @@ fn create_unit(game_data: &GameData) -> UnitDefinition {
         id,
         owner: 0,
         name: format!("Unit #{}", id),
-        levels: Default::default(),
+        levels,
         permanently_unlocked_skills: vec![],
         race,
         weapon,

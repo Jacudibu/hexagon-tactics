@@ -31,7 +31,7 @@ impl GameData {
     pub fn load() -> Self {
         GameData {
             races: RaceDefinition::mock_data(),
-            classes: Default::default(),
+            classes: ClassDefinition::mock_data(),
             skills: SkillDefinition::mock_data(),
             weapons: WeaponDefinition::mock_weapons(),
             armor: ArmorDefinition::mock_armor(),

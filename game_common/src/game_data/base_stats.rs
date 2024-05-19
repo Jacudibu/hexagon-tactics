@@ -12,6 +12,8 @@ pub struct BaseStats {
 
 impl std::ops::AddAssign for BaseStats {
     fn add_assign(&mut self, rhs: Self) {
+        self.hp += rhs.hp;
+        self.mp += rhs.mp;
         self.movement += rhs.movement;
         self.jump += rhs.jump;
         self.strength += rhs.strength;

@@ -3,13 +3,22 @@ use game_common::game_data::unit_definition::UnitDefinition;
 use game_common::game_data::GameData;
 
 pub fn print_unit_definition_info(ui: &mut Ui, unit: &UnitDefinition, game_data: &GameData) {
-    let mut lines = Vec::new();
+    let race = &game_data.races[&unit.race];
+    ui.label(format!("{}", race.name));
+
+    for (class_id, level) in &unit.levels {
+        let class = &game_data.classes[class_id];
+        ui.label(format!("{} Lv. {}", class.name, level.level));
+    }
+
+    ui.label(RichText::new("Stats").heading());
+
     let stats = unit.calculate_stats(game_data);
-    lines.push(format!("HP: {}", stats.max_health));
-    lines.push(format!("MP: {}", stats.max_mana));
-    lines.push(format!("Move: {} | Jump: {}", stats.movement, stats.jump));
-    lines.push(format!("Speed: {}", stats.speed));
-    ui.label(lines.join("\n"));
+    ui.label(format!("HP: {}", stats.max_health));
+    ui.label(format!("MP: {}", stats.max_mana));
+    ui.label(format!("Move: {} | Jump: {}", stats.movement, stats.jump));
+    ui.label(format!("Strength: {}", stats.strength));
+    ui.label(format!("Speed: {}", stats.speed));
 
     ui.label(RichText::new("Equipment").heading());
     if let Some(accessory) = unit.accessory {

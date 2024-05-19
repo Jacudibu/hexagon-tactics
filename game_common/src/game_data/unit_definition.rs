@@ -16,6 +16,15 @@ pub struct Level {
     pub experience: u32,
 }
 
+impl Default for Level {
+    fn default() -> Self {
+        Self {
+            level: 1,
+            experience: 0,
+        }
+    }
+}
+
 #[derive(Event, Serialize, Deserialize, Debug, Clone)]
 pub struct UnitDefinition {
     pub id: UnitId,
