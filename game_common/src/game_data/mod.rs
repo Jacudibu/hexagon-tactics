@@ -10,6 +10,7 @@ use race::{RaceDefinition, RaceId};
 pub mod base_stats;
 pub mod class;
 pub mod equipment;
+pub mod level;
 pub mod monster;
 pub mod race;
 pub mod skill;

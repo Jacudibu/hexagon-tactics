@@ -114,6 +114,17 @@ async fn process_message_from_client(
                                     let connection_id = state.player_to_connection_map[&player_id];
                                     state.send_to(&connection_id, message);
                                 }
+                                ServerToClientMessageVariant::SendToMultiple((
+                                    player_ids,
+                                    message,
+                                )) => {
+                                    // TODO: Optimize send_to_multiple to avoid cloning the message
+                                    for player_id in &player_ids {
+                                        let connection_id =
+                                            state.player_to_connection_map[player_id];
+                                        state.send_to(&connection_id, message.clone());
+                                    }
+                                }
                                 ServerToClientMessageVariant::Broadcast(message) => {
                                     state.broadcast(message);
                                 }

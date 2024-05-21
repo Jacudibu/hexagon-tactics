@@ -1,6 +1,7 @@
 use crate::combat_unit::UnitId;
 use crate::game_data::class::ClassId;
 use crate::game_data::equipment::WeaponId;
+use crate::game_data::level::Level;
 use crate::game_data::race::RaceId;
 use crate::game_data::skill::SkillId;
 use crate::game_data::{AccessoryId, ArmorId, GameData};
@@ -10,26 +11,12 @@ use bevy::prelude::Event;
 use bevy::utils::HashMap;
 use serde::{Deserialize, Serialize};
 
-#[derive(Event, Serialize, Deserialize, Debug, Copy, Clone)]
-pub struct Level {
-    pub level: u8,
-    pub experience: u32,
-}
-
-impl Default for Level {
-    fn default() -> Self {
-        Self {
-            level: 1,
-            experience: 0,
-        }
-    }
-}
-
 #[derive(Event, Serialize, Deserialize, Debug, Clone)]
 pub struct UnitDefinition {
     pub id: UnitId,
     pub owner: PlayerId, // TODO: Probably should be an enum - None, Player, NPCEnemy
     pub name: String,
+    pub active_class: ClassId,
 
     pub race: RaceId,
     pub levels: HashMap<ClassId, Level>,

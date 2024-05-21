@@ -21,6 +21,7 @@ use hashbrown::HashMap;
 pub mod end_turn;
 pub mod finish_loading;
 pub mod move_unit;
+mod on_combat_end;
 pub mod place_unit;
 pub mod use_skill;
 

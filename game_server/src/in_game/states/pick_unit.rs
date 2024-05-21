@@ -6,8 +6,8 @@ use crate::in_game::states::InGameState;
 use crate::in_game::states::StateTransitionKind;
 use crate::message_processor::{create_error_response, ServerToClientMessageVariant};
 use game_common::combat_unit::get_unique_unit_id;
-use game_common::game_data::class::ClassId;
-use game_common::game_data::unit_definition::{Level, UnitDefinition};
+use game_common::game_data::level::Level;
+use game_common::game_data::unit_definition::UnitDefinition;
 use game_common::game_data::GameData;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{

@@ -15,6 +15,7 @@ use enum_as_inner::EnumAsInner;
 pub enum ServerToClientMessageVariant {
     SendToSender(ServerToClientMessage),
     SendTo((PlayerId, ServerToClientMessage)),
+    SendToMultiple((Vec<PlayerId>, ServerToClientMessage)),
     Broadcast(ServerToClientMessage),
 }
 
