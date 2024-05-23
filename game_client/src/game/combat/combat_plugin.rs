@@ -20,6 +20,7 @@ use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     CombatFinished, PlayerTurnToPlaceUnit, StartUnitTurn,
 };
+use game_common::player_resources::PlayerResources;
 
 pub struct CombatPlugin;
 
@@ -127,10 +128,20 @@ pub fn on_start_unit_turn(
 
 pub fn on_combat_finished(
     mut events: EventReader<CombatFinished>,
+    mut player_resources: ResMut<PlayerResources>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
     local_player_id: Res<LocalPlayerId>,
 ) {
     for event in events.read() {
+        // TODO: Persist lost units in Victory/Defeat state for UI
+        player_resources
+            .units
+            .retain(|x| !event.casualties.contains(&x.id));
+
+        for x in &mut player_resources.units {
+            x.add_experience(event.experience);
+        }
+
         if event.winners.contains(&local_player_id.actor) {
             next_combat_state.set(CombatState::Victory);
         } else {

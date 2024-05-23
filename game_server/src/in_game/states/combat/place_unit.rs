@@ -51,6 +51,7 @@ pub fn place_unit(
     combat_state.combat_data.units.insert(unit.id, unit.clone());
 
     // TODO: start combat when X units have been placed by each player instead of doing... this
+    // TODO: Also make sure that the user actually has any more units to place now that we can remove them
     let next = if combat_state.combat_data.units.len() >= (3 * players.len() + 2) {
         let unit_id = combat_state.combat_data.get_unit_for_next_turn();
         combat_state.combat_data.start_unit_turn(unit_id);

@@ -1,7 +1,7 @@
 use crate::combat_unit::UnitId;
 use crate::game_data::class::ClassId;
 use crate::game_data::equipment::WeaponId;
-use crate::game_data::level::Level;
+use crate::game_data::level::{Level, LevelUp};
 use crate::game_data::race::RaceId;
 use crate::game_data::skill::SkillId;
 use crate::game_data::{AccessoryId, ArmorId, GameData};
@@ -66,5 +66,13 @@ impl UnitDefinition {
         }
 
         result
+    }
+
+    pub fn add_experience(&mut self, amount: u32) -> LevelUp {
+        return self
+            .levels
+            .get_mut(&self.active_class)
+            .unwrap()
+            .add_experience(amount);
     }
 }
