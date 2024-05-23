@@ -49,7 +49,7 @@ fn setup_state(
         combat_data
             .units
             .iter()
-            .filter(|(_, unit)| unit.owner == local_player_id.owner)
+            .filter(|(_, unit)| unit.owner == local_player_id.actor)
             .count()
             < units.len(),
         "All units have been placed, yet we just entered SetupState for CombatState::PlaceUnit ?",

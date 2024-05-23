@@ -113,26 +113,16 @@ impl CombatState {
         let mut state_transitions = Vec::new();
         if check_win_conditions {
             let (player_units, ai_units) = count_alive_units(&self.combat_data.units);
-            if player_units == 0 {
-                state_transitions.push(StateTransition {
-                    players: players.keys().cloned().collect(),
-                    kind: StateTransitionKind::CombatFinished(CombatFinishedTransition {}),
-                });
-                messages.push(ServerToClientMessageVariant::Broadcast(
-                    ServerToClientMessage::CombatFinished(CombatFinished {
-                        winner: ActorId::AI,
-                    }),
-                ));
-            } else if ai_units == 0 {
-                state_transitions.push(StateTransition {
-                    players: players.keys().cloned().collect(),
-                    kind: StateTransitionKind::CombatFinished(CombatFinishedTransition {}),
-                });
-                messages.push(ServerToClientMessageVariant::Broadcast(
-                    ServerToClientMessage::CombatFinished(CombatFinished {
-                        winner: ActorId::Player(sender), // TODO: Sender might still be losing if this is pvp
-                    }),
-                ));
+            if player_units == 0 || ai_units == 0 {
+                let (transition, mut extra_messages) = on_combat_end::on_combat_end(
+                    players,
+                    player_resources,
+                    &self.combat_data,
+                    game_data,
+                );
+
+                state_transitions.push(transition);
+                messages.append(&mut extra_messages);
             }
         }
 

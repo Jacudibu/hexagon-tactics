@@ -23,7 +23,7 @@ pub fn on_you_connected(
 
         commands.insert_resource(LocalPlayerId {
             id: x.player_id,
-            owner: ActorId::Player(x.player_id),
+            actor: ActorId::Player(x.player_id),
         });
         commands.insert_resource(ConnectedPlayers {
             players: all_players,

@@ -92,7 +92,7 @@ pub struct UseSkill {
 
 #[derive(Event, Serialize, Deserialize, PartialEq, Debug)]
 pub struct CombatFinished {
-    pub winner: ActorId,
+    pub winners: Vec<ActorId>,
     pub experience: u32,
     pub casualties: Vec<UnitId>,
 }

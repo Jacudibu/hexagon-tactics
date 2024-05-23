@@ -10,3 +10,5 @@ target/
 *.pdb
 
 test_map.map
+
+game_client/assets/sprites/wip_ignore_in_git/

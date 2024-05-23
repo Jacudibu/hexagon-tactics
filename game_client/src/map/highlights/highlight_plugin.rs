@@ -16,8 +16,8 @@ use bevy::log::error;
 use bevy::math::Vec3;
 use bevy::pbr::{NotShadowCaster, PbrBundle};
 use bevy::prelude::{
-    default, on_event, resource_changed_or_removed, Commands, Component, Condition, Entity,
-    IntoSystemConfigs, OnExit, Plugin, Query, Res, Resource, Transform, With,
+    default, in_state, on_event, resource_changed_or_removed, Commands, Component, Condition,
+    Entity, IntoSystemConfigs, OnExit, Plugin, Query, Res, Resource, Transform, With,
 };
 use game_common::game_map::{GameMap, HEX_LAYOUT};
 use hexx::Hex;
@@ -40,7 +40,8 @@ impl Plugin for HighlightPlugin {
                     resource_changed_or_removed::<CursorOnTile>()
                         .or_else(on_event::<TileChangeEvent>()),
                 ),
-            ),
+            )
+                .run_if(in_state(MapState::Loaded)),
         );
         app.add_systems(OnExit(MapState::Loaded), clean_up);
     }

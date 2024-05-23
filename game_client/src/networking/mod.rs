@@ -13,7 +13,7 @@ pub use network_plugin::{NetworkPlugin, NetworkState};
 #[derive(Resource)]
 pub struct LocalPlayerId {
     pub id: PlayerId,
-    pub owner: ActorId,
+    pub actor: ActorId,
 }
 
 #[derive(Resource)]

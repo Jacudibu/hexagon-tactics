@@ -16,7 +16,6 @@ use bevy::prelude::{
 };
 use game_common::combat_data::CombatData;
 use game_common::combat_turn::CombatTurn;
-use game_common::combat_unit::ActorId;
 use game_common::network_events::client_to_server::ClientToServerMessage;
 use game_common::network_events::server_to_client::{
     CombatFinished, PlayerTurnToPlaceUnit, StartUnitTurn,
@@ -113,7 +112,7 @@ pub fn on_start_unit_turn(
             continue;
         };
 
-        if unit.owner == local_player_id.owner {
+        if unit.owner == local_player_id.actor {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer)
@@ -129,12 +128,13 @@ pub fn on_start_unit_turn(
 pub fn on_combat_finished(
     mut events: EventReader<CombatFinished>,
     mut next_combat_state: ResMut<NextState<CombatState>>,
+    local_player_id: Res<LocalPlayerId>,
 ) {
     for event in events.read() {
-        if event.winner == ActorId::AI {
-            next_combat_state.set(CombatState::Defeated);
-        } else {
+        if event.winners.contains(&local_player_id.actor) {
             next_combat_state.set(CombatState::Victory);
+        } else {
+            next_combat_state.set(CombatState::Defeated);
         }
     }
 }

@@ -212,7 +212,7 @@ pub fn on_move_unit(
             tile: unit.position,
         });
 
-        if unit.owner == local_player_id.owner {
+        if unit.owner == local_player_id.actor {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer);
@@ -268,7 +268,7 @@ pub fn on_use_skill(
                 &map,
             ));
 
-        if unit.owner == local_player_id.owner {
+        if unit.owner == local_player_id.actor {
             next_combat_state.set(CombatState::ThisPlayerUnitTurn);
         } else {
             next_combat_state.set(CombatState::WaitingForOtherPlayer);

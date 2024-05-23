@@ -159,6 +159,7 @@ fn create_unit(game_data: &GameData) -> UnitDefinition {
         id,
         owner: 0,
         name: format!("Unit #{}", id),
+        active_class: class,
         levels,
         permanently_unlocked_skills: vec![],
         race,
