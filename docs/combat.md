@@ -1,7 +1,7 @@
 # Combat
 
-Battles take place on a hexagonal battlefield. Turn-Based, but one turn for each individual unit rather than for each
-player.
+Battles take place on a hexagonal [battlefield](battlefield.md). Turn-Based, but one turn for each individual unit
+rather than for each player.
 
 New combatants can either be trained (costing resources) or hired randomly after each encounter (costing money). Maybe
 the player can also attempt to tame wild monsters instead of defeating them.
