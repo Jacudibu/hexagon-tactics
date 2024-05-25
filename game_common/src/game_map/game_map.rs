@@ -26,6 +26,7 @@ impl GameMap {
                     height: 1,
                     surface: TileSurface::Grass,
                     fluid: None,
+                    spawn_zone: None,
                 },
             );
         }

@@ -62,4 +62,7 @@ target the entire tile, and, as such, will interact with all props at once.
     - Example: a table.
 - Interactable: A unit standing next to this prop might use it to trigger a certain action.
     - Example: A closed door or a lever.
-- 
+
+## Spawn Zones
+
+Every team is assigned a (random) spawn zone on the map, these have to marked during map creation. They cannot overlap.

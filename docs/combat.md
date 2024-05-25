@@ -6,6 +6,11 @@ rather than for each player.
 New combatants can either be trained (costing resources) or hired randomly after each encounter (costing money). Maybe
 the player can also attempt to tame wild monsters instead of defeating them.
 
+## Unit Placement
+
+At the start of combat, each player has to place their units on the battlefield. Units can only be placed into
+designated Spawn Zones. Once the maximum amount of placeable units have been placed, the actual combat starts.
+
 ## Turn Actions
 
 - Move: How many tiles a unit can move depends on the units class. A Unit can move, interact, and move again.

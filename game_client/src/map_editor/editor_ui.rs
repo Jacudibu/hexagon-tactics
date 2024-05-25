@@ -1,5 +1,6 @@
 use crate::map::SpawnMapCommand;
-use crate::map_editor::map_editor_plugin::{MapEditorAction, MapEditorTool, ACTION_TO_TOOL};
+use crate::map_editor::map_editor_action::{MapEditorAction, ACTION_TO_TOOL};
+use crate::map_editor::map_editor_tool::MapEditorTool;
 use crate::ApplicationState;
 use bevy::app::{App, Plugin};
 use bevy::prelude::*;

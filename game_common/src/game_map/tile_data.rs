@@ -7,4 +7,5 @@ pub struct TileData {
     pub height: u8,
     pub surface: TileSurface,
     pub fluid: Option<Fluid>,
+    pub spawn_zone: Option<u8>,
 }
