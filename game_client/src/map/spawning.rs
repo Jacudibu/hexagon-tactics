@@ -197,7 +197,7 @@ pub fn are_tile_sides_necessary(map: &GameMap, tile_data: &TileData, hex: &Hex) 
 
     hex.all_neighbors().iter().any(|x| match map.tiles.get(x) {
         None => true,
-        Some(neighbor) => neighbor.height != tile_data.height,
+        Some(neighbor) => neighbor.height < tile_data.height,
     })
 }
 
