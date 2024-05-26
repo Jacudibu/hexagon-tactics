@@ -2,15 +2,16 @@ use std::fmt::Formatter;
 use std::ops::DerefMut;
 
 use bevy::log::error;
-use bevy::prelude::{Commands, Event, EventReader, EventWriter, Local, Res, ResMut, Resource};
+use bevy::prelude::{EventWriter, Local, Res, ResMut, Resource};
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
 use game_common::game_map::{Fluid, FluidKind, GameMap, TileData, TileSurface, MAX_HEIGHT};
 
-use crate::map::{CursorOnTile, RangeHighlights, TileChangeEvent};
+use crate::map::{CursorOnTile, TileChangeEvent};
 use crate::map_editor::map_editor_action::MapEditorAction;
 use crate::map_editor::multiselect_data::MultiselectData;
+use crate::map_editor::tools::events::{AddSpawnMarkerEvent, RemoveSpawnMarkerEvent};
 
 #[derive(Resource, Debug, Default)]
 pub enum MapEditorTool {
@@ -202,89 +203,6 @@ fn use_tool_on_tile(
         MapEditorTool::RemoveSpawnTile => {
             tile.spawn_zone = None;
             remove_spawn_marker_event.send(RemoveSpawnMarkerEvent { tile: hex.clone() });
-        }
-    }
-}
-
-pub fn on_tool_change(
-    commands: Commands,
-    map: Res<GameMap>,
-    tool: Option<Res<MapEditorTool>>,
-    highlights: Option<Res<RangeHighlights>>,
-) {
-    match tool {
-        None => {
-            remove_all_spawn_spot_markers(commands);
-        }
-        Some(tool) => match tool.into_inner() {
-            MapEditorTool::MarkSpawnTile(_) => {
-                if highlights.is_none() {
-                    create_all_spawn_spot_markers(commands, map)
-                }
-            }
-            MapEditorTool::RemoveSpawnTile => {
-                if highlights.is_none() {
-                    create_all_spawn_spot_markers(commands, map)
-                }
-            }
-            _ => {
-                if highlights.is_some() {
-                    remove_all_spawn_spot_markers(commands)
-                }
-            }
-        },
-    }
-}
-
-fn create_all_spawn_spot_markers(mut commands: Commands, map: Res<GameMap>) {
-    let mut tiles = Vec::new();
-
-    for (hex, data) in &map.tiles {
-        let Some(_team) = data.spawn_zone else {
-            continue;
-        };
-
-        tiles.push(hex.clone());
-    }
-
-    commands.insert_resource(RangeHighlights { tiles });
-}
-
-fn remove_all_spawn_spot_markers(mut commands: Commands) {
-    commands.remove_resource::<RangeHighlights>()
-}
-
-#[derive(Event)]
-pub struct AddSpawnMarkerEvent {
-    pub tile: Hex,
-    pub team: u8,
-}
-
-#[derive(Event)]
-pub struct RemoveSpawnMarkerEvent {
-    pub tile: Hex,
-}
-
-pub fn on_add_spawn_marker(
-    mut events: EventReader<AddSpawnMarkerEvent>,
-    mut existing_highlights: ResMut<RangeHighlights>,
-) {
-    for event in events.read() {
-        existing_highlights.tiles.push(event.tile);
-    }
-}
-
-pub fn on_remove_spawn_marker(
-    mut events: EventReader<RemoveSpawnMarkerEvent>,
-    mut existing_highlights: ResMut<RangeHighlights>,
-) {
-    for event in events.read() {
-        if let Some(pos) = existing_highlights
-            .tiles
-            .iter()
-            .position(|x| x == &event.tile)
-        {
-            existing_highlights.tiles.swap_remove(pos);
         }
     }
 }
