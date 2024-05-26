@@ -1,6 +1,7 @@
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{
-    in_state, Commands, EventWriter, IntoSystemConfigs, OnEnter, OnExit, Res, ResMut,
+    in_state, on_event, resource_changed_or_removed, Commands, EventWriter, IntoSystemConfigs,
+    OnEnter, OnExit, Res, ResMut,
 };
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::plugin::InputManagerPlugin;
@@ -21,6 +22,8 @@ impl Plugin for MapEditorPlugin {
         app.add_plugins(InputManagerPlugin::<MapEditorAction>::default());
         app.add_plugins(MapEditorUiPlugin);
         app.init_resource::<ActionState<MapEditorAction>>();
+        app.add_event::<map_editor_tool::AddSpawnMarkerEvent>();
+        app.add_event::<map_editor_tool::RemoveSpawnMarkerEvent>();
         app.insert_resource(MapEditorAction::default_input_map());
         app.add_systems(OnEnter(ApplicationState::MapEditor), setup_map_editor);
         app.add_systems(OnExit(ApplicationState::MapEditor), exit_map_editor);
@@ -31,6 +34,12 @@ impl Plugin for MapEditorPlugin {
                 map_editor_tool::use_tool
                     .after(track_input)
                     .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
+                map_editor_tool::on_tool_change
+                    .run_if(resource_changed_or_removed::<MapEditorTool>()),
+                map_editor_tool::on_add_spawn_marker
+                    .run_if(on_event::<map_editor_tool::AddSpawnMarkerEvent>()),
+                map_editor_tool::on_remove_spawn_marker
+                    .run_if(on_event::<map_editor_tool::RemoveSpawnMarkerEvent>()),
             )
                 .run_if(in_state(ApplicationState::MapEditor))
                 .run_if(in_state(MapState::Loaded)),
