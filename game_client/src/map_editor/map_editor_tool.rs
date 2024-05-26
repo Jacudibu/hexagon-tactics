@@ -1,3 +1,4 @@
+use bevy::ecs::system::SystemParam;
 use std::fmt::Formatter;
 use std::ops::DerefMut;
 
@@ -39,6 +40,12 @@ impl std::fmt::Display for MapEditorTool {
     }
 }
 
+#[derive(SystemParam)]
+pub struct EventWriters<'w> {
+    add_spawn_marker_event: EventWriter<'w, AddSpawnMarkerEvent>,
+    remove_spawn_marker_event: EventWriter<'w, RemoveSpawnMarkerEvent>,
+}
+
 pub fn use_tool(
     map: ResMut<GameMap>,
     active_tool: Res<MapEditorTool>,
@@ -46,8 +53,7 @@ pub fn use_tool(
     input_state: Res<ActionState<MapEditorAction>>,
     mut multiselect_data: Local<MultiselectData>,
     mut tile_change_event: EventWriter<TileChangeEvent>,
-    mut add_spawn_marker_event: EventWriter<AddSpawnMarkerEvent>,
-    mut remove_spawn_marker_event: EventWriter<RemoveSpawnMarkerEvent>,
+    mut event_writers: EventWriters,
 ) {
     let Some(cursor) = cursor else {
         return;
@@ -65,8 +71,7 @@ pub fn use_tool(
             &cursor,
             multiselect_data,
             &mut tile_change_event,
-            &mut add_spawn_marker_event,
-            &mut remove_spawn_marker_event,
+            &mut event_writers,
         );
 
         return;
@@ -81,8 +86,7 @@ pub fn use_tool(
                 &cursor,
                 multiselect_data,
                 &mut tile_change_event,
-                &mut add_spawn_marker_event,
-                &mut remove_spawn_marker_event,
+                &mut event_writers,
             );
         }
     }
@@ -94,8 +98,7 @@ fn create_tool_events_for_tile(
     cursor: &CursorOnTile,
     mut multiselect_data: Local<MultiselectData>,
     tile_change_event: &mut EventWriter<TileChangeEvent>,
-    add_spawn_marker_event: &mut EventWriter<AddSpawnMarkerEvent>,
-    remove_spawn_marker_event: &mut EventWriter<RemoveSpawnMarkerEvent>,
+    event_writers: &mut EventWriters,
 ) {
     let cursor = std::iter::once(cursor);
     tile_change_event.send_batch(cursor.filter_map(|cursor| {
@@ -109,13 +112,7 @@ fn create_tool_events_for_tile(
             if let Some(tile) = map.tiles.get_mut(&cursor.hex) {
                 if can_tool_be_used_on_tile(&active_tool, tile) {
                     let old_data = tile.clone();
-                    use_tool_on_tile(
-                        &active_tool,
-                        &cursor.hex,
-                        tile,
-                        add_spawn_marker_event,
-                        remove_spawn_marker_event,
-                    );
+                    use_tool_on_tile(&active_tool, &cursor.hex, tile, event_writers);
                     Some(TileChangeEvent {
                         hex: cursor.hex,
                         old_data,
@@ -150,8 +147,7 @@ fn use_tool_on_tile(
     tool: &MapEditorTool,
     hex: &Hex,
     tile: &mut TileData,
-    add_spawn_marker_event: &mut EventWriter<AddSpawnMarkerEvent>,
-    remove_spawn_marker_event: &mut EventWriter<RemoveSpawnMarkerEvent>,
+    event_writers: &mut EventWriters,
 ) {
     match tool {
         MapEditorTool::RaiseTiles => {
@@ -195,14 +191,18 @@ fn use_tool_on_tile(
         }
         MapEditorTool::MarkSpawnTile(team) => {
             tile.spawn_zone = Some(team.clone());
-            add_spawn_marker_event.send(AddSpawnMarkerEvent {
-                tile: hex.clone(),
-                team: team.clone(),
-            });
+            event_writers
+                .add_spawn_marker_event
+                .send(AddSpawnMarkerEvent {
+                    hex: hex.clone(),
+                    team: team.clone(),
+                });
         }
         MapEditorTool::RemoveSpawnTile => {
             tile.spawn_zone = None;
-            remove_spawn_marker_event.send(RemoveSpawnMarkerEvent { tile: hex.clone() });
+            event_writers
+                .remove_spawn_marker_event
+                .send(RemoveSpawnMarkerEvent { hex: hex.clone() });
         }
     }
 }

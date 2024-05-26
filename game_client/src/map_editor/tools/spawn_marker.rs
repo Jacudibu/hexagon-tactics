@@ -30,13 +30,13 @@ impl Plugin for SpawnMarkerToolPlugin {
 
 #[derive(Event)]
 pub struct AddSpawnMarkerEvent {
-    pub tile: Hex,
+    pub hex: Hex,
     pub team: u8,
 }
 
 #[derive(Event)]
 pub struct RemoveSpawnMarkerEvent {
-    pub tile: Hex,
+    pub hex: Hex,
 }
 
 fn on_tool_change(
@@ -92,7 +92,7 @@ pub fn on_add_spawn_marker(
     mut existing_highlights: ResMut<RangeHighlights>,
 ) {
     for event in events.read() {
-        existing_highlights.tiles.push(event.tile);
+        existing_highlights.tiles.push(event.hex);
     }
 }
 
@@ -104,7 +104,7 @@ pub fn on_remove_spawn_marker(
         if let Some(pos) = existing_highlights
             .tiles
             .iter()
-            .position(|x| x == &event.tile)
+            .position(|x| x == &event.hex)
         {
             existing_highlights.tiles.swap_remove(pos);
         }
