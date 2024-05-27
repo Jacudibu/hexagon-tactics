@@ -27,7 +27,9 @@ impl Plugin for GameMapPlugin {
 pub enum MapState {
     #[default]
     Unloaded,
-    Loaded,
+    Despawning,
+    Spawning,
+    Ready,
 }
 
 #[derive(Component, Debug)]

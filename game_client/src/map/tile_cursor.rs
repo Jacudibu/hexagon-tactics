@@ -15,13 +15,13 @@ impl Plugin for TileCursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(DeferredRaycastingPlugin::<TileRaycastSet>::default());
         app.insert_resource(RaycastPluginState::<TileRaycastSet>::default());
-        app.add_systems(OnEnter(MapState::Loaded), setup_camera);
+        app.add_systems(OnEnter(MapState::Ready), setup_camera);
         app.add_systems(
             First,
             (update_mouse_cursor
                 .after(bevy_mod_raycast::deferred::update_target_intersections::<TileRaycastSet>))
             .run_if(in_state(MouseCursorOverUiState::NotOverUI))
-            .run_if(in_state(MapState::Loaded)),
+            .run_if(in_state(MapState::Ready)),
         );
     }
 }

@@ -18,7 +18,7 @@ impl Plugin for MapGizmosPlugin {
         app.add_systems(Startup, setup_gizmo_config);
         app.add_systems(
             Update,
-            (draw_hexagon_gizmos, draw_cursor_gizmos).run_if(in_state(MapState::Loaded)),
+            (draw_hexagon_gizmos, draw_cursor_gizmos).run_if(in_state(MapState::Ready)),
         );
     }
 }

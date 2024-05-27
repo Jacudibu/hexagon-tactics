@@ -20,7 +20,7 @@ impl Plugin for MapUiPlugin {
                 Update,
                 tile_cursor_ui
                     .run_if(resource_exists::<CursorOnTile>)
-                    .run_if(in_state(MapState::Loaded)),
+                    .run_if(in_state(MapState::Ready)),
             );
     }
 }

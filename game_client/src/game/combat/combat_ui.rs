@@ -31,7 +31,7 @@ impl Plugin for CombatUiPlugin {
                     .run_if(resource_exists::<CurrentlyPlacedUnit>),
                 (draw_selected_unit_info, draw_state_ui)
                     .run_if(in_state(ApplicationState::InGame))
-                    .run_if(in_state(MapState::Loaded)),
+                    .run_if(in_state(MapState::Ready)),
             ),
         );
     }

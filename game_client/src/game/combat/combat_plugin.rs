@@ -35,7 +35,7 @@ impl Plugin for CombatPlugin {
         app.add_plugins(LeaveCombatPlugin);
         app.init_state::<CombatState>();
         app.add_systems(
-            OnEnter(MapState::Loaded),
+            OnEnter(MapState::Ready),
             on_map_loaded.run_if(in_state(ApplicationState::InGame)),
         );
         app.add_systems(

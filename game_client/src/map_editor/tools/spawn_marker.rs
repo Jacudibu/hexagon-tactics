@@ -23,7 +23,7 @@ impl Plugin for SpawnMarkerToolPlugin {
                 on_remove_spawn_marker.run_if(on_event::<RemoveSpawnMarkerEvent>()),
             )
                 .run_if(in_state(ApplicationState::MapEditor))
-                .run_if(in_state(MapState::Loaded)),
+                .run_if(in_state(MapState::Ready)),
         );
     }
 }

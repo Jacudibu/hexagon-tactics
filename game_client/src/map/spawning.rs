@@ -4,7 +4,7 @@ use crate::map::map_plugin::{
 };
 use crate::map::tile_cursor::TileRaycastSet;
 use crate::map::METERS_PER_TILE_HEIGHT_UNIT;
-use bevy::app::{App, First, Last, Plugin, Startup};
+use bevy::app::{App, Last, Plugin, Startup};
 use bevy::core::Name;
 use bevy::hierarchy::{BuildChildren, DespawnRecursiveExt};
 use bevy::math::{EulerRot, Quat};
@@ -12,8 +12,8 @@ use bevy::pbr::{
     AmbientLight, DirectionalLight, DirectionalLightBundle, NotShadowCaster, PbrBundle,
 };
 use bevy::prelude::{
-    default, on_event, resource_added, resource_removed, Color, Commands, Entity, Event,
-    IntoSystemConfigs, NextState, Res, ResMut, SpatialBundle, Transform,
+    default, on_event, Color, Commands, Entity, Event, IntoSystemConfigs, NextState, OnEnter, Res,
+    ResMut, SpatialBundle, Transform, Update,
 };
 use bevy::utils::HashMap;
 use bevy_mod_raycast::deferred::RaycastMesh;
@@ -28,17 +28,16 @@ impl Plugin for MapSpawningPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_light);
         app.add_systems(
-            First,
+            Last,
             (
-                on_map_spawned.run_if(resource_added::<MapTileEntities>),
-                on_map_despawned.run_if(resource_removed::<MapTileEntities>()),
                 spawn_map_command_listener.run_if(on_event::<SpawnMapCommand>()),
+                despawn_map_command_listener.run_if(on_event::<DespawnMapCommand>()),
             ),
         );
-        app.add_systems(
-            Last,
-            despawn_map_command_listener.run_if(on_event::<DespawnMapCommand>()),
-        );
+
+        app.add_systems(OnEnter(MapState::Despawning), despawn_map);
+        app.add_systems(OnEnter(MapState::Spawning), spawn_map);
+
         app.add_event::<SpawnMapCommand>();
         app.add_event::<DespawnMapCommand>();
     }
@@ -67,17 +66,34 @@ fn setup_light(mut commands: Commands) {
     });
 }
 
-pub fn despawn_map_command_listener(mut commands: Commands, map_entities: ResMut<MapTileEntities>) {
-    commands.entity(map_entities.parent).despawn_recursive();
-    commands.remove_resource::<MapTileEntities>();
+pub fn despawn_map_command_listener(mut new_map_state: ResMut<NextState<MapState>>) {
+    new_map_state.set(MapState::Despawning);
 }
 
-pub fn spawn_map_command_listener(
+pub fn despawn_map(
+    mut commands: Commands,
+    map_entities: ResMut<MapTileEntities>,
+    mut new_map_state: ResMut<NextState<MapState>>,
+) {
+    commands.entity(map_entities.parent).despawn_recursive();
+    commands.remove_resource::<MapTileEntities>();
+    commands.remove_resource::<GameMap>();
+
+    new_map_state.set(MapState::Unloaded);
+}
+
+pub fn spawn_map_command_listener(mut new_map_state: ResMut<NextState<MapState>>) {
+    // TODO: Extra step where we load the map resource here.
+    new_map_state.set(MapState::Spawning);
+}
+
+pub fn spawn_map(
     mut commands: Commands,
     map: Res<GameMap>,
     existing_map_tile_entities: Option<Res<MapTileEntities>>,
     materials: Res<HexagonMaterials>,
     meshes: Res<HexagonMeshes>,
+    mut new_map_state: ResMut<NextState<MapState>>,
 ) {
     if let Some(map_tile_entities) = existing_map_tile_entities {
         commands
@@ -159,6 +175,7 @@ pub fn spawn_map_command_listener(
         parent: map_parent,
         entities,
     });
+    new_map_state.set(MapState::Ready);
 }
 
 pub fn spawn_side_entity(
@@ -231,13 +248,4 @@ pub fn spawn_fluid_entity(
             .set_parent(parent)
             .id(),
     )
-}
-
-pub fn on_map_spawned(mut new_map_state: ResMut<NextState<MapState>>) {
-    new_map_state.set(MapState::Loaded);
-}
-
-pub fn on_map_despawned(mut commands: Commands, mut new_map_state: ResMut<NextState<MapState>>) {
-    commands.remove_resource::<GameMap>();
-    new_map_state.set(MapState::Unloaded);
 }

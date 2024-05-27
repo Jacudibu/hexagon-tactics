@@ -41,9 +41,9 @@ impl Plugin for HighlightPlugin {
                         .or_else(on_event::<TileChangeEvent>()),
                 ),
             )
-                .run_if(in_state(MapState::Loaded)),
+                .run_if(in_state(MapState::Ready)),
         );
-        app.add_systems(OnExit(MapState::Loaded), clean_up);
+        app.add_systems(OnExit(MapState::Ready), clean_up);
     }
 }
 

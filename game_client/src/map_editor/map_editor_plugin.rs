@@ -29,14 +29,14 @@ impl Plugin for MapEditorPlugin {
             PreUpdate,
             switch_tool_on_button_press
                 .run_if(in_state(ApplicationState::MapEditor))
-                .run_if(in_state(MapState::Loaded)),
+                .run_if(in_state(MapState::Ready)),
         );
         app.add_systems(
             Update,
             use_tool
                 .run_if(in_state(MouseCursorOverUiState::NotOverUI))
                 .run_if(in_state(ApplicationState::MapEditor))
-                .run_if(in_state(MapState::Loaded)),
+                .run_if(in_state(MapState::Ready)),
         );
     }
 }
