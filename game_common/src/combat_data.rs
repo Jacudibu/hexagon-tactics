@@ -29,7 +29,7 @@ impl CombatData {
     }
 
     #[must_use]
-    pub fn can_unit_be_placed_on_tile(&self, hex: &Hex, map: &GameMap) -> bool {
+    pub fn can_unit_be_placed_on_tile(&self, team: &u8, hex: &Hex, map: &GameMap) -> bool {
         if self.unit_positions.contains_key(hex) {
             return false;
         }
@@ -38,6 +38,16 @@ impl CombatData {
             error!("Invalid tile coordinates: {:?}", hex);
             return false;
         };
+
+        let Some(spawn_team) = &tile.spawn_zone else {
+            error!("Invalid tile coordinates: {:?}", hex);
+            return false;
+        };
+
+        if spawn_team != team {
+            error!("Invalid tile coordinates: {:?}", hex);
+            return false;
+        }
 
         if let Some(fluid) = &tile.fluid {
             if fluid.height > 1.0 {

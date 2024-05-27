@@ -27,10 +27,11 @@ pub fn place_unit(
         player_resources,
     )?;
 
-    if !combat_state
-        .combat_data
-        .can_unit_be_placed_on_tile(&message.hex, &combat_state.loaded_map)
-    {
+    if !combat_state.combat_data.can_unit_be_placed_on_tile(
+        &1,
+        &message.hex,
+        &combat_state.loaded_map,
+    ) {
         return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
             ErrorWhenProcessingMessage {
                 message: "Invalid Position!".into(),
