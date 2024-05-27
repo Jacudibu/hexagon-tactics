@@ -4,7 +4,7 @@ use crate::ApplicationState;
 use bevy::app::{App, Plugin};
 use bevy::prelude::{
     in_state, on_event, resource_changed_or_removed, Commands, Event, EventReader,
-    IntoSystemConfigs, Res, ResMut, Update,
+    IntoSystemConfigs, OnEnter, Res, ResMut, Update,
 };
 use game_common::game_map::GameMap;
 use hexx::Hex;
@@ -24,6 +24,11 @@ impl Plugin for SpawnMarkerToolPlugin {
             )
                 .run_if(in_state(ApplicationState::MapEditor))
                 .run_if(in_state(MapState::Ready)),
+        );
+
+        app.add_systems(
+            OnEnter(MapState::Ready),
+            on_tool_change.run_if(in_state(ApplicationState::MapEditor)),
         );
     }
 }

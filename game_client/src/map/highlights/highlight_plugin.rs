@@ -40,8 +40,7 @@ impl Plugin for HighlightPlugin {
                     resource_changed_or_removed::<CursorOnTile>()
                         .or_else(on_event::<TileChangeEvent>()),
                 ),
-            )
-                .run_if(in_state(MapState::Ready)),
+            ),
         );
         app.add_systems(OnExit(MapState::Ready), clean_up);
     }
@@ -51,16 +50,19 @@ fn on_highlight_change<TMarker: Component + Default, TResource: Resource + Highl
     mut commands: Commands,
     existing_highlights: Query<Entity, With<TMarker>>,
     highlighted_tiles: Option<Res<TResource>>,
-    map: Res<GameMap>,
+    map: Option<Res<GameMap>>,
     hexagon_meshes: Res<HexagonMeshes>,
     cursor_materials: Res<HighlightMaterials>,
 ) {
-    // TODO: Would probably be cheaper to move highlights instead of respawning them :^)
     for entity in existing_highlights.iter() {
         commands.entity(entity).despawn();
     }
 
     let Some(highlighted_tiles) = highlighted_tiles else {
+        return;
+    };
+
+    let Some(map) = map else {
         return;
     };
 
@@ -86,29 +88,12 @@ fn on_highlight_change<TMarker: Component + Default, TResource: Resource + Highl
     }
 }
 
-fn clean_up(
-    mut commands: Commands,
-    cursor: Query<Entity, With<CursorHighlightMarker>>,
-    range: Query<Entity, With<RangeHighlightMarker>>,
-    attack: Query<Entity, With<AttackHighlightMarker>>,
-    active: Query<Entity, With<ActiveUnitHighlightMarker>>,
-    path: Query<Entity, With<PathHighlightMarker>>,
-) {
-    for x in cursor.iter() {
-        commands.entity(x).despawn();
-    }
-    for x in range.iter() {
-        commands.entity(x).despawn();
-    }
-    for x in attack.iter() {
-        commands.entity(x).despawn();
-    }
-    for x in active.iter() {
-        commands.entity(x).despawn();
-    }
-    for x in path.iter() {
-        commands.entity(x).despawn();
-    }
+fn clean_up(mut commands: Commands) {
+    commands.remove_resource::<CursorOnTile>();
+    commands.remove_resource::<RangeHighlights>();
+    commands.remove_resource::<AttackHighlights>();
+    commands.remove_resource::<ActiveUnitHighlights>();
+    commands.remove_resource::<PathHighlights>();
 }
 
 fn highlight_position(map: &GameMap, hex: &Hex, extra_height: f32) -> Vec3 {
