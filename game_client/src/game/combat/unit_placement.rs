@@ -3,7 +3,7 @@ use crate::game::combat::combat_plugin::CombatState;
 use crate::game::combat::local_combat_data::LocalCombatData;
 use crate::game::sprite_builder;
 use crate::load::CharacterSprites;
-use crate::map::CursorOnTile;
+use crate::map::{CursorOnTile, RangeHighlights};
 use crate::networking::LocalPlayerId;
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dParams;
@@ -41,6 +41,7 @@ pub struct CurrentlyPlacedUnit {
 fn setup_state(
     mut commands: Commands,
     player_resources: Res<PlayerResources>,
+    map: Res<GameMap>,
     combat_data: Res<CombatData>,
     local_player_id: Res<LocalPlayerId>,
 ) {
@@ -58,10 +59,14 @@ fn setup_state(
     commands.insert_resource(CurrentlyPlacedUnit {
         array_index: get_next_unplaced_unit_index(&combat_data, units, units.len()),
     });
+
+    let spawn_spots = map.get_spawn_points_for_team(&1);
+    commands.insert_resource(RangeHighlights { tiles: spawn_spots })
 }
 
 fn leave_state(mut commands: Commands) {
     commands.remove_resource::<CurrentlyPlacedUnit>();
+    commands.remove_resource::<RangeHighlights>();
 }
 
 fn get_next_unplaced_unit_index(

@@ -104,6 +104,24 @@ impl GameMap {
 
         Some(1)
     }
+
+    #[must_use]
+    pub fn get_spawn_points_for_team(&self, player_team: &u8) -> Vec<Hex> {
+        self.tiles
+            .iter()
+            .filter_map(|(hex, tile)| {
+                let Some(team) = &tile.spawn_zone else {
+                    return None;
+                };
+
+                if player_team != team {
+                    return None;
+                }
+
+                Some(hex.clone())
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
