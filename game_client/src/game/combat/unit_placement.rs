@@ -157,6 +157,7 @@ fn input_listener(
     action_state: Res<ActionState<CombatAction>>,
     cursor: Option<Res<CursorOnTile>>,
     currently_placed_unit: Res<CurrentlyPlacedUnit>,
+    range_highlights: Res<RangeHighlights>,
     mut switch_unit_events: EventWriter<SwitchToNextUnitEvent>,
     mut client_to_server_events: EventWriter<ClientToServerMessage>,
 ) {
@@ -167,13 +168,14 @@ fn input_listener(
         switch_unit_events.send(SwitchToNextUnitEvent::Previous);
     } else if action_state.just_pressed(&CombatAction::SelectTile) {
         if let Some(cursor) = cursor {
-            // TODO: Validation so we can't spam the server
-            client_to_server_events.send(ClientToServerMessage::PlaceUnit(
-                client_to_server::PlaceUnit {
-                    unit_id: units[currently_placed_unit.array_index].id,
-                    hex: cursor.hex,
-                },
-            ));
+            if range_highlights.tiles.contains(&cursor.hex) {
+                client_to_server_events.send(ClientToServerMessage::PlaceUnit(
+                    client_to_server::PlaceUnit {
+                        unit_id: units[currently_placed_unit.array_index].id,
+                        hex: cursor.hex,
+                    },
+                ));
+            }
         }
     }
 }

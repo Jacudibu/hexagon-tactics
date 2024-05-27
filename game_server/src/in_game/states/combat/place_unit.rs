@@ -27,21 +27,13 @@ pub fn place_unit(
         player_resources,
     )?;
 
-    if !combat_state.combat_data.can_unit_be_placed_on_tile(
+    validation::validate_unit_can_be_placed_on_tile(
+        &combat_state.combat_data,
+        &unit.id,
         &1,
         &message.hex,
         &combat_state.loaded_map,
-    ) {
-        return Err(ServerToClientMessage::ErrorWhenProcessingMessage(
-            ErrorWhenProcessingMessage {
-                message: "Invalid Position!".into(),
-            },
-        ));
-    }
-
-    if combat_state.combat_data.units.contains_key(&unit.id) {
-        return Err(create_error_response("Unit has already been placed!"));
-    }
+    )?;
 
     let mut unit = CombatUnit::from_unit_definition(unit, game_data);
     unit.position = message.hex;
