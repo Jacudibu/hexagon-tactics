@@ -1,5 +1,5 @@
 use crate::game::combat::unit_actions::ActiveUnitAction;
-use crate::map::{AttackHighlights, CursorOnTile, PathHighlights, RangeHighlights};
+use crate::map::{AttackHighlights, CursorOnTile, MapState, PathHighlights, RangeHighlights};
 use crate::ApplicationState;
 use bevy::app::{App, Plugin};
 use bevy::prelude::*;
@@ -23,7 +23,8 @@ impl Plugin for UnitActionHighlightPlugin {
                         .or_else(resource_changed_or_removed::<CursorOnTile>()),
                 ),
             )
-                .run_if(in_state(ApplicationState::InGame)),
+                .run_if(in_state(ApplicationState::InGame))
+                .run_if(in_state(MapState::Ready)),
         );
     }
 }
