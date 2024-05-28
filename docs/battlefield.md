@@ -43,13 +43,17 @@ movement on them. Void may hold fluids, which would then count as a "deep" fluid
 
 ## Props
 
-Props are objects which can be placed on top of tiles. Multiple props can be placed on one tile, and a prop can be big
+Props are objects which can be placed on top of tiles. Multiple props can be placed on one tile, a prop can be big
 enough to cover multiple tiles, and certain skills might spawn new props on the map. They may be destructible or
 interact with skills in other ways. As such, they are highly modular. For the sake of simplicity, skills will always
 target the entire tile, and, as such, will interact with all props at once.
 
-#### Possible Components:
+Props will be defined just like other Game Data, though their values of the individual prop components work as "sensible
+defaults" and can be adjusted individually for each instance inside the map editor.
 
+### Optional Prop Components:
+
+- Offset: Instead of being placed right on top of the tile's center, the prop gets shifted by the assigned 3D Vector.
 - Destructible: The prop has HP and resistances to certain damage types. Getting destroyed by different damage types
   might trigger different effects and spawn another prop to visualize the remains.
     - Example: Flowers burning down when struck by fire, grass getting cut through slashing damage.
@@ -59,8 +63,8 @@ target the entire tile, and, as such, will interact with all props at once.
     - Multiple props can be stacked on top of one another that way. Additional props which don't increase the height
       will be placed on top of the uppermost prop.
     - If these props are destroyed, anything placed on top will fall down, potentially receiving falling damage.
-    - Example: a table.
-- Interactable: A unit standing next to this prop might use it to trigger a certain action.
+    - Example: A table.
+- Interactable: A unit standing next to this prop might use it to trigger a certain action, maybe affecting other props.
     - Example: A closed door or a lever.
 
 ## Spawn Zones
