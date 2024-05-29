@@ -1,4 +1,5 @@
 use crate::game_data::equipment::{AccessoryDefinition, AccessoryId, ArmorDefinition, ArmorId};
+use crate::game_data::prop::{PropDefinition, PropId};
 use crate::game_data::skill::{SkillDefinition, SkillId};
 use bevy::prelude::Resource;
 use bevy::utils::HashMap;
@@ -12,6 +13,7 @@ pub mod class;
 pub mod equipment;
 pub mod level;
 pub mod monster;
+pub mod prop;
 pub mod race;
 pub mod skill;
 pub mod unit_definition;
@@ -26,6 +28,7 @@ pub struct GameData {
     pub armor: HashMap<ArmorId, ArmorDefinition>,
     pub accessories: HashMap<AccessoryId, AccessoryDefinition>,
     pub monsters: HashMap<MonsterId, MonsterDefinition>,
+    pub props: HashMap<PropId, PropDefinition>,
 }
 
 impl GameData {
@@ -38,6 +41,7 @@ impl GameData {
             armor: ArmorDefinition::mock_armor(),
             accessories: AccessoryDefinition::mock_accessories(),
             monsters: MonsterDefinition::mock_data(),
+            props: PropDefinition::mock_data(),
         }
     }
 }
@@ -59,6 +63,7 @@ pub mod test_helpers {
                 armor: Default::default(),
                 accessories: Default::default(),
                 monsters: Default::default(),
+                props: Default::default(),
             }
         }
 

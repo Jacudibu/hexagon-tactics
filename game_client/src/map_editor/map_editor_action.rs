@@ -22,6 +22,7 @@ pub enum MapEditorAction {
     MouseMotion,
     MarkSpawnTile,
     RemoveSpawnTile,
+    SpawnCubeProp,
 }
 
 impl std::fmt::Display for MapEditorAction {
@@ -38,6 +39,7 @@ impl std::fmt::Display for MapEditorAction {
             MapEditorAction::LowerFluid => write!(f, "Lower Water"),
             MapEditorAction::MarkSpawnTile => write!(f, "Mark Spawn Tile"),
             MapEditorAction::RemoveSpawnTile => write!(f, "Remove Spawn Tile"),
+            MapEditorAction::SpawnCubeProp => write!(f, "Spawn Cube Prop"),
             MapEditorAction::MouseMotion => {
                 warn!(
                     "MapEditorAction::MouseMotion::Display was called. This should never happen?"
@@ -62,6 +64,7 @@ impl MapEditorAction {
         input_map.insert(Self::LowerFluid, KeyCode::Digit6);
         input_map.insert(Self::MarkSpawnTile, KeyCode::KeyZ);
         input_map.insert(Self::RemoveSpawnTile, KeyCode::KeyX);
+        input_map.insert(Self::SpawnCubeProp, KeyCode::KeyC);
         input_map.insert(Self::MouseMotion, DualAxis::mouse_motion());
 
         input_map
@@ -69,7 +72,7 @@ impl MapEditorAction {
 }
 
 #[rustfmt::skip]
-pub const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 10] = [
+pub const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 11] = [
     (MapEditorAction::RaiseTiles, MapEditorTool::RaiseTiles),
     (MapEditorAction::LowerTiles, MapEditorTool::LowerTiles),
     (MapEditorAction::PaintGrass, MapEditorTool::PaintSurface(TileSurface::Grass)),
@@ -80,4 +83,5 @@ pub const ACTION_TO_TOOL: [(MapEditorAction, MapEditorTool); 10] = [
     (MapEditorAction::LowerFluid, MapEditorTool::LowerFluid),
     (MapEditorAction::MarkSpawnTile, MapEditorTool::MarkSpawnTile(1)),
     (MapEditorAction::RemoveSpawnTile, MapEditorTool::RemoveSpawnTile),
+    (MapEditorAction::SpawnCubeProp, MapEditorTool::SpawnProp(1)),
 ];

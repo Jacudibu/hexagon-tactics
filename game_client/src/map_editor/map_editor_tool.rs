@@ -4,6 +4,7 @@ use std::ops::DerefMut;
 
 use bevy::log::error;
 use bevy::prelude::{EventWriter, Local, Res, ResMut, Resource};
+use game_common::game_data::prop::PropId;
 use hexx::Hex;
 use leafwing_input_manager::action_state::ActionState;
 
@@ -24,6 +25,7 @@ pub enum MapEditorTool {
     LowerFluid,
     MarkSpawnTile(u8),
     RemoveSpawnTile,
+    SpawnProp(PropId),
 }
 
 impl std::fmt::Display for MapEditorTool {
@@ -36,6 +38,7 @@ impl std::fmt::Display for MapEditorTool {
             MapEditorTool::LowerFluid => write!(f, "Lower Fluid"),
             MapEditorTool::MarkSpawnTile(team) => write!(f, "Mark Spawn Tiles for Team {team}"),
             MapEditorTool::RemoveSpawnTile => write!(f, "Remove Spawn Tiles"),
+            MapEditorTool::SpawnProp(prop) => write!(f, "Spawn Prop {}", prop),
         }
     }
 }
@@ -140,6 +143,7 @@ fn can_tool_be_used_on_tile(tool: &MapEditorTool, tile: &TileData) -> bool {
             tile.height > 0 && !tile.spawn_zone.is_some_and(|x| &x == team)
         }
         MapEditorTool::RemoveSpawnTile => tile.spawn_zone.is_some(),
+        MapEditorTool::SpawnProp(_) => true,
     }
 }
 
@@ -203,6 +207,9 @@ fn use_tool_on_tile(
             event_writers
                 .remove_spawn_marker_event
                 .send(RemoveSpawnMarkerEvent { hex: hex.clone() });
+        }
+        MapEditorTool::SpawnProp(id) => {
+            // TODO
         }
     }
 }
